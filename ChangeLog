@@ -1,3 +1,7 @@
+2004-10-07  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* Baka/RT.pm: Return ticket number when ticket is created.
+
 2004-10-04  James Tanis  <jtt@buscemi.sysdetect.com>
 
 	* Baka/StructuredConf.pm: Handle comments.

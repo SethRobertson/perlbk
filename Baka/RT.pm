@@ -8,7 +8,7 @@ package Baka::RT;
 $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 {
-  sub new($;$$$$)
+  sub new($;$$$)
   {
     my($self, $queue, $base_priority, $flags) = @_;
     my($class) = ref($self) || $self;
@@ -145,9 +145,9 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     $subject = "Uknown subject" if (!defined($subject));
     $source = "/dev/null" if (!defined($source));
 
-    return (-1) if (!defined($queue) || ($self->_execute_cmd("$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$self->{'nobody'}\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq") < 0));
+    return (-1) if (!defined($queue) || ($self->_execute_cmd("$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$self->{'nobody'}\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq", \$new_ticket)) < 0);
 
-    return (0);
+    return ($new_ticket);
   }
 
 
@@ -197,7 +197,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
   sub set_priority($$;$)
   {
-    my($self, $priority, $cur_ticket) = @_;
+    my($self, $cur_ticket, $priority) = @_;
     my($ret);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
