@@ -1,3 +1,8 @@
+2004-11-24  Alexander Dupuy  <dupuy@sysdetect.com>
+
+	* Baka/Conf.pm: use first, not last, occurrence of a key [for
+	consistency with C and Java implementations]
+
 2004-10-28  James Tanis  <jtt@fry.sysdetect.com>
 
 	* Baka/StructuredConf.pm: search_up: Method for finding a key
@@ -42,11 +47,11 @@
 
 2004-08-25  Seth Robertson  <seth@cheviot.sysdetect.com>
 
-	* lib/installlib.pl (question($$$$;$)): If no verification, don't fail.
+	* lib/installlib.pl (question): If no verification, don't fail.
 
 2004-06-25  James Tanis  <jtt@buscemi.sysdetect.com>
 
-	* lib/installlib.pl (kill_job($$$$$)): Do second cancel, kill -9,
+	* lib/installlib.pl (kill_job): Do second cancel, kill -9,
 	and post kill wait if asked.
 
 2004-06-18  Seth Robertson  <seth@pearl.sysdetect.com>
@@ -56,24 +61,22 @@
 
 2004-05-17  Seth Robertson  <seth@winwood.sysdetect.com>
 
-	* perl/BkReportGen/helper_simplereports.pl
-	(helper_simplereports($$$$$$)): Add table seperator between
-	non-operating and operating sections.  Colorize HTML error
-	reports.  Starrize the text error names.
+	* perl/BkReportGen/helper_simplereports.pl (helper_simplereports):
+	Add table separator between non-operating and operating sections.
+	Colorize HTML error reports.  Starrize the text error names.
 
 2004-04-06  Seth Robertson  <seth@pearl.sysdetect.com>
 
-	* perl/BkReportGen/helper_simplereports.pl
-	(helper_simplereports($$$$$$)): Allow report errors to come out
-	first.  Context be damned!
+	* perl/BkReportGen/helper_simplereports.pl (helper_simplereports):
+	Allow report errors to come out first.  Context be damned!
 
-	* perl/BkReportGen/helper_ifconfig.pl (helper_ifconfig($$$$)): If
+	* perl/BkReportGen/helper_ifconfig.pl (helper_ifconfig): If
 	we have interfaces defined in antura.conf, only report errors
 	about those interfaces.
 
 2004-03-11  Seth Robertson  <seth@pearl.sysdetect.com>
 
-	* bin/quotexml: Program to quote xml (or html) from people who
+	* bin/quotexml: Program to quote xml [or html] from people who
 	interpret such
 
 2004-03-05  James Tanis  <jtt@buscemi.sysdetect.com>
@@ -88,7 +91,7 @@
 2004-02-27  Seth Robertson  <seth@pearl.sysdetect.com>
 
 	* Baka/Conf.pm: Handle more of standard bkconf notations.
-	(e.g. "key=" "key = foo bar baz" etc)  RT 2970
+	[e.g. "key=" "key = foo bar baz" etc.]  RT 2970
 
 2004-02-27  James Tanis  <jtt@buscemi.sysdetect.com>
 
@@ -97,9 +100,10 @@
 
 2003-08-26  Seth Robertson  <seth@startide.sysdetect.com>
 
-	* bin/genup*.pl: Set my copyright on these programs I wrote many years ago.
+	* bin/genup*.pl: Set my copyright on programs I wrote many years ago.
 
-	* bin/Oligarchical: Program to monitor and control programs in various, evil, ways.
+	* bin/Oligarchical: Program to monitor and control programs in
+	various, evil, ways.
 
 2003-01-01  Brian Lindauer  <lindauer@projector.sysdetect.com>
 

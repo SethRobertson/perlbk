@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.8 2004/07/01 21:38:03 lindauer Exp $
+# $Id: Conf.pm,v 1.9 2004/11/24 17:14:31 dupuy Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -58,7 +58,8 @@ $VERSION = 1.00;
 	my $key = $1;
 	my $val = $2;
 
-	$self->{'sections'}->{$section}->{$key} = $val;
+	$self->{'sections'}->{$section}->{$key} = $val
+	  if (!defined $self->{'sections'}->{$section}->{$key});
       }
       else
       {
