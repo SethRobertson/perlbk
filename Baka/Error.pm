@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.2 2003/06/13 22:21:17 lindauer Exp $
+# $Id: Error.pm,v 1.3 2003/06/17 05:11:07 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -7,17 +7,17 @@
 # THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF SYSTEM DETECTION.
 # The copyright notice above does not evidence any actual
 # or intended publication of such source code.
-# 
+#
 # Only properly authorized employees and contractors of System Detection
 # are authorized to view, posses, to otherwise use this file.
-# 
+#
 # System Detection
 # 5 West 19th Floor 2 Suite K
 # New York, NY 10011-4240
-# 
+#
 # +1 212 242 2970
 # <sysdetect@sysdetect.org>
-# 
+#
 # --Copyright SYSDETECT--
 
 
@@ -41,8 +41,8 @@ $VERSION = 1.00;
 use strict;
 {
   ##
-  # Constructor.  
-  # Valid log levels are emerg, alert, crit, err, 
+  # Constructor. 
+  # Valid log levels are emerg, alert, crit, err,
   # warning, notice, info, and debug.
   #
   # @param ident identifier for syslog output (program name)
@@ -73,22 +73,22 @@ use strict;
     {
       $log_method = 'inet';
     }
-    
+   
     die "Invalid print level ($print_level).\n" if !Log::Dispatch->level_is_valid($print_level);
     die "Invalid log level ($log_level).\n" if !Log::Dispatch->level_is_valid($log_level);
 
     my $logger = Log::Dispatch->new();
-    
+   
     $logger->add( Log::Dispatch::Syslog->new( name => 'syslogger',
 					      min_level => $log_level,
 					      ident => $ident,
 					      logopt => 'pid',
 					      facility => 'user',
 					      socket => $log_method ));
-    
+   
     $logger->add( Log::Dispatch::Screen->new( name => 'screenlogger',
 					      min_level => $print_level ));
-    
+   
     $self->{'logger'} = $logger;
 
     return $self;
@@ -141,7 +141,7 @@ use strict;
     $logger->log(level => $level, message => $message);
   }
 
-    
+   
 }
 
 return 1;

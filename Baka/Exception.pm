@@ -1,4 +1,4 @@
-# $Id: Exception.pm,v 1.2 2003/06/13 22:21:17 lindauer Exp $
+# $Id: Exception.pm,v 1.3 2003/06/17 05:11:07 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -7,17 +7,17 @@
 # THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF SYSTEM DETECTION.
 # The copyright notice above does not evidence any actual
 # or intended publication of such source code.
-# 
+#
 # Only properly authorized employees and contractors of System Detection
 # are authorized to view, posses, to otherwise use this file.
-# 
+#
 # System Detection
 # 5 West 19th Floor 2 Suite K
 # New York, NY 10011-4240
-# 
+#
 # +1 212 242 2970
 # <sysdetect@sysdetect.org>
-# 
+#
 # --Copyright SYSDETECT--
 
 
