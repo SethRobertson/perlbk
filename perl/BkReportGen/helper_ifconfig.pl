@@ -125,69 +125,69 @@ sub helper_ifconfig($$$$)
 	$confidence -= .2;
 	next;
       }
-
-      if ($interinfo{$int}->{'RX-dropped'} > $oldinfo->{$int}->{'RX-dropped'})
-      {
-	push(@warnings,"Interface $int dropped some packets on reception, was $oldinfo->{$int}->{'RX-dropped'} now $interinfo{$int}->{'RX-dropped'}!\n");
-	$confidence -= .02;
-	next;
-      }
-
-      if ($interinfo{$int}->{'RX-errors'} > $oldinfo->{$int}->{'RX-errors'})
-      {
-	push(@warnings,"Interface $int received some errors, was $oldinfo->{$int}->{'RX-errors'} now $interinfo{$int}->{'RX-errors'}!\n");
-	$confidence -= .1;
-	next;
-      }
-
-      if ($interinfo{$int}->{'RX-frame'} > $oldinfo->{$int}->{'RX-frame'})
-      {
-	push(@warnings,"Interface $int received some frame problems, was $oldinfo->{$int}->{'RX-frame'} now $interinfo{$int}->{'RX-frame'}!\n");
-	$confidence -= .1;
-	next;
-      }
-
-      if ($interinfo{$int}->{'RX-overruns'} > $oldinfo->{$int}->{'RX-overruns'})
-      {
-	push(@warnings,"Interface $int saw some overruns (not unusual), was $oldinfo->{$int}->{'RX-overruns'} now $interinfo{$int}->{'RX-overruns'}!\n");
-	$confidence -= .01;
-	next;
-      }
-
-      if ($interinfo{$int}->{'TX-carrier'} > $oldinfo->{$int}->{'TX-carrier'})
-      {
-	push(@warnings,"Interface $int has some carrier problems (not a major problem), was $oldinfo->{$int}->{'TX-carrier'} now $interinfo{$int}->{'TX-carrier'}!\n");
-	$confidence -= .01;
-	next;
-      }
-
-      if ($interinfo{$int}->{'TX-collisions'} > $oldinfo->{$int}->{'TX-collisions'})
-      {
-	push(@warnings,"Interface $int saw some collisions (not usually major problem, consider moving to a switch), was $oldinfo->{$int}->{'TX-collisions'} now $interinfo{$int}->{'TX-collisions'}!\n");
-	$confidence -= .001;
-	next;
-      }
-
-      if ($interinfo{$int}->{'TX-dropped'} > $oldinfo->{$int}->{'TX-dropped'})
-      {
-	push(@warnings,"Interface $int dropped packets on transmit, was $oldinfo->{$int}->{'TX-dropped'} now $interinfo{$int}->{'TX-dropped'}!\n");
-	$confidence -= .05;
-	next;
-      }
-
-      if ($interinfo{$int}->{'TX-errors'} > $oldinfo->{$int}->{'TX-errors'})
-      {
-	push(@warnings,"Interface $int had errors on transmit, was $oldinfo->{$int}->{'TX-errors'} now $interinfo{$int}->{'TX-errors'}!\n");
-	$confidence -= .2;
-	next;
-      }
-
-      if ($interinfo{$int}->{'TX-overruns'} > $oldinfo->{$int}->{'TX-overruns'})
-      {
-	push(@warnings,"Interface $int had overruns on transmit (not unusual), was $oldinfo->{$int}->{'TX-overruns'} now $interinfo{$int}->{'TX-overruns'}!\n");
-	$confidence -= .05;
-	next;
-      }
+#
+#      if ($interinfo{$int}->{'RX-dropped'} > $oldinfo->{$int}->{'RX-dropped'})
+#      {
+#	push(@warnings,"Interface $int dropped some packets on reception, was $oldinfo->{$int}->{'RX-dropped'} now $interinfo{$int}->{'RX-dropped'}!\n");
+#	$confidence -= .02;
+#	next;
+#      }
+#
+#      if ($interinfo{$int}->{'RX-errors'} > $oldinfo->{$int}->{'RX-errors'})
+#      {
+#	push(@warnings,"Interface $int received some errors, was $oldinfo->{$int}->{'RX-errors'} now $interinfo{$int}->{'RX-errors'}!\n");
+#	$confidence -= .1;
+#	next;
+#      }
+#
+#      if ($interinfo{$int}->{'RX-frame'} > $oldinfo->{$int}->{'RX-frame'})
+#      {
+#	push(@warnings,"Interface $int received some frame problems, was $oldinfo->{$int}->{'RX-frame'} now $interinfo{$int}->{'RX-frame'}!\n");
+#	$confidence -= .1;
+#	next;
+#      }
+#
+#      if ($interinfo{$int}->{'RX-overruns'} > $oldinfo->{$int}->{'RX-overruns'})
+#      {
+#	push(@warnings,"Interface $int saw some overruns (not unusual), was $oldinfo->{$int}->{'RX-overruns'} now $interinfo{$int}->{'RX-overruns'}!\n");
+#	$confidence -= .01;
+#	next;
+#      }
+#
+#      if ($interinfo{$int}->{'TX-carrier'} > $oldinfo->{$int}->{'TX-carrier'})
+#      {
+#	push(@warnings,"Interface $int has some carrier problems (not a major problem), was $oldinfo->{$int}->{'TX-carrier'} now $interinfo{$int}->{'TX-carrier'}!\n");
+#	$confidence -= .01;
+#	next;
+#      }
+#
+#      if ($interinfo{$int}->{'TX-collisions'} > $oldinfo->{$int}->{'TX-collisions'})
+#      {
+#	push(@warnings,"Interface $int saw some collisions (not usually major problem, consider moving to a switch), was $oldinfo->{$int}->{'TX-collisions'} now $interinfo{$int}->{'TX-collisions'}!\n");
+#	$confidence -= .001;
+#	next;
+#      }
+#
+#      if ($interinfo{$int}->{'TX-dropped'} > $oldinfo->{$int}->{'TX-dropped'})
+#      {
+#	push(@warnings,"Interface $int dropped packets on transmit, was $oldinfo->{$int}->{'TX-dropped'} now $interinfo{$int}->{'TX-dropped'}!\n");
+#	$confidence -= .05;
+#	next;
+#      }
+#
+#      if ($interinfo{$int}->{'TX-errors'} > $oldinfo->{$int}->{'TX-errors'})
+#      {
+#	push(@warnings,"Interface $int had errors on transmit, was $oldinfo->{$int}->{'TX-errors'} now $interinfo{$int}->{'TX-errors'}!\n");
+#	$confidence -= .2;
+#	next;
+#      }
+#
+#      if ($interinfo{$int}->{'TX-overruns'} > $oldinfo->{$int}->{'TX-overruns'})
+#      {
+#	push(@warnings,"Interface $int had overruns on transmit (not unusual), was $oldinfo->{$int}->{'TX-overruns'} now $interinfo{$int}->{'TX-overruns'}!\n");
+#	$confidence -= .05;
+#	next;
+#      }
     }
     foreach $int (keys %$oldinfo)
     {
