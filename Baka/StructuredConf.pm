@@ -1,5 +1,7 @@
+package Baka::StructuredConf;
 use strict;
 use FileHandle;
+
 
 # 
 # start		: directive_list
@@ -31,7 +33,6 @@ use FileHandle;
 # final = "simple token";
 #
 
-package Baka::StructuredConf;
 
 use constant
 {
@@ -188,7 +189,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       
       $tree->{$ret->{'key'}} = $ret->{'value'} if (defined($ret));
 
-      push(@{$tree->{'keys'}}, $ret->{'key'});
+      push(@{$tree->{'_keys'}}, $ret->{'key'});
     }
     return($tree);
   }
@@ -525,7 +526,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       return(-1);
     }
 
-    foreach $key (@{$tree->{'keys'}})
+    foreach $key ($self->keys($tree->))
     {
       print $handle "$indent$key = ";
       if (ref($tree->{$key}) eq "SCALAR")
@@ -543,7 +544,197 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     return(0);
   }
 
+  sub keys($$)
+  {
+    my($self,$tree) = @_;
+
+    return(undef) if (!defined($tree));
+
+    return(@{$tree->{'_keys'}})
+  }
+
 }
 
 
 1;
+
+
+__END__
+
+=head1 NAME
+
+Baka::StructuredConf - Use a hierarchical configuration file.
+
+=head1 SYNOPSIS
+
+=over 6
+      use Baka::StructuredConf;
+
+      $conf = Baka::StructuredConf->new;
+      $conf = Baka::StructuredConf->new(filename,\$error);
+
+      $parse_ok = $conf->parse;
+      $parse_ok = $conf->parse($conf_file_lines);
+      $parse_ok = $conf->parse_file($filename);
+
+      $conf->keys($subree_hash_ref);
+
+      $conf_file_lines = $conf->string;
+      $conf->string($adjusted_conf_file_lines);
+
+      $debug = $conf->debug;
+      $conf->debug(1);
+
+      $write_ok = $conf->write_file($filename);
+
+      $error_string = $conf->error;
+
+=back
+
+=head1 DESCRIPTION
+
+This module provides an API for using and managing a configuration file
+where the entries have a hierarchical relationship. It produces a reference
+to a hash whose members are all either hash references to the lext "level"
+or a scalar reference to a string. Blank lines are ignored as is all text
+begining with a hash(#) and continuing to the next NEWLINE.
+
+Traversing the tree is very easy. At each level you call
+C<$self-E<gt>keys($hash_ref)> to get the list of valid keys at that level
+(in top-down order). For each key you check the value. if it's a hash you
+"recurse" down to the next level (ie that becomes the new argument to
+C<$self-E<gt>keys>); if it's a scalar reference you dereference it for the
+value of the key.
+
+=head1 API
+
+=over 6
+
+=item new
+
+The contsructor may be called to simply create the object or may optionally
+pass in a F<filename> to be parsed. In addition you may pass in a scalar
+reference which will be filled out with the error string should an error
+occr. Once the object is created, all errors are retrieved via
+C<$self-E<gt>error>.
+
+Returns an I<object reference> on success; I<undef> on failure.
+
+=item parse
+
+Takes a I<string> which contains the text of a configuration file and parses
+it. If the I<string> is not defined, it parse the current value of
+C<$self-E<gt>string>. 
+
+Returns a I<hash reference> on success; I<undef> on failure.
+
+=item parse_file
+
+Like C<$self-E<gt>parse($string)> but takes a F<filename> instead.
+
+Returns a I<hash reference> on success; I<undef> on failure.
+
+=item keys
+
+Returns the list of valid keys at the "level" of I<$subtree_hash_ref>. While this is essentially the same thing as (keys %$subtree_hash_ref), it differs in two respects:
+
+=over 3
+
+=item 1
+
+It does not return the internally used I<_keys> key.
+
+=item 2
+
+It returns the keys in the top-down order in which they were parsed. Using perl's C<keys> command will not do that.
+
+=back
+
+=item string
+
+Retrieve or modify the string representing the configuration file. If you
+modify the string, you will have to reparse later.
+
+Returns the I<configuration file string> on success; I<undef>x on failure.
+
+=item debug
+
+Set or retrive the current debug value. I<0> turns off debuggin; all other
+values turn debugging on.
+
+Returns the current I<debugging value>; it cannot fail
+
+=item write_file
+
+Write the current (possibly modified) confguration string out to
+F<filename>. Comments, if there were any, will be lost!
+
+Returns I<0> on success; I<-1> on failure.
+
+=item error
+
+Returns the I<current error string>; it cannot fail.
+
+
+=back       
+
+=head1 BAKUS-NAUR FORM
+
+The following the BNF of the grammar for the file.
+
+    start		: directive_list
+    directive_list	: directive ';' directive_list | <epsilon>
+    directive		: STRING '=' block
+    block		: '{' directive_list '}' | STRING
+
+Where STRING may be either a single word (ie wods containing no white space
+or reserverd characters: semicolons, braces, and equals) or multiple words
+bracketed by matching quotes (of any type). You may of course quote single
+words as well.
+
+NB: This means that keys (ie: words to the left an '=') may be multiple
+words surrounded by quotes, though typically they are single words.
+
+=head1 EXAMPLE FILE
+
+    start = 
+    { 
+      name = "this is token"; 
+      description = "this is another token";
+    };
+    
+    next = 
+    { 
+      first_sub_directive =
+      { 
+        name = "First subdirective name";
+        description = "First subdirective description";
+      };
+    
+      second_sub_directive =
+      { 
+        name = "Second subdirective name";
+        description = "Second subdirective description";
+      };
+    };
+    
+    final = "simple token";
+
+=head1 NOTES
+
+The source for C<$self-E<gt>write_tree> (or really the internal function
+C<_print_tree>) is a very easy way to learn the strucuture of the hash tree
+which is returned and how to traverse it.
+
+=head1 BUGS
+
+It's not clear or promised that C<$self-E<gt>debug(1)> does anything useful.
+
+It's not celar that making the string values *also* be references
+accomplishes anything useful. But it *definitely* confuses people.
+
+=head1 AUTHOR
+
+James Tanis (jtt@sysd.com)
+ 
+=cut
