@@ -1,3 +1,8 @@
+2004-06-25  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* lib/installlib.pl (kill_job($$$$$)): Do second cancel, kill -9,
+	and post kill wait if asked.
+
 2004-06-18  Seth Robertson  <seth@pearl.sysdetect.com>
 
 	* bin/BkReportGen: Fix locking.  Also deal with stale locks while
