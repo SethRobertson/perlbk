@@ -1,3 +1,8 @@
+2005-01-22  James Tanis  <jtt@cheviot.sysdetect.com>
+
+	* Baka/Conf.pm: Evidently $f->{f}{b} != $f->{f}->{b} in 5.8.5. Let's
+	up this is just a bug.
+
 2004-11-24  Alexander Dupuy  <dupuy@sysdetect.com>
 
 	* Baka/Conf.pm: use first, not last, occurrence of a key [for

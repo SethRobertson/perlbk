@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.9 2004/11/24 17:14:31 dupuy Exp $
+# $Id: Conf.pm,v 1.10 2005/01/22 20:25:03 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -140,12 +140,12 @@ $VERSION = 1.00;
 
     if (!defined($value))
     {
-      delete($self->{'sections'}{'global'}{$key});
+      delete($self->{'sections'}->{'global'}->{$key});
       return 1;
     }
 	     
     # Update myself
-    $self{'sections'}{'global'}{$key} = $value;
+    $self->{'sections'}->{'global'}->{$key} = $value;
 
     # Update the file. First read and replace the value if the key is found.
     if (!open(CONF_IN, "< $self->{'filename'}"))
