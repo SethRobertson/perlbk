@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.4 2004/02/28 01:38:26 seth Exp $
+# $Id: Conf.pm,v 1.5 2004/03/02 22:43:34 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -110,18 +110,35 @@ $VERSION = 1.00;
 
   # Set a value in a simple baka conf with no sections and unique values
   # Return 1 on success, 0 on failure.
-  sub set_uniq_value($$$)
+  sub set_uniq_value($$$;$)
   {
-    my($self, $key, $value) = @_;
+    my($self, $key, $value, $error_ref) = @_;
     my(@lines);
     my($found_key) = 0;
-    my($ret) = 1;
+    my($ret) = 0;
 
+    if (!defined($key))
+    {
+      $$error_ref = "Illegal arguments" if (defined($$error_ref));
+      goto error;
+    }
+
+    if (!defined($value))
+    {
+      delete($self->{'sections'}{'global'}{$key});
+      return 1;
+    }
+	     
     # Update myself
     $self{'sections'}{'global'}{$key} = $value;
 
     # Update the file. First read and replace the value if the key is found.
-    open(CONF_IN, "< $self->{'filename'}") || die "Failed to open $self->{'filename'} for reading: $!.\n";
+    if (!open(CONF_IN, "< $self->{'filename'}"))
+    {
+      $$error_ref = "Failed to open $self->{'filename'} for reading: $!.\n" 
+	if (defined($error_ref));
+      goto error;
+    }
     @lines = grep(s/^\s*$key\s*=.*/$key = $value/ && ($found_key = 1) || 1, <CONF_IN>);
     close(CONF_IN);
 
@@ -129,13 +146,24 @@ $VERSION = 1.00;
     push @lines, "$key = $value\n" if (!$found_key);
 
     # Write out new file.
-    open(CONF_OUT, "> $self->{'filename'}+") ||
-      die "Failed to open $self->{'filename'} for writing: $!.\n";
-
+    if (!open(CONF_OUT, "> $self->{'filename'}+"))
+    {
+      $$error_ref = "Failed to open $self->{'filename'} for writing: $!.\n" 
+	if (defined($$error_ref));
+      goto error;
+    }
     print CONF_OUT "" . join ('', @lines);
 
     close(CONF_OUT);
-    rename("$self->{'filename'}+", "$self->{'filename'}");
+    if (!rename("$self->{'filename'}+", "$self->{'filename'}"))
+    {
+      $$error_ref = "Could not rename $self->{'filename'}+ to $self->{'filename'}: $!" if (defined($$error_ref));
+      goto error;
+    }
+
+    $ret = 1;
+
+  error:
     return($ret);
   }
 };
