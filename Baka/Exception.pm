@@ -1,4 +1,4 @@
-# $Id: Exception.pm,v 1.5 2003/09/05 16:26:48 seth Exp $
+# $Id: Exception.pm,v 1.6 2003/09/09 20:03:47 lindauer Exp $
 #
 # ++Copyright LIBBK++
 # 
@@ -26,6 +26,8 @@ require Exporter;
 @EXPORT_OK = qw(push pop peek stringify);
 $VERSION = 1.00;
 {
+  use UNIVERSAL qw(isa);
+
   sub new($)
   {
     my ($type, $errstr) = @_;
@@ -40,7 +42,7 @@ $VERSION = 1.00;
   sub push($$)
   {
     my ($self, $errstr) = @_;
-    return undef unless ($self->isa(Baka::Exception));
+    return undef unless (isa($self, Baka::Exception));
     push(@{$self->{'errstack'}}, $errstr);
   }
 
@@ -48,7 +50,7 @@ $VERSION = 1.00;
   sub pop($)
   {
     my ($self) = @_;
-    return $self unless ($self->isa(Baka::Exception));
+    return $self unless (isa($self, Baka::Exception));
     pop(@{$self->{'errstack'}});
   }
 
@@ -56,7 +58,7 @@ $VERSION = 1.00;
   sub peek($)
   {
     my ($self) = @_;
-    return $self unless ($self->isa(Baka::Exception));
+    return $self unless (isa($self, Baka::Exception));
     return $self->{'errstack'}[scalar(@{$self->{'errstack'}}) - 1];
   }
 
@@ -67,7 +69,7 @@ $VERSION = 1.00;
     my ($buf, $indent, $errstr);
 
     # Protect against unhandled perl exceptions
-    return "$self\n" unless ($self->isa(Baka::Exception));
+    return "$self\n" unless (isa($self, Baka::Exception));
 
     $buf = "";
     $indent = "";
