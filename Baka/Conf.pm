@@ -1,15 +1,15 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.2 2004/02/28 00:44:52 jtt Exp $
+# $Id: Conf.pm,v 1.3 2004/02/28 01:27:51 seth Exp $
 #
 # ++Copyright LIBBK++
-# 
+#
 # Copyright (c) 2003 The Authors. All rights reserved.
-# 
+#
 # This source code is licensed to you under the terms of the file
 # LICENSE.TXT in this release for further details.
-# 
+#
 # Mail <projectbaka\@baka.org> for further information
-# 
+#
 # --Copyright LIBBK--
 #
 
@@ -107,7 +107,7 @@ $VERSION = 1.00;
     return keys(%{$sec_hash});
   }
 
-  
+
   # Set a value in a simple baka conf with no sections and unique values
   # Return 1 on success, 0 on failure.
   sub set_uniq_value($$$)
@@ -119,7 +119,7 @@ $VERSION = 1.00;
 
     # Update myself
     $self{'sections'}{'global'}{$key} = $value;
-    
+
     # Update the file. First read and replace the value if the key is found.
     open(CONF_IN, "< $self->{'filename'}") || die "Failed to open $self->{'filename'} for reading: $!.\n";
     @lines = grep(s/^\s*$key\s*=.*/$key = $value/ && ($found_key = 1) || 1, <CONF_IN>);
@@ -129,7 +129,7 @@ $VERSION = 1.00;
     push @lines, "$key = $value\n" if (!$found_key);
 
     # Write out new file.
-    open(CONF_OUT, "> $self->{'filename'}+") || 
+    open(CONF_OUT, "> $self->{'filename'}+") ||
       die "Failed to open $self->{'filename'} for writing: $!.\n";
 
     print CONF_OUT "" . join ('', @lines);
