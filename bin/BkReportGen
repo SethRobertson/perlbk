@@ -72,7 +72,7 @@ $Info{'VarDir'} = "$FindBin::Bin/../var/BkReportGen";
 
 die "Modules directory $Info{'LibDir'} missing\n" unless (-d $Info{'LibDir'});
 
-die "Could not create $Info{'VarDir'}: $!\n" 
+die "Could not create $Info{'VarDir'}: $!\n"
   if (! -d $Info{'VarDir'} && system("mkdir -p $Info{'VarDir'}"));
 
 our ($mainarg);
@@ -153,11 +153,12 @@ sub OutputAll($$$)
   {
     next unless ($Outputref =~ /([^:]+)(:(.*))?/);
     eval "package Modules; \$main::Outputret = output_$1(\$main::OutputAllInforef, \$main::Outputref, \$main::OutputAllSubject, \$main::OutputAlldataref); package main;";
+    $fullret .= $Outputret if (length($Outputret) > 1);
     if ($@)
     {
       warn "Output method failure of $Outputref failed with $@";
       next;
     }
   }
-
+  $fullret;
 }
