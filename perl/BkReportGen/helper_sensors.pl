@@ -22,7 +22,7 @@ sub helper_sensors($$$$)
 
   if ( -f "/etc/sensors.conf")
   {
-    my $sensor = `sensors`;
+    my $sensor = `sensors 2>&1`;
 
     # We don't declare errors on sensors failure
     return 1 if ($?);
