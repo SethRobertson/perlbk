@@ -1,40 +1,33 @@
 ######################################################################
-# $Id: Makefile,v 1.5 2003/09/24 19:11:35 jtt Exp $
+# $Id: Makefile,v 1.1 2003/09/24 19:11:35 jtt Exp $
 #
 # ++Copyright SYSDETECT++
 #
-# Copyright (c) 2001 System Detection.  All rights reserved.
+# Copyright (c) 2003 System Detection.  All rights reserved.
 #
 # THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF SYSTEM DETECTION.
 # The copyright notice above does not evidence any actual
 # or intended publication of such source code.
 #
 # Only properly authorized employees and contractors of System Detection
-# are authorized to view, posses, to otherwise use this file.
+# are authorized to view, possess, to otherwise use this file.
 #
 # System Detection
-# 5 West 19th Floor 2 Suite K
+# 5 West 19th Street Floor 2K
 # New York, NY 10011-4240
 #
-# +1 212 242 2970
-# <sysdetect@sysdetect.org>
+# +1 212 206 1900
+# <support@sysd.com>
 #
 # --Copyright SYSDETECT--
 #
 # Foo group Makefile
 #
 
-BK_PERL_MODS=			\
-	Baka/Error.pm		\
-	Baka/Exception.pm	\
-# Line eater fodder
+BK_SIMPLE_SCRIPTS=Oligarchical
 
-BK_SUBDIR=bin
-
-GROUPTOP=..
-GROUPSUBDIR=perlbk
-
-
+GROUPTOP=../..
+GROUPSUBDIR=perlbk/bin
 ##################################################
 ## BEGIN BKSTANDARD MAKEFILE
 -include ./Make.preinclude

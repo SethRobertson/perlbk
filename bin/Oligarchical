@@ -254,8 +254,12 @@ sub getpidlist($)
 
   return split(/\s+/, $info->{'pid'}) if ($info->{'pid'});
 
-  chomp(@pidlist = (`$info->{'pidcmd'}`)) if ($info->{'pidcmd'});
-  return (@pidlist);
+  if ($info->{'pidcmd'})
+    {
+      print STDERR "run: $info->{'pidcmd'}\n" if ($OPTIONS{'x'});
+      chomp(@pidlist = (`$info->{'pidcmd'}`));
+      return (@pidlist);
+    }
 
   die "Invalid configuration--neither NAME or PID section\n" unless ($info->{'name'});
 
