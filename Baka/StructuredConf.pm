@@ -1,15 +1,10 @@
 use strict;
 
 # 
-# start: directive_list
-# 
-# directive_list: directive
-#                 | directive, directive_list
-# 
-# directive:      STRING EQUALS block SEMICOLON
-# 
-# block: LEFT_BRACE directive_list RIGHT_BRACE
-#         | STRING
+# start		: directive_list
+# directive_list: directive SEMICOLON directive_list | <null>
+# directive	: STRING EQUALS block
+# block		: LEFT_BRACE directive_list RIGHT_BRACE | STRING
 # 
 # start = 
 # { 
@@ -40,13 +35,14 @@ package Baka::StructuredConf;
 use constant
 {
   # Lexical tokens
-  STRING 	=>	1,
-  EQUALS	=>	2,
-  LEFT_BRACE	=>	3,
-  RIGHT_BRACE	=>	4,
-  EOF		=>	5,
-  ERROR		=>	6,
-  SEMICOLON	=>	7,
+  STRING 		=>	1,
+  EQUALS		=>	2,
+  LEFT_BRACE		=>	3,
+  RIGHT_BRACE		=>	4,
+  EOF			=>	5,
+  ERROR			=>	6,
+  SEMICOLON		=>	7,
+  DEBUG_FLAG_LEX	=>	1,
 };
 
 {
@@ -64,6 +60,8 @@ use constant
       $self->{'filename'} = $filename;
       $self->parse_file;
     }
+    $self->{'debug'} = 0;
+    $self->{'saw_eol'} = 0;
 
     return($self);
   }
@@ -77,6 +75,18 @@ use constant
     $self->{'string'} = $string if (defined($string));
     
     return($self->{'string'});
+  }
+
+
+
+  # Set and get debug value
+  sub debug($;$)
+  {
+    my($self, $debug_level) = @_;
+
+    $self->{'debug'} = $debug_level if (defined($debug_level));
+    
+    return($self->{'debug'});
   }
 
 
@@ -98,8 +108,7 @@ use constant
     $self->{'line'} = 1;
     $self->{'length'} = length($string);
     
-    
-    return(0);
+    return($self->_start);
   }
 
 
@@ -131,6 +140,122 @@ use constant
     $/ = $old_sep;
 
     return($ret);
+  }
+
+  # Actually do the parse
+  sub _start($;)
+  {
+    my($self) = @_;
+
+    return (-1) if ($self->_directive_list < 0);
+      
+    if ($self->_get_token != EOF)
+    {
+      $self->parse_error("Failed parse");
+      return(-1);
+    }
+
+    return(0);
+  }	       
+
+
+  sub _directive_list($;)
+  {
+    my($self) = @_;
+    my($tok);
+    
+    while(1)
+    {
+      return (-1) if ($self->_directive < 0);
+
+      if (($tok = $self->_get_token) != SEMICOLON)
+      {
+	$self->_push_token($tok);
+	return(0);
+      }
+    }
+  }
+
+
+
+  sub _directive($;)
+  {
+    my($self) = @_;
+    my($name, $tok);
+
+    if (($tok = $self->_get_token) != STRING)
+    {
+      $self->_push_token($tok);
+      return(0);
+    }
+    
+    $name = $self->{'token_value'};
+
+    print "Found name: **$name**\n";
+
+    if (($tok = $self->_get_token) != EQUALS)
+    {
+      $self->_push_token(STRING, $name);
+      $self->_push_token($tok);
+      return(0);
+    }
+
+    return ($self->_block)
+  }
+
+
+
+  sub _block($)
+  {
+    my($self) = @_;
+    my($tok);
+    
+    if (($tok = $self->_get_token) == LEFT_BRACE)
+    {
+      return (-1) if ($self->_directive_list < 0);
+      
+      if (($tok = $self->_get_token) != RIGHT_BRACE)
+      {
+	$self->_push_token($tok);
+      }
+    }
+    elsif ($tok == STRING)
+    {
+      print "Found simple value: **$self->{'token_value'}**\n";
+    }
+    else
+    {
+      $self->_push_token($tok);
+    }
+
+    # Finish off directive.
+
+    return(0);
+  }
+
+
+  # Push back a unneeded tokens;
+  sub _push_token($$;$)
+  {
+    my($self, $token, $value) = @_;
+    my($r);
+
+    $r->{'token'} = $token;
+    $r->{'value'} = $value if (defined($value));
+
+    # If we've pulled off a string we don't want, we have to also push 
+    # back the string value we probably don't know about.
+    $r->{'value'} = $self->{'token_value'} if (($token == STRING) && !defined($value));
+
+    if ($self->{'debug'} & DEBUG_FLAG_LEX)
+    {
+      print "LEX: PUSH: $token";
+      print ": $value" if (defined($value));
+      print "\n";
+    }
+      
+    push @{$self->{'token_stack'}}, $r;
+    return;
   }
 
 
@@ -167,21 +292,47 @@ use constant
   }
 
 
+
   # Send up lexical tokens
   sub _get_token($)
   {
     my($self) = @_;
-    my($char);
+    my($char, $old_token);
+    my($look);
+
+    if (defined($old_token = pop(@{$self->{'token_stack'}})))
+    {
+      $self->{'token_value'} = $old_token->{'token_value'} if (defined($old_token->{'token_value'}));
+
+      if ($self->{'debug'} & DEBUG_FLAG_LEX)
+      {
+	print "LEX: POP : $old_token->{'token'}" ;
+	print ": $old_token->{'token_value'}" if (defined($old_token->{'token_value'}));
+	print "\n";
+      }
+      return($old_token->{'token'});
+    }
 
     # Skip leading whitspace.
     while((defined($char = $self->_next_char)) && ($char =~ /\s/)){}
 
-    return(EOF) if (!defined($char));
+    if (defined($char) && ($char eq "#"))
+    {
+      if (defined($char = $self->_next_char))
+      {
+	while((defined($char = $self->_next_char)) && ($char ne "\n")) {}
+      }
+    }
 
+    if (!defined($char))
+    {
+      print "LEX: Returning EOF\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
+      return(EOF);
+    }
+    
     my($start) = $self->{'pos'} - 1;
     if ($char =~ /[\"\'\`]/)
     {
-      my($look); # lookahead.
       # looking for a quoted string.
       $start++; # Advance the starting position of the string.
       while((defined($look = $self->_next_char)) && ($look ne $char)){}
@@ -202,42 +353,54 @@ use constant
 	chomp($substr = substr($self->string, $start, $strlen) . "$elipses");
 
 	$self->parse_error("Premature EOF. Possible runaway string near \"$substr\"");
+	print "LEX: Returning ERROR" if ($self->{'debug'} & DEBUG_FLAG_LEX);
 	return(ERROR);
       }
       
       chomp($self->{'token_value'} = substr($self->string, $start, $self->{'pos'} - $start -1));
+      print "LEX: Returning STRING: **$self->{'token_value'}**\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
+
       return(STRING);
     }
     elsif ($char eq "{")
     {
+      print "LEX: Returning LEFT_BRACE\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
       return(LEFT_BRACE);
     }
     elsif ($char eq "}")
     {
+      print "LEX: Returning RIGHT_BRACE\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
       return(RIGHT_BRACE);
     }
     elsif ($char eq "=")
     {
+      print "LEX: Returning EQUALS\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
       return(EQUALS);
+    }
+    elsif ($char eq ";")
+    {
+      print "LEX: Returning SEMICOLON\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
+      return(SEMICOLON);
     }
     else
     {
-      my($look);
-      
-      while((defined($look = $self->_next_char)) && ($look !~ /[\s{}=]/)){}
+      while((defined($look = $self->_next_char)) && ($look !~ /[\s{}=;]/)){}
       
       if (!defined($look))
       {
 	# We probably can't reach this code actually.
 	$self->parse_error("Premature EOF");
+	print "LEX: Returning ERROR\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
 	return(ERROR);
       }
       
-      chomp($self->{'token_value'} = substr($self->string, $start, $self->{'pos'} - $start));
+      chomp($self->{'token_value'} = substr($self->string, $start, $self->{'pos'} - $start - 1));
+      print "LEX: Returning STRING: **$self->{'token_value'}**\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
       return(STRING);
     }
 
     $self->parse_error("Parser reached illegal state");
+    print "LEX: Returning ERROR\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
     return(ERROR);
   }
 
@@ -251,8 +414,19 @@ use constant
     if ($self->{'pos'} < $self->{'length'})
     {
       $self->_get_char;
-      $self->{'line'}++ if ($self->{'char'} eq "\n");
       $self->{'pos'}++;
+
+      # If you see a new line, mark that fact, so that line cnt can be updated on the *next* char.
+      if ($self->{'char'} eq "\n")
+      {
+	$self->{'saw_eol'} = 1;
+      }
+      else
+      {
+	$self->{'line'}++ if ($self->{'saw_eol'});
+	$self->{'saw_eol'} = 0;
+      }
+
     }
     
     return($self->{'char'});
