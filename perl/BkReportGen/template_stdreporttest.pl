@@ -24,7 +24,7 @@ sub template_stdreporttest($$)
 
   $Aux{'helper_top'} = {'numberproc'=>5,'magic'=>'worker|postmaster|postgres|antura'};
 
-  $ret = helper_simplereports($Inforef, $StateRef, \@Output, ['loadaverage','df','top','ifconfig'], \%Aux, \$operatingmin);
+  $ret = helper_simplereports($Inforef, $StateRef, \@Output, ['loadaverage','df','top','ifconfig','initialize_antura'], \%Aux, \$operatingmin);
 
   if (defined($ret) && length($ret) > 1)
   {

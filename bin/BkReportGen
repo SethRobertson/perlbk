@@ -37,6 +37,7 @@ use Sys::Hostname;
 use Getopt::Long;
 use Storable('nstore','retrieve');
 use strict;
+use Baka::Conf;
 
 my($USAGE) = "Usage: $0: BkReportGen <--locking> [[-v name=variable]...] [-C <onsuccess|onfailure|*always>] [-V <returncode|tinysummary|summary|*full>] [-O <*TEXT|HTML>] [-P <seconds>] <<-o <outputname<:address>>> ...> templatename...\n";
 
@@ -70,6 +71,9 @@ $Info{'LibDir'} = "$FindBin::Bin/../perl/BkReportGen";
 $Info{'VarDir'} = "$FindBin::Bin/../var/BkReportGen";
 
 die "Modules directory $Info{'LibDir'} missing\n" unless (-d $Info{'LibDir'});
+
+die "Could not create $Info{'VarDir'}: $!\n" 
+  if (! -d $Info{'VarDir'} && system("mkdir -p $Info{'VarDir'}"));
 
 our ($mainarg);
 our ($mainret);
