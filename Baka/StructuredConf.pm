@@ -526,7 +526,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       return(-1);
     }
 
-    foreach $key ($self->keys($tree->))
+    foreach $key ($self->keys($tree))
     {
       print $handle "$indent$key = ";
       if (ref($tree->{$key}) eq "SCALAR")

@@ -3,6 +3,11 @@ use strict;
 
 package Baka::RT;
 
+use constant
+{
+  BASE_PRIORITY => 30,
+};
+
 
 # If this isn't set to something, rt won't let you submit tickets
 $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
@@ -18,7 +23,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
     $self->rtdir("/usr/local/rt2");
     $self->queue($queue) if (defined($queue));
-    $self->base_priority(defined($base_priority)?$base_priority:30);
+    $self->base_priority(defined($base_priority)?$base_priority:BASE_PRIORITY);
     $self->{'no_rt_ticket'} = "NO_RT_TICKET";
     $self->cur_ticket("");
     $self->{'nobody'}="Nobody";
@@ -42,6 +47,63 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
     return ($new_ticket);
   }
+
+
+  sub search_for_ticket($$)
+  {
+    my($self, $subject) = @_;
+    my($cur_ticket);
+
+    $cur_ticket = "" if ($self->_execute_cmd("$self->{'rt'} --limit-subject=\"$subject\" --limit-status=\"new\" --limit-status=\"open\" --summary='%id20' 2>/dev/null | sed '1d' | awk '{ print \$1 }'", \$cur_ticket) < 0);
+
+    return($self->cur_ticket($cur_ticket));
+  }
+
+
+
+  sub cur_ticket($;$)
+  {
+    my($self, $cur_ticket) = @_;
+
+    if (defined($cur_ticket)) 
+    {
+      if ($cur_ticket eq "") 
+      {
+	$self->{'cur_ticket'} = $self->{'no_rt_ticket'};
+      } 
+      else 
+      {
+	$self->{'cur_ticket'} = $cur_ticket;
+      }
+    }
+
+    return($self->{'cur_ticket'});
+  }
+
+
+
+  sub close_ticket($;$)
+  {
+    my($self, $cur_ticket) = @_;
+    my($ret);
+
+    $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
+    return(-1) if ($cur_ticket eq $self->{'no_rt_ticket'});
+
+    return ($self->_execute_cmd("$self->{'rt'} --status=\"resolved\" --id=\"$cur_ticket\" >/dev/null 2>&1"));
+  }
+
+
+
+  sub valid_ticket($;$)
+  {
+    my($self, $cur_ticket) = @_;
+
+    $cur_ticket = $self->cur_ticket if (!defined($cur_ticket));
+
+    return ($cur_ticket ne $self->{'no_rt_ticket'});
+  }
+
 
 
   sub rtdir($;$)
@@ -68,98 +130,12 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
-  sub cur_ticket($;$)
-  {
-    my($self, $cur_ticket) = @_;
-
-    if (defined($cur_ticket)) 
-    {
-      if ($cur_ticket eq "") 
-      {
-	$self->{'cur_ticket'} = $self->{'no_rt_ticket'};
-      } 
-      else 
-      {
-	$self->{'cur_ticket'} = $cur_ticket;
-      }
-    }
-
-    return($self->{'cur_ticket'});
-  }
-
-
-
-  sub verbose($;$)
-  {
-    my($self, $verbose) = @_;
-
-    $self->{'verbose'} = $verbose if (defined($verbose));
-    return($self->{'verbose'});
-  }
-
-
-
-  sub no_execute($;$)
-  {
-    my($self, $no_execute) = @_;
-
-    $self->{'no_execute'} = $no_execute if (defined($no_execute));
-    return($self->{'no_execute'});
-  }
-
-
-
   sub base_priority($;$)
   {
     my($self, $base_priority) = @_;
 
     $self->{'base_priority'} = $base_priority if (defined($base_priority));
     return($self->{'base_priority'});
-  }
-
-
-
-  sub search_for_ticket($$)
-  {
-    my($self, $subject) = @_;
-    my($cur_ticket);
-
-    $cur_ticket = "" if ($self->_execute_cmd("$self->{'rt'} --limit-subject=\"$subject\" --limit-status=\"new\" --limit-status=\"open\" --summary='%id20' 2>/dev/null | sed '1d' | awk '{ print \$1 }'", \$cur_ticket) < 0);
-
-    return($self->cur_ticket($cur_ticket));
-  }
-
-
-
-  sub valid_ticket($;$)
-  {
-    my($self, $cur_ticket) = @_;
-
-    $cur_ticket = $self->cur_ticket if (!defined($cur_ticket));
-
-    return ($cur_ticket ne $self->{'no_rt_ticket'});
-  }
-
-
-
-  sub valid_owner($;$)
-  {
-    my($self, $owner) = @_;
-
-    return (defined($owner) && ($owner ne $self->{'nobody'}));
-  }
-
-
-
-  sub close_ticket($;$)
-  {
-    my($self, $cur_ticket) = @_;
-    my($ret);
-
-    $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
-    return(-1) if ($cur_ticket eq $self->{'no_rt_ticket'});
-
-    return ($self->_execute_cmd("$self->{'rt'} --status=\"resolved\" --id=\"$cur_ticket\" >/dev/null 2>&1"));
   }
 
 
@@ -175,6 +151,15 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     $cur_owner = $self->{'nobody'} if ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%owner100' 2>/dev/null | sed -e '1d' | tr -d ' '", \$cur_owner) < 0);
     
     return($cur_owner);
+  }
+
+
+
+  sub valid_owner($;$)
+  {
+    my($self, $owner) = @_;
+
+    return (defined($owner) && ($owner ne $self->{'nobody'}));
   }
 
 
@@ -218,6 +203,26 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     $kw_args = join (" --keywords=", @$keywords_listr);
     
     return($self->_execute_cmd("$self->{'rt'} --id=$cur_ticket --keywords=$kw_args >/dev/null 2>&1"));
+  }
+
+
+
+  sub verbose($;$)
+  {
+    my($self, $verbose) = @_;
+
+    $self->{'verbose'} = $verbose if (defined($verbose));
+    return($self->{'verbose'});
+  }
+
+
+
+  sub no_execute($;$)
+  {
+    my($self, $no_execute) = @_;
+
+    $self->{'no_execute'} = $no_execute if (defined($no_execute));
+    return($self->{'no_execute'});
   }
 
 
@@ -282,7 +287,7 @@ Baka::RT -- Perl API to the RT ticketing system.
       
       $rt->rtdir;
       $rt->rtdir($dir);
-      
+
       $rt->queue;
       $rt->queue($queue);
 
@@ -291,6 +296,7 @@ Baka::RT -- Perl API to the RT ticketing system.
 
       $rt->get_owner;
       $rt->get_owner($ticket);
+      $rt->valid_owner($ticket);
 
       $rt->get_priority;
       $rt->get_priority($ticket);
@@ -353,6 +359,24 @@ Returns I<0> on success; I<-1> on failure.
 Determines whether the supplied I<ticket> or the current ticket is valid. 
 
 Returns I<1> if the ticket is valid, I<0> otherwise.
+
+=item rtdir
+
+Set or retrieve the directory where the RT installation is located.
+
+Returns the I<current directory> on success; I<undef> on failure.
+
+=item queue
+
+Set or retrieve the current default RT queue for new tickets.
+
+Returns the I<current queue> on success; I<undef> on failure.
+
+=item base_priority
+
+Set of retrieve the current default priority for new tickets.
+
+
 
 =back
 
