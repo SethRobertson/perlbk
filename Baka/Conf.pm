@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.5 2004/03/02 22:43:34 jtt Exp $
+# $Id: Conf.pm,v 1.6 2004/03/06 00:56:28 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -139,7 +139,7 @@ $VERSION = 1.00;
 	if (defined($error_ref));
       goto error;
     }
-    @lines = grep(s/^\s*$key\s*=.*/$key = $value/ && ($found_key = 1) || 1, <CONF_IN>);
+    @lines = grep(s/^\s*(\#\s*)?$key\s*=.*/$key = $value/ && ($found_key = 1) || 1, <CONF_IN>);
     close(CONF_IN);
 
     # Add the key/value pair if the key was not found

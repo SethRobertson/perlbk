@@ -1,3 +1,7 @@
+2004-03-05  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* Baka/Conf.pm: Allow set_uniq_value to reset a commented out key.
+
 2004-03-04  Seth Robertson  <seth@startide.sysdetect.com>
 
 	* bin/BkReportGen: Generate warning messages if the output methods
