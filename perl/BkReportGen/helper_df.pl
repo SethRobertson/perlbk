@@ -45,7 +45,13 @@ sub helper_df($$$$)
     my (@fields) = split(/\s+/,$line);
     next if ($#fields < 5 || $fields[5] !~ /(\d+)\%/);
     my ($percent) = $1;
+
+    # Under 90% utilization should be fine (though technically 91% with 20GB free is probably good as well)
     next if ($percent < 90);
+
+    # Don't worry so much about CDs.  Yes, CDs can be mounted with other types, but not often
+    next if ($fields[1] =~ /iso9660/);
+
     if ((100-$percent)/100 < $Output{'operating'})
     {
       $Output{'operating'} = (100-$percent)/10;

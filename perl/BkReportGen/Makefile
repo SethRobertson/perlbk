@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.3 2004/02/18 00:36:44 seth Exp $
+# $Id: Makefile,v 1.4 2004/02/19 03:29:11 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -30,6 +30,9 @@ MODULES=					\
 	helper_loadaverage.pl			\
 	helper_simplereports.pl			\
 	helper_top.pl				\
+	output_exec.pl				\
+	output_file.pl				\
+	output_mailto.pl			\
 	output_stdout.pl			\
 	template_helloworld.pl			\
 	template_stdreporttest.pl		\

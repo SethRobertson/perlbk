@@ -28,7 +28,7 @@ sub template_stdreporttest($$)
 
   if (defined($ret) && length($ret) > 1)
   {
-    return "helper_simplereports terminated abnormally with $ret";
+    return "template_stdreporttest: helper_simplereports terminated abnormally with $ret";
   }
 
   # <TODO>Do something clever with operatingmin</TODO>

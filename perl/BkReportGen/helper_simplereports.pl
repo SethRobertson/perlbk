@@ -25,11 +25,11 @@ sub helper_simplereports($$$$$$)
     $ret = eval qq^helper_$call(\$Inforef, \$StoredRef, \\\@Output, \$CallData->{"helper_$call"});^;
     if ($@)
     {
-      return "helper_$call failed with $@";
+      return "helper_simplereports: helper_$call failed with $@";
     }
     if (defined($ret) && length($ret) > 1)
     {
-      return "helper_$call terminated abnormally with $ret";
+      return "helper_simplereports: helper_$call terminated abnormally with $ret";
     }
   }
 
@@ -73,6 +73,7 @@ sub helper_simplereports($$$$$$)
   {
     unshift(@$Outputarrayref, sprintf("                                Operating at %.0f%%\n\n",$$OperatingMinRef*100));
   }
+  1;
 }
 
 1;

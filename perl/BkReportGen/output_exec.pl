@@ -11,17 +11,23 @@
 #
 # --Copyright LIBBK--
 #
-# Sample output template to print data to standard out.
+# Sample output template to print data to a file
 # Note that the "$Subject" does not appear during TEXT output.
 #
 
-sub output_stdout($$$$;$)
+sub output_exec($$$$;$)
 {
   my ($Inforef, $output, $subject, $data, $misc) = @_;
 
-  my ($ret) = output_standard('STDOUT',$Inforef,$output, $subject, $data, $misc);
+  $output =~ s/^exec://;
 
-  1;
+  return "Cannot open output pipe $output\n" if (!open(F,"|$output"));
+
+  my ($ret) = output_standard('F',$Inforef, $output, $subject, $data, $misc);
+
+  close(F);
+
+  $ret;
 }
 
 1;
