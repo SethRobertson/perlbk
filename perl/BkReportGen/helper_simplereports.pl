@@ -18,7 +18,7 @@ sub helper_simplereports($$$$$$)
 {
   my ($Inforef, $StoredRef, $Outputarrayref, $CallList, $CallData, $OperatingMinRef) = @_;
   my (@Output);
-  my ($call,$ret,$line);
+  my ($call,$ret,$line,$badop);
 
   foreach $call (@$CallList)
   {
@@ -33,6 +33,17 @@ sub helper_simplereports($$$$$$)
     }
   }
 
+  if ($Inforef->{'OutputFormat'} eq "HTML")
+  {
+    unshift(@$Outputarrayref, qq^<tr><td COLSPAN="2" CLASS="separator">&nbsp;</td></tr>^);
+  }
+  else
+  {
+    unshift(@$Outputarrayref, "".("-"x70)."\n");
+    unshift(@$Outputarrayref, "\n");
+  }
+
+
   $$OperatingMinRef = 1;
   foreach $line (@Output)
   {
@@ -45,16 +56,17 @@ sub helper_simplereports($$$$$$)
 
     if (defined($line->{'operating'}) && $line->{'operating'} < 1.0)
     {
+      $badop = 1;
       if ($Inforef->{'OutputFormat'} eq "HTML")
       {
 	# <TODO>Do something more clever with HTML (think HTML::Entities) though the <pre> is bad too</TODO>
-	unshift(@$Outputarrayref, "<tr><td>$line->{'name'}</td><td><pre>$line->{'data'}</pre></td></tr>");
+	unshift(@$Outputarrayref, qq^<tr><td bgcolor="red">$line->{'name'}</td><td><pre>$line->{'data'}</pre></td></tr>^);
       }
       else
       {
 	unshift(@$Outputarrayref, "".("-"x70)."\n");
 	unshift(@$Outputarrayref, "$line->{'data'}");
-	unshift(@$Outputarrayref, "$line->{'name'}:\n");
+	unshift(@$Outputarrayref, "* $line->{'name'}:\n");
       }
     }
     else
@@ -81,7 +93,7 @@ sub helper_simplereports($$$$$$)
   }
   else
   {
-    unshift(@$Outputarrayref, "".("-"x70)."\n");
+    unshift(@$Outputarrayref, "".("-"x70)."\n") if ($badop);
     unshift(@$Outputarrayref, sprintf("                                Operating at %.0f%%\n\n",$$OperatingMinRef*100));
   }
   1;

@@ -1,3 +1,10 @@
+2004-05-17  Seth Robertson  <seth@winwood.sysdetect.com>
+
+	* perl/BkReportGen/helper_simplereports.pl
+	(helper_simplereports($$$$$$)): Add table seperator between
+	non-operating and operating sections.  Colorize HTML error
+	reports.  Starrize the text error names.
+
 2004-04-06  Seth Robertson  <seth@pearl.sysdetect.com>
 
 	* perl/BkReportGen/helper_simplereports.pl
