@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -wc
 #
 # ++Copyright LIBBK++
 #
@@ -31,9 +31,14 @@
 use Getopt::Long;
 use strict;
 
-
+sub runcommand($$);
+sub getpidlist( $ );
+sub min($$);
+sub delblock($$$$);
+	       
 
 my($USAGE) = "Usage: $0: [-nvx] <--config filename>\n";
+	       
 my(%OPTIONS);
 Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat", "require_order");
 GetOptions(\%OPTIONS, 'n', 'x', 'v', 'config=s') || die $USAGE;
@@ -45,14 +50,14 @@ my ($blockcount, $x, @group);
 if ($OPTIONS{'config'} ne "-")
 {
   open(C,$OPTIONS{'config'}) || die "Cannot open configuration file $OPTIONS{'config'}: $!\n";
-  $x = "C";
+  *x = *C;
 }
 else
 {
-  $x = "STDIN";
+  *x = *STDIN;
 }
 $blockcount = 0;
-while (<$x>)
+while (<*x>)
 {
   s/\#.*//;
   chomp;
@@ -67,7 +72,7 @@ while (<$x>)
   next unless /^(\S+)\s*(.*)/;
   $group[$blockcount]->{$1} = $2;
 }
-close($x);
+close(*x);
 
 
 print STDERR "Blockcount is $blockcount\n" if ($OPTIONS{'v'});
@@ -83,7 +88,6 @@ for ($x = 0; $x < $blockcount; $x++)
 }
 
 
-exit(0) unless ($blockcount > 0);
 ######################################################################
 #
 # Initial pass
