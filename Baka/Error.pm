@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.5 2003/07/22 14:21:47 lindauer Exp $
+# $Id: Error.pm,v 1.6 2003/07/24 19:42:53 lindauer Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -49,11 +49,12 @@ use strict;
   # @param print_level threshold for printing an error
   # @param log_level threshold for logging an error
   # @param log_method inet (default) or unix
+  # @param want_pid add pid to all messages
   # @param debug debugging verbosity (larger means more messages)
   #
   sub new()
   {
-    my ($class, $ident, $print_level, $log_level, $log_method, $debug) = @_;
+    my ($class, $ident, $print_level, $log_level, $log_method, $want_pid, $debug) = @_;
 
     die "Internal error: missing required parameters for Baka::Error.\n" unless ($ident && $print_level && $log_level);
 
@@ -61,6 +62,8 @@ use strict;
     bless $self;
 
     $self->{'debug'} = $debug || 0;
+    
+    $self->{'want_pid'} = $want_pid;
 
     if ($log_method)
     {
@@ -130,6 +133,7 @@ use strict;
     my ($self, $message, $level) = @_;
     my $print_level = $self->{'print_level'};
     my $logger = $self->{'logger'};
+    my $want_pid = $self->{'want_pid'};
 
     $level = 'err' unless ($level);
 
@@ -138,6 +142,8 @@ use strict;
       $logger->log(level => 'err', message => "Internal error: invalid log level ($level).\n");
       $level = 'err';
     }
+
+    $message = "[$$] $message" if $want_pid; 
 
     $logger->log(level => $level, message => $message);
   }
