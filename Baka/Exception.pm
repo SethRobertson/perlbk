@@ -1,4 +1,4 @@
-# $Id: BkException.pl,v 1.2 2003/06/12 04:44:20 lindauer Exp $
+# $Id: Exception.pm,v 1.1 2003/06/13 21:45:47 lindauer Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -29,7 +29,11 @@
 
 
 
-package BkException;
+package Baka::Exception;
+require Exporter;
+@ISA = qw (Exporter);
+@EXPORT_OK = qw(push, pop, peek, stringify);
+$VERSION = 1.00;
 {
   sub new($)
   {
@@ -45,7 +49,7 @@ package BkException;
   sub push($$)
   {
     my ($self, $errstr) = @_;
-    return undef unless ($self->isa(BkException));
+    return undef unless ($self->isa(Baka::Exception));
     push(@{$self->{'errstack'}}, $errstr);
   }
 
@@ -53,7 +57,7 @@ package BkException;
   sub pop($)
   {
     my ($self) = @_;
-    return $self unless ($self->isa(BkException));
+    return $self unless ($self->isa(Baka::Exception));
     pop(@{$self->{'errstack'}});
   }
 
@@ -61,7 +65,7 @@ package BkException;
   sub peek($)
   {
     my ($self) = @_;
-    return $self unless ($self->isa(BkException));
+    return $self unless ($self->isa(Baka::Exception));
     return $self->{'errstack'}[scalar(@{$self->{'errstack'}}) - 1];
   }
 
@@ -72,7 +76,7 @@ package BkException;
     my ($buf, $indent, $errstr);
 
     # Protect against unhandled perl exceptions
-    return "$self\n" unless ($self->isa(BkException));
+    return "$self\n" unless ($self->isa(Baka::Exception));
 
     $buf = "";
     $indent = "";

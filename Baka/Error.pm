@@ -1,4 +1,4 @@
-# $Id: BkError.pl,v 1.5 2003/06/12 04:44:20 lindauer Exp $
+# $Id: Error.pm,v 1.1 2003/06/13 21:45:47 lindauer Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -33,7 +33,11 @@ use Log::Dispatch;
 use Log::Dispatch::Syslog;
 use Log::Dispatch::Screen;
 
-package BkError;
+package SysD::Error;
+require Exporter;
+@ISA = qw (Exporter);
+@EXPORT_OK = qw(err_print, dprint);
+$VERSION = 1.00;
 use strict;
 {
   ##
