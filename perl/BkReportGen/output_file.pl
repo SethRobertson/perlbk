@@ -39,7 +39,7 @@ sub output_standard($$$$$;$)
 {
   my ($FH, $Inforef, $output, $subject, $data, $misc) = @_;
 
-  if ($Inforef->{'OutputFormat'} eq "HTML")
+  if ($Inforef->{'OutputFormat'} eq "HTML" && !$Inforef->{'CmdLine'}->{'HTML_Fragment'})
   {
     print $FH "<html><head><title>$subject</title></head><body>\n";
   }
@@ -54,7 +54,7 @@ sub output_standard($$$$$;$)
   }
 
 
-  if ($Inforef->{'OutputFormat'} eq "HTML")
+  if ($Inforef->{'OutputFormat'} eq "HTML" && !$Inforef->{'CmdLine'}->{'HTML_Fragment'})
   {
     print $FH "</body></html>\n";
   }
