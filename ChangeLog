@@ -1,3 +1,7 @@
+2004-08-25  Seth Robertson  <seth@cheviot.sysdetect.com>
+
+	* lib/installlib.pl (question($$$$;$)): If no verification, don't fail.
+
 2004-06-25  James Tanis  <jtt@buscemi.sysdetect.com>
 
 	* lib/installlib.pl (kill_job($$$$$)): Do second cancel, kill -9,
