@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.5 2003/09/24 19:11:35 jtt Exp $
+# $Id: Makefile,v 1.6 2003/10/08 04:26:31 dupuy Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -21,7 +21,7 @@
 #
 # --Copyright SYSDETECT--
 #
-# Foo group Makefile
+# Perl utilities Makefile
 #
 
 BK_PERL_MODS=			\
