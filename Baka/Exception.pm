@@ -1,4 +1,4 @@
-# $Id: Exception.pm,v 1.1 2003/06/13 21:45:47 lindauer Exp $
+# $Id: Exception.pm,v 1.2 2003/06/13 22:21:17 lindauer Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -32,7 +32,7 @@
 package Baka::Exception;
 require Exporter;
 @ISA = qw (Exporter);
-@EXPORT_OK = qw(push, pop, peek, stringify);
+@EXPORT_OK = qw(push pop peek stringify);
 $VERSION = 1.00;
 {
   sub new($)

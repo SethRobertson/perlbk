@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.1 2003/06/13 21:45:47 lindauer Exp $
+# $Id: Error.pm,v 1.2 2003/06/13 22:21:17 lindauer Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -33,10 +33,10 @@ use Log::Dispatch;
 use Log::Dispatch::Syslog;
 use Log::Dispatch::Screen;
 
-package SysD::Error;
+package Baka::Error;
 require Exporter;
 @ISA = qw (Exporter);
-@EXPORT_OK = qw(err_print, dprint);
+@EXPORT_OK = qw(err_print dprint);
 $VERSION = 1.00;
 use strict;
 {
@@ -55,7 +55,7 @@ use strict;
   {
     my ($class, $ident, $print_level, $log_level, $log_method, $debug) = @_;
 
-    die "Internal error: missing required parameters for BkError.\n" unless ($ident && $print_level && $log_level);
+    die "Internal error: missing required parameters for Baka::Error.\n" unless ($ident && $print_level && $log_level);
 
     my $self = {};
     bless $self;
