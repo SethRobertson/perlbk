@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.3 2004/02/17 03:24:25 seth Exp $
+# $Id: Makefile,v 1.1 2004/02/17 03:24:27 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -24,10 +24,13 @@
 # Perl utility programs Makefile
 #
 
-BK_SIMPLE_SCRIPTS=Oligarchical BkReportGen
+MODULES=			\
+	output_stdout.pl	\
+	template_helloworld.pl	\
+# Line eater fodder -- do no remove
 
-GROUPTOP=../..
-GROUPSUBDIR=perlbk/bin
+GROUPTOP=../../..
+GROUPSUBDIR=perlbk/perl/BkReportGen
 ##################################################
 ## BEGIN BKSTANDARD MAKEFILE
 -include ./Make.preinclude
@@ -40,3 +43,6 @@ include $(GROUPTOP)/$(PKGTOP)/bkmk/Make.include
 ## END BKSTANDARD MAKEFILE
 ##################################################
 
+actual_install install::
+	$(MKDIR) $(BK_INSTALLPERLDIR)/BkReportGen $(BK_INSTALLPERLDIR)/../var/BkReportGen
+	$(INSTALL) $(INSTALL_OTHERFLAGS) $(MODULES) $(BK_INSTALLPERLDIR)/BkReportGen

@@ -1,0 +1,159 @@
+#!/usr/bin/perl -w
+#
+# ++Copyright LIBBK++
+#
+# Copyright (c) $YEAR The Authors. All rights reserved.
+#
+# This source code is licensed to you under the terms of the file
+# LICENSE.TXT in this release for further details.
+#
+# Mail <projectbaka\@baka.org> for further information
+#
+# --Copyright LIBBK--
+#
+#
+######################################################################
+#
+# BkReportGen <--locking> [[-v name=variable]...] <-C <onsuccess|onfailure|always>> <-V <returncode|tinysummary|summary|full>> <-O <TEXT|HTML>> -P <seconds> <<-o <outputname<:address>>> ...> templatename...
+#
+#
+# ../lib/BkReportGen/output-{NAME}.pl
+# ../lib/BkReportGen/helper-{NAME}.pl
+# ../lib/BkReportGen/template-{NAME}.pl
+# @Variables{LoadList}->{Output} = [output-mail, output-stdout...]
+# @Variables{LoadList}->{Template} = [template-system-status, template-logreport...]
+# @Variables{LoadList}->{Helper} = [helper-system-status, helper-logreport...]
+# $Variables{CmdLine}->{key} = value
+# @Variables{OutputList} = [outputname:address, outputname:address, ...]
+# $Variables{Condition} = Onsuccess|OnFailure|Always
+# $Variables{OutputFormat} = TEXT|HTML
+# $Variables{PeriodSeconds} = Suggested
+#
+######################################################################
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Sys::Hostname;
+use Getopt::Long;
+use Storable('nstore','retrieve');
+use strict;
+
+my($USAGE) = "Usage: $0: BkReportGen <--locking> [[-v name=variable]...] [-C <onsuccess|onfailure|*always>] [-V <returncode|tinysummary|summary|*full>] [-O <*TEXT|HTML>] [-P <seconds>] <<-o <outputname<:address>>> ...> templatename...\n";
+
+my(%OPTIONS);
+Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat", "require_order");
+GetOptions(\%OPTIONS, 'locking', 'variableset|v=s%', 'Condition|C=s', 'Verbosity|V=s', 'OutputFormat|O=s', 'Period|P=i', 'output|o=s@') || die $USAGE;
+
+our(%Info);
+
+die "Must have at least one -o output format\n$USAGE\n" if ($#{$OPTIONS{'output'}} < 0);
+$OPTIONS{'Period'} = 0 unless ($OPTIONS{'Period'});
+$OPTIONS{'Condition'} = "always" unless ($OPTIONS{'Condition'});
+$OPTIONS{'Verbosity'} = "full" unless ($OPTIONS{'Verbosity'});
+$OPTIONS{'OutputFormat'} = "TEXT" unless ($OPTIONS{'OutputFormat'});
+
+my ($tmp);
+$tmp = quotemeta($OPTIONS{'Condition'});
+die "Invalid -C Conditionn\n$USAGE\n" unless (grep(/^$tmp$/,('onsuccess','onfailure','always')));
+$tmp = quotemeta($OPTIONS{'Verbosity'});
+die "Invalid -V Verbosity\n$USAGE\n" unless (grep(/^$tmp$/,('returncode','tinysummary','summary','full')));
+$tmp = quotemeta($OPTIONS{'OutputFormat'});
+die "Invalid -O Output Format\n$USAGE\n" unless (grep(/^$tmp$/,('TEXT','HTML')));
+
+%{$Info{'CmdLine'}} = %{$OPTIONS{'variableset'}||{}};
+@{$Info{'OutputList'}} = @{$OPTIONS{'output'}};
+$Info{'Condition'} = $OPTIONS{'Condition'};
+$Info{'Verbosity'} = $OPTIONS{'Verbosity'};
+$Info{'OutputFormat'} = $OPTIONS{'OutputFormat'};
+$Info{'PeriodSeconds'} = $OPTIONS{'Period'};
+$Info{'LibDir'} = "$FindBin::Bin/../perl/BkReportGen";
+$Info{'VarDir'} = "$FindBin::Bin/../var/BkReportGen";
+
+die "Modules directory $Info{'LibDir'} missing\n" unless (-d $Info{'LibDir'});
+
+our ($mainarg);
+foreach $mainarg (<$Info{'LibDir'}/*.pl>)
+{
+  if ($mainarg !~ m:^.*/([^\-]*)_(.*)\.pl:)
+  {
+    warn "Bad filename $mainarg\n";
+    next;
+  }
+  $Info{'Loaded'}->{$1}->{$2} = 1;
+  package Modules;
+  require "$mainarg";
+  package main;
+}
+
+foreach $mainarg (@ARGV)
+{
+  my ($ret,$SavedState);
+
+  if ($OPTIONS{'locking'})
+  {
+    if (-f "$Info{'VarDir'}/template-$mainarg-$Info{'PeriodSeconds'}.LOCK")
+    {
+      warn "Template $mainarg is locked!!!  Skipping.\n";
+      next;
+    }
+    open(L,">$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK") || die "Cannot lock $mainarg\n";
+    print L hostname."-$$\n" || die "Cannot lock $mainarg write\n";
+    close(L) || die "Cannot lock $mainarg close\n";
+  }
+
+  if (-f "$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}")
+  {
+    $SavedState = retrieve("$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}");
+  }
+  else
+  {
+    $SavedState = {};
+  }
+
+  eval "package Modules; \$main::ret = template_$mainarg(\\\%Info, \$SavedState); package main;";
+
+  if ($OPTIONS{'locking'})
+  {
+    unlink("$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK");
+  }
+
+  if ($@)
+  {
+    warn "$mainarg failed with $@";
+    next;
+  }
+  if (defined($ret) && length($ret) > 1)
+  {
+    warn "$mainarg terminated abnormally with $ret";
+    next;
+  }
+
+  nstore($SavedState, "$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}") || warn "Could not save state for $mainarg\n";
+}
+
+
+
+######################################################################
+#
+# Convenience subroutine to output data to all listed output routines
+#
+sub OutputAll($$$)
+{
+  our ($OutputAllInforef, $OutputAllSubject, $OutputAlldataref) = @_;
+
+  my ($fullret);
+  our ($Outputref);
+  our ($Outputret);
+
+  foreach $Outputref (@{$OutputAllInforef->{'OutputList'}})
+  {
+    next unless ($Outputref =~ /([^:]+)(:(.*))?/);
+    eval "package Modules; \$main::Outputret = output_$1(\$main::OutputAllInforef, \$main::Outputref, \$main::OutputAllSubject, \$main::OutputAlldataref); package main;";
+    if ($@)
+    {
+      warn "Output method failure of $Outputref failed with $@";
+      next;
+    }
+  }
+
+}

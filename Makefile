@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.7 2003/12/31 16:56:17 lindauer Exp $
+# $Id: Makefile,v 1.8 2004/02/17 03:24:24 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -30,7 +30,7 @@ BK_PERL_MODS=			\
 	Baka/Conf.pm		\
 # Line eater fodder
 
-BK_SUBDIR=bin
+BK_SUBDIR=bin perl/BkReportGen
 
 GROUPTOP=..
 GROUPSUBDIR=perlbk
