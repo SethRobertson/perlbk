@@ -86,6 +86,8 @@ sub helper_ifconfig($$$$)
     $oldinfo = $Storedref->{'helper_ifconfig_intinfo'};
     foreach $int (keys %interinfo)
     {
+      next if ($Opt->{'alert'} && ($int !~ /$Opt->{'alert'}/));
+
       if (!$oldinfo->{$int})
       {
 	push(@warnings,"New interface $int has appeared!\n");
@@ -110,16 +112,16 @@ sub helper_ifconfig($$$$)
       # Don't both looking further an non-up interfaces
       next if ($interinfo{$int}->{'status'} ne "UP");
 
-      if ($interinfo{$int}->{'RX-packets'} <= $oldinfo->{$int}->{'RX-packets'})
+      if ($interinfo{$int}->{'RX-packets'} == $oldinfo->{$int}->{'RX-packets'})
       {
-	push(@warnings,"Interface $int has not received additional packets (could be wraparound), was $oldinfo->{$int}->{'RX-packets'} now $interinfo{$int}->{'RX-packets'}!\n");
+	push(@warnings,"Interface $int has not received additional packets, was $oldinfo->{$int}->{'RX-packets'} now $interinfo{$int}->{'RX-packets'}!\n");
 	$confidence -= .1;
 	next;
       }
 
-      if ($interinfo{$int}->{'RX-bytes'} <= $oldinfo->{$int}->{'RX-bytes'})
+      if ($interinfo{$int}->{'RX-bytes'} == $oldinfo->{$int}->{'RX-bytes'})
       {
-	push(@warnings,"Interface $int has not received additional data (but did receive some packets--could be wraparound), was $oldinfo->{$int}->{'RX-bytes'} now $interinfo{$int}->{'RX-bytes'}!\n");
+	push(@warnings,"Interface $int has not received additional data (but did receive some packets), was $oldinfo->{$int}->{'RX-bytes'} now $interinfo{$int}->{'RX-bytes'}!\n");
 	$confidence -= .2;
 	next;
       }
