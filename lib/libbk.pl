@@ -42,7 +42,7 @@ sub normalize_path($;$)
 
   $norm_path = "/" . join('/', @norm_components);
 
-  if (defined($path) && ($flag & 1))
+  if (defined($flag) && ($flag & 1))
   {
     chomp(my($pawd_path) = `pawd $norm_path 2>&1`);
 

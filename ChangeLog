@@ -1,3 +1,7 @@
+2004-10-18  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* lib/libbk.pl (normalize_path($;$)): Correct bad identifier
+
 2004-10-15  James Tanis  <jtt@buscemi.sysdetect.com>
 
 	* lib/libbk.pl (normalize_path($;$)): Function to eliminate
