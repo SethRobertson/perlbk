@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.7 2004/04/27 21:05:28 lindauer Exp $
+# $Id: Conf.pm,v 1.8 2004/07/01 21:38:03 lindauer Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -84,6 +84,18 @@ $VERSION = 1.00;
     return undef unless ($sec_hash);
 
     return $sec_hash->{$key};
+  }
+
+
+
+  # Return the entire hash for a section.  Section is global unless specified.
+  sub get_section($$)
+  {
+    my ($self, $section) = @_;
+
+    $section = 'global' unless ($section);
+
+    return $self->{'sections'}->{$section};
   }
 
 
