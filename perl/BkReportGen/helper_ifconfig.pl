@@ -22,6 +22,7 @@ sub helper_ifconfig($$$$)
   my ($interface);
   my (%interinfo);
   my ($oldinfo);
+  my ($confidence) = 1;
 
   my ($ifconfig);
   $ifconfig = `ifconfig -a`;
@@ -76,18 +77,107 @@ sub helper_ifconfig($$$$)
   {
     my ($int);
 
-    $oldinfo = $Storedref->{'helper_ifocnfig_intinfo'};
+    $oldinfo = $Storedref->{'helper_ifconfig_intinfo'};
     foreach $int (keys %interinfo)
     {
       if (!$oldinfo->{$int})
       {
 	push(@warnings,"New interface $int has appeared!\n");
+	$confidence -= .05;
 	next;
       }
 
       if ($interinfo{$int}->{'status'} ne $oldinfo->{$int}->{'status'})
       {
 	push(@warnings,"Interface $int has changed status from $oldinfo->{$int}->{'status'} to $interinfo{$int}->{'status'}!\n");
+	if ($interinfo{$int}->{'status'} eq "UP")
+	{
+	  $confidence -= .05;
+	}
+	else
+	{
+	  $confidence -= .5;
+	}
+	next;
+      }
+
+      # Don't both looking further an non-up interfaces
+      next if ($interinfo{$int}->{'status'} ne "UP");
+
+      if ($interinfo{$int}->{'RX-packets'} <= $oldinfo->{$int}->{'RX-packets'})
+      {
+	push(@warnings,"Interface $int has not received additional packets (could be wraparound), was $oldinfo->{$int}->{'RX-packets'} now $interinfo{$int}->{'RX-packets'}!\n");
+	$confidence -= .1;
+	next;
+      }
+
+      if ($interinfo{$int}->{'RX-bytes'} <= $oldinfo->{$int}->{'RX-bytes'})
+      {
+	push(@warnings,"Interface $int has not received additional data (but did receive some packets--could be wraparound), was $oldinfo->{$int}->{'RX-bytes'} now $interinfo{$int}->{'RX-bytes'}!\n");
+	$confidence -= .2;
+	next;
+      }
+
+      if ($interinfo{$int}->{'RX-dropped'} > $oldinfo->{$int}->{'RX-dropped'})
+      {
+	push(@warnings,"Interface $int dropped some packets on reception, was $oldinfo->{$int}->{'RX-dropped'} now $interinfo{$int}->{'RX-dropped'}!\n");
+	$confidence -= .02;
+	next;
+      }
+
+      if ($interinfo{$int}->{'RX-errors'} > $oldinfo->{$int}->{'RX-errors'})
+      {
+	push(@warnings,"Interface $int received some errors, was $oldinfo->{$int}->{'RX-errors'} now $interinfo{$int}->{'RX-errors'}!\n");
+	$confidence -= .1;
+	next;
+      }
+
+      if ($interinfo{$int}->{'RX-frame'} > $oldinfo->{$int}->{'RX-frame'})
+      {
+	push(@warnings,"Interface $int received some frame problems, was $oldinfo->{$int}->{'RX-frame'} now $interinfo{$int}->{'RX-frame'}!\n");
+	$confidence -= .1;
+	next;
+      }
+
+      if ($interinfo{$int}->{'RX-overruns'} > $oldinfo->{$int}->{'RX-overruns'})
+      {
+	push(@warnings,"Interface $int saw some overruns (not unusual), was $oldinfo->{$int}->{'RX-overruns'} now $interinfo{$int}->{'RX-overruns'}!\n");
+	$confidence -= .01;
+	next;
+      }
+
+      if ($interinfo{$int}->{'TX-carrier'} > $oldinfo->{$int}->{'TX-carrier'})
+      {
+	push(@warnings,"Interface $int has some carrier problems (not a major problem), was $oldinfo->{$int}->{'TX-carrier'} now $interinfo{$int}->{'TX-carrier'}!\n");
+	$confidence -= .01;
+	next;
+      }
+
+      if ($interinfo{$int}->{'TX-collisions'} > $oldinfo->{$int}->{'TX-colisions'})
+      {
+	push(@warnings,"Interface $int saw some collisions (not usually major problem, consider moving to a switch), was $oldinfo->{$int}->{'TX-collisions'} now $interinfo{$int}->{'TX-collisions'}!\n");
+	$confidence -= .001;
+	next;
+      }
+
+      if ($interinfo{$int}->{'TX-dropped'} > $oldinfo->{$int}->{'TX-dropped'})
+      {
+	push(@warnings,"Interface $int dropped packets on transmit, was $oldinfo->{$int}->{'TX-dropped'} now $interinfo{$int}->{'TX-dropped'}!\n");
+	$confidence -= .05;
+	next;
+      }
+
+      if ($interinfo{$int}->{'TX-errors'} > $oldinfo->{$int}->{'TX-errors'})
+      {
+	push(@warnings,"Interface $int had errors on transmit, was $oldinfo->{$int}->{'TX-errors'} now $interinfo{$int}->{'TX-errors'}!\n");
+	$confidence -= .2;
+	next;
+      }
+
+      if ($interinfo{$int}->{'TX-overruns'} > $oldinfo->{$int}->{'TX-overruns'})
+      {
+	push(@warnings,"Interface $int had overruns on transmit (not unusual), was $oldinfo->{$int}->{'TX-overruns'} now $interinfo{$int}->{'TX-overruns'}!\n");
+	$confidence -= .05;
 	next;
       }
     }
@@ -96,16 +186,27 @@ sub helper_ifconfig($$$$)
       if (!$interinfo{$int})
       {
 	push(@warnings,"Old interface $int has disappeared!\n");
+	$confidence -= .5;
 	next;
       }
     }
   }
+  $Output{'operating'} = $confidence<0?0:$confidence;
 
   $Storedref->{'helper_ifconfig_init'} = 1;
 
   $Storedref->{'helper_ifconfig_intinfo'} = \%interinfo;
 
   push(@$Outputarrayref, \%Output);
+
+  if ($#warnings >= 0)
+  {
+    my (%Out1);
+
+    $Out1{'name'} = "INTERFACE WARNINGS";
+    $Out1{'data'} = join("",@warnings);;
+    push(@$Outputarrayref, \%Out1);
+  }
 
   1;
 }
