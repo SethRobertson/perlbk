@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.4 2003/06/17 06:20:26 seth Exp $
+# $Id: Error.pm,v 1.5 2003/07/22 14:21:47 lindauer Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -87,7 +87,8 @@ use strict;
 					      socket => $log_method ));
    
     $logger->add( Log::Dispatch::Screen->new( name => 'screenlogger',
-					      min_level => $print_level ));
+					      min_level => $print_level,
+					      stderr => 1 ));
    
     $self->{'logger'} = $logger;
 
