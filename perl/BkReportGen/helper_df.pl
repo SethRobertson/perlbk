@@ -22,6 +22,7 @@ sub helper_df($$$$)
   my ($Inforef, $Storedref, $Outputarrayref, $Opt) = @_;
   my (%Output);
   my (@warnings);
+  my ($operating) = 1;
 
   my ($dfkb,$dfin);
   $dfkb = `df -HTl`;
@@ -38,7 +39,7 @@ sub helper_df($$$$)
 
   $Output{'name'} = "Disk Usage";
   $Output{'data'} = "$dfkb";
-  $Output{'operating'} = 1;
+  $operating = $Output{'operating'} = 1;
 
   # Should we attempt to filter out crap?
 
@@ -57,7 +58,7 @@ sub helper_df($$$$)
 
     if ((100-$percent)/100 < $Output{'operating'})
     {
-      $Output{'operating'} = (100-$percent)/10;
+      $operating = $Output{'operating'} = (100-$percent)/10;
     }
     push(@warnings,$line);
   }
@@ -68,6 +69,7 @@ sub helper_df($$$$)
     my(%Warn);
     $Warn{'name'} = "DISK SPACE WARNING";
     $Warn{'data'} = join("\n",@warnings)."\n";
+    $Warn{'operating'} = $operating;
     push(@$Outputarrayref, \%Warn);
   }
 
