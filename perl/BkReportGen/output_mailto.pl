@@ -34,6 +34,12 @@ sub output_mailto($$$$;$)
   $headers{'To'} = $output;
   $headers{'Subject'} = $subject;
 
+  my $from;
+  if ($from = $Inforef->{'mailto_from'})
+  {
+    $headers{'From'} = $from;
+  }
+
   if ($Inforef->{'OutputFormat'} eq "HTML")
   {
     $headers{'Content-Type'} = "text/html; charset=$charset";
