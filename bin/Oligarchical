@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wc
+#!/usr/bin/perl -w
 #
 # ++Copyright LIBBK++
 #
@@ -22,6 +22,8 @@
 # exitifmissinglater yes/no
 # period seconds
 # periodcmd <cmd args>   ## %p gets substituted with space seperated process list
+# periodcmdretry <#>
+# periodcmdpause <secs>
 # periodcmdiftrue <cmd args>
 # periodcmdiffalse <cmd args>
 # command <cmd args>     ## Must self-background
@@ -50,14 +52,14 @@ my ($blockcount, $x, @group);
 if ($OPTIONS{'config'} ne "-")
 {
   open(C,$OPTIONS{'config'}) || die "Cannot open configuration file $OPTIONS{'config'}: $!\n";
-  *x = *C;
+  *X = *C;
 }
 else
 {
-  *x = *STDIN;
+  *X = *STDIN;
 }
 $blockcount = 0;
-while (<*x>)
+while (<X>)
 {
   s/\#.*//;
   chomp;
@@ -72,7 +74,7 @@ while (<*x>)
   next unless /^(\S+)\s*(.*)/;
   $group[$blockcount]->{$1} = $2;
 }
-close(*x);
+close(X);
 
 
 print STDERR "Blockcount is $blockcount\n" if ($OPTIONS{'v'});
@@ -84,7 +86,17 @@ exit(0) unless ($blockcount > 0);
 for ($x = 0; $x < $blockcount; $x++)
 {
   $group[$x]->{'period'} = 60 unless ($group[$x]->{'period'});
-  print STDERR "Group $x period $group[$x]->{'period'} name $group[$x]->{'name'} pid $group[$x]->{'pid'}\n" if ($OPTIONS{'v'});
+  $group[$x]->{'exitifmissinginitially'} = "no" if (!defined($group[$x]->{'exitifmissinginitially'}));
+  $group[$x]->{'startifmissinginitially'} = "no" if (!defined($group[$x]->{'startifmissinginitially'}));
+  $group[$x]->{'exitifmissinglater'} = "no" if (!defined($group[$x]->{'exitifmissinglater'}));
+  $group[$x]->{'startifmissinglater'} = "no" if (!defined($group[$x]->{'startifmissinglater'}));
+  $group[$x]->{'retrylives'} = $group[$x]->{'periodcmdretry'};
+  if ($OPTIONS{'v'})
+    {
+      print STDERR "Group $x period $group[$x]->{'period'} name $group[$x]->{'name'} ";
+      print STDERR "$group[$x]->{'pid'}" if (defined($group[$x]->{'pid'}));
+      print STDERR "\n";
+    }
 }
 
 
@@ -150,10 +162,17 @@ while (1)
 	  {
 	    $tmp = $group[$x]->{'periodcmdiffalse'};
 	    $tmp =~ s/\%p/$p/g;
-	    runcommand($tmp,\%OPTIONS);
-	    if ($? != 0)
+	    if (runcommand($tmp,\%OPTIONS))
 	    {
-	      delblock(\$x,\$blockcount,\@group,\%OPTIONS);
+	      if (!$group[$x]->{'retrylives'})
+		{
+		  delblock(\$x,\$blockcount,\@group,\%OPTIONS);
+		}
+	      else
+		{
+		  # NB We *only* get here if retrylives was set positive.
+		  $group[$x]->{'retrylives'}--;
+		}
 	      next;
 	    }
 	  }
@@ -162,6 +181,7 @@ while (1)
 	{
 	  if ($group[$x]->{'periodcmdiftrue'})
 	  {
+	    $group[$x]->{'retrylives'} = $group[$x]->{'periodcmdretry'};
 	    $tmp = $group[$x]->{'periodcmdiftrue'};
 	    $tmp =~ s/\%p/$p/g;
 	    runcommand($tmp,\%OPTIONS);
@@ -205,6 +225,8 @@ sub runcommand($$)
 {
   my($command,$OPTIONS) = @_;
 
+  $command .= " >/dev/null 2>&1";
+
   print STDERR "run: $command\n" if ($OPTIONS->{'x'});
   system($command) unless ($OPTIONS->{'n'});
   print STDERR "Command exited with return $?\n" if ($OPTIONS->{'v'});
@@ -220,11 +242,16 @@ sub runcommand($$)
 sub getpidlist($)
 {
   my ($info) = @_;
+  my (@pidlist);
 
   return split(/\s+/, $info->{'pid'}) if ($info->{'pid'});
 
+  chomp(@pidlist = (`$info->{'pidcmd'}`)) if ($info->{'pidcmd'});
+  return (@pidlist);
+
   die "Invalid configuration--neither NAME or PID section\n" unless ($info->{'name'});
 
+  # Should probably use ps with -o for better portability.
   return split(/\s+/, `pidof $info->{'name'}`);
 }
 

@@ -1,17 +1,25 @@
 ######################################################################
-# $Id: Makefile,v 1.3 2003/09/05 16:26:47 seth Exp $
+# $Id: Makefile,v 1.4 2003/09/23 22:38:30 jtt Exp $
 #
-# ++Copyright LIBBK++
-# 
-# Copyright (c) 2003 The Authors. All rights reserved.
-# 
-# This source code is licensed to you under the terms of the file
-# LICENSE.TXT in this release for further details.
-# 
-# Mail <projectbaka\@baka.org> for further information
-# 
-# --Copyright LIBBK--
+# ++Copyright SYSDETECT++
 #
+# Copyright (c) 2001 System Detection.  All rights reserved.
+#
+# THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF SYSTEM DETECTION.
+# The copyright notice above does not evidence any actual
+# or intended publication of such source code.
+#
+# Only properly authorized employees and contractors of System Detection
+# are authorized to view, posses, to otherwise use this file.
+#
+# System Detection
+# 5 West 19th Floor 2 Suite K
+# New York, NY 10011-4240
+#
+# +1 212 242 2970
+# <sysdetect@sysdetect.org>
+#
+# --Copyright SYSDETECT--
 #
 # Foo group Makefile
 #
