@@ -5,10 +5,10 @@ package BkError;
 
   sub new($)
   {
-    my ($opt_d) = @_;
+    ($this, $debug) = @_;
     my $self = {};
     bless $self;
-    $debug = $opt_d;
+    print STDERR "Debugging on.\n" if ($debug);
     return $self;
   }
 
