@@ -201,9 +201,24 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     my($ret);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
-    return(-1) if ($cur_ticket eq $self->{'no_rt_ticket'});
+    return(-1) if (!$self->valid_ticket($cur_ticket));
 
     return ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --priority=\"$priority\" >/dev/null 2>&1"))
+  }
+
+
+
+  sub add_kewords($$$)
+  {
+    my($self, $cur_ticket, $keywords_listr) = @_;
+    my($kw_args);
+
+    $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
+    return (-1) if (!defined($keywords_listr) || !$self->valid_ticket($cur_ticket));
+
+    $kw_args = join (" --keywords=", @$keywords_listr);
+    
+    return($self->_execute_cmd("$self->{'rt'} --id=$cur_ticket --keywords=$kw_args"));
   }
 
 
