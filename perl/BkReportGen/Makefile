@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.5 2004/06/23 19:11:11 dupuy Exp $
+# $Id: Makefile,v 1.6 2004/09/08 03:27:07 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -30,6 +30,7 @@ MODULES=					\
 	helper_linuxstats.pl			\
 	helper_loadaverage.pl			\
 	helper_simplereports.pl			\
+	helper_smart.pl				\
 	helper_top.pl				\
 	output_exec.pl				\
 	output_file.pl				\
