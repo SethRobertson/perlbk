@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.1 2004/03/02 22:13:24 seth Exp $
+# $Id: Makefile,v 1.2 2005/02/08 21:09:27 jtt Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -26,6 +26,7 @@
 
 BK_PERL_MODS=			\
 	installlib.pl		\
+	libbk.pl		\
 # Line eater fodder
 
 
