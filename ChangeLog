@@ -1,5 +1,7 @@
 2004-10-18  James Tanis  <jtt@buscemi.sysdetect.com>
 
+	* Baka/RT.pm (Baka): Documentation
+
 	* lib/libbk.pl (normalize_path($;$)): Correct bad identifier
 
 2004-10-15  James Tanis  <jtt@buscemi.sysdetect.com>

@@ -192,7 +192,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
-  sub add_kewords($$$)
+  sub add_keywords($$;$)
   {
     my($self, $keywords_listr, $cur_ticket) = @_;
     my($kw_args);
@@ -227,6 +227,12 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
+  ################################################################
+  # 
+  # Execute shell commands. If 'no_execute' is set, do not actually
+  # perform the action (but print out a mesage if 'verbose' is on).
+  # Returns 0 on success, -1 on faiure.
+  #
   sub _execute_cmd($$;$)
   {
     my($self, $cmd, $outputr) = @_;
@@ -304,8 +310,8 @@ Baka::RT -- Perl API to the RT ticketing system.
       $rt->set_priority($priority);
       $rt->set_priority($priority, $ticket);
 
-      $rt->add_kewords($keywords_list_ref);
-      $rt->add_kewords($keywords_list_ref, $ticket);
+      $rt->add_keywords($keywords_list_ref);
+      $rt->add_keywords($keywords_list_ref, $ticket);
 
       $rt->verbose;
       $rt->verbose(1);
@@ -326,9 +332,9 @@ Baka::RT -- Perl API to the RT ticketing system.
 The contructor may be called with either no arguments to simply obtain the
 object reference or with either (or both) I<queue_name> or
 I<base_priority>. These two values will be used as defaults in
-C<$self-E<gt>create_ticket>). There is no default I<queue> (ie you have to
-set it here, via the C<$self-E<gt>queue> method, or when you invoke
-C<$self-E<gt>create_ticket>)
+C<$rt-E<gt>create_ticket>. There is no default I<queue> (ie you have to
+set it here, via the C<$rt-E<gt>queue> method, or when you invoke
+C<$rt-E<gt>create_ticket>)
 
 Returns the I<new object reference> on success; I<undef> on failure.
 
@@ -338,12 +344,12 @@ This creates a ticket. You may optionally pass in the I<subject>, the file
 F<source> from which the body of the ticket will be obtained, the I<queue>,
 and the I<priority>.
 
-Returns the I<ticket number> on success, I<-1> on failure.
+Returns a I<ticket number> on success, I<-1> on failure.
 
 =item search_for_ticket
 
 Search for a ticket with the given I<subject>. This function has the side
-effect of setting the located ticket as the default ticket for the object.
+effect of setting the located ticket as the current ticket for the object.
 
 Returns the I<ticket number> on success; a I<special toket> on failure (see
 alos the description of C<valid_ticket>).
@@ -357,6 +363,10 @@ Returns I<0> on success; I<-1> on failure.
 =item valid_ticket
 
 Determines whether the supplied I<ticket> or the current ticket is valid. 
+
+B<NB> This method is a legacy of the old shell implementation. While it
+will always be supported to maintain backwards compatibility it may by
+obviated in the future.
 
 Returns I<1> if the ticket is valid, I<0> otherwise.
 
@@ -374,9 +384,70 @@ Returns the I<current queue> on success; I<undef> on failure.
 
 =item base_priority
 
-Set of retrieve the current default priority for new tickets.
+Set or retrieve the current default priority for new tickets.
+
+Returns the I<current base priority>. It cannot fail.
+
+=item get_owner
+
+Retrieve the owner the ticket. If a ticket is not supplied, it operates on
+the current ticket.
+
+Returns the I<owner name> on success; I<a special token> if there is no
+onwer (see the I<valid_owner> method below); I<undef> on failure.
+
+=item valid_owner
+
+Determine if the result from I<get_owner> is a valid owner.
+
+B<NB> This method is a legacy of the old shell implementation. While it
+will always be supported to maintain backwards compatibility it may by
+obviated in the future.
+
+Returns I<1> if the owner is valid; I<0> otherwise.
+
+=item get_priority
+
+Retrieve the current priority of a ticket. If no ticket is specified, the
+method operates on the current ticket.
+
+Returns the I<priority> on success; I<-1> on failure..
+
+=item set_priority
+
+Set the priority of a ticket. If no ticket is specified, the method
+operates on the current ticket.
+
+Returns I<0> on success, I<-1> on failure.
 
 
+=item add_keywords
+
+Adds keywords to a ticket. If not ticket is specified, the the method
+operates on the current ticket.  Keyword strings must be exactly the same
+as the RT command line interface would accept (eg:
+"+Impact/Broken"). The keyword argument must be a reference to an array of
+keword strings (so all keywords may be inserted in one call). 
+
+Returns I<0> on success; I<-1> on failure.
+
+=item verbose
+
+Set or retrive the current state of verbose mode. Setting verbose to I<0>
+turns off verbosity (the default setting). All other values turn it on.
+
+Returns the I<current verbosity value>.
+
+=item no_execute.
+
+Set or retrive the current state of the "no execute" mode. Setting verbose
+to I<0> turns off "no execute" (the default setting). All other values turn
+it on.  In this mode (generally most useful with I<verbose>), the RT
+operations will not actually execute.
+
+I<NB> This method has not really ben tested.
+
+Returns the I<current "no execute" value>.
 
 =back
 
