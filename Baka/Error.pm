@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.7 2003/09/05 16:26:48 seth Exp $
+# $Id: Error.pm,v 1.8 2004/04/16 17:54:47 lindauer Exp $
 #
 # ++Copyright LIBBK++
 # 
@@ -66,7 +66,7 @@ use strict;
     }
     else
     {
-      $log_method = 'inet';
+      $log_method = 'unix';
     }
    
     die "Invalid print level ($print_level).\n" if !Log::Dispatch->level_is_valid($print_level);
