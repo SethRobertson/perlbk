@@ -96,6 +96,8 @@ sub helper_simplereports($$$$$$)
     unshift(@$Outputarrayref, "".("-"x70)."\n") if ($badop);
     unshift(@$Outputarrayref, sprintf("                                Operating at %.0f%%\n\n",$$OperatingMinRef*100));
   }
+
+  $Inforef->{'LastOperatingMin'} = int($$OperatingMinRef*100);
   1;
 }
 

@@ -142,7 +142,7 @@ foreach $mainarg (@ARGV)
 
   nstore($SavedState, "$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}") || warn "Could not save state for $mainarg\n";
 }
-
+exit 100-$Info{'LastOperatingMin'};
 
 
 ######################################################################
