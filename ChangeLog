@@ -1,3 +1,8 @@
+2004-02-27  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* Baka/Conf.pm: Method to allow updates to simple single valued
+	conf files.
+
 2003-08-26  Seth Robertson  <seth@startide.sysdetect.com>
 
 	* bin/genup*.pl: Set my copyright on these programs I wrong many years ago.
