@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.9 2004/05/25 21:45:47 lindauer Exp $
+# $Id: Error.pm,v 1.10 2004/06/30 21:02:21 lindauer Exp $
 #
 # ++Copyright LIBBK++
 # 
@@ -94,6 +94,38 @@ use strict;
   }
 
 
+  ##
+  # Toggle runtime debugging to file.
+  #
+  # @param enable 1 to enable, 0 to disable
+  # @param filename log file
+  #
+  sub toggle_dynamic_debug($$$)
+  {
+    my ($self, $enable, $filename) = @_;
+
+    if ($enable)
+    {
+      if (!$self->{'dyn_debug_file'})
+      {
+	$self->{'dyn_debug_file'} = FileHandle->new;
+	if (!$self->{'dyn_debug_file'}->open(">$filename"))
+	{
+	  err_print($self, "Dynamic debug open failed: $!.\n");
+	  $self->{'dyn_debug_file'} = undef;
+	}
+      }
+    }
+    else
+    {
+      if ($self->{'dyn_debug_file'})
+      {
+	$self->{'dyn_debug_file'}->close();
+	$self->{'dyn_debug_file'} = undef;
+      }
+    }
+  }
+
 
   ##
   # Print a debugging message.
@@ -112,6 +144,11 @@ use strict;
     if ($debug >= $level)
     {
       err_print($self, $msg, 'debug');
+    }
+    elsif ($self->{'dyn_debug_file'})
+    {
+      my $fh = $self->{'dyn_debug_file'};
+      print $fh "[$$] $msg";
     }
   }
 
@@ -141,6 +178,12 @@ use strict;
     $message = "[$$] $message" if $want_pid; 
 
     $logger->log(level => $level, message => $message);
+
+    if ($self->{'dyn_debug_file'})
+    {
+      my $fh = $self->{'dyn_debug_file'};
+      print $fh $message;
+    }
   }
 
    
