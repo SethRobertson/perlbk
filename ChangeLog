@@ -1,3 +1,9 @@
+2004-10-13  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* Baka/RT.pm: /dev/null RT output from keyword addition.
+
+	* Baka/StructuredConf.pm: Don't overparse strings.
+
 2004-10-07  James Tanis  <jtt@buscemi.sysdetect.com>
 
 	* Baka/RT.pm: Return ticket number when ticket is created.

@@ -218,7 +218,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
     $kw_args = join (" --keywords=", @$keywords_listr);
     
-    return($self->_execute_cmd("$self->{'rt'} --id=$cur_ticket --keywords=$kw_args"));
+    return($self->_execute_cmd("$self->{'rt'} --id=$cur_ticket --keywords=$kw_args >/dev/null 2>&1"));
   }
 
 

@@ -48,7 +48,7 @@ use constant
 
 
 # Characters which stop the current round of tokenization
-my($separator_chars) = '\s{}=;\#';
+my($separator_chars) = '\n\s\{\}\=\;\#';
 
 {
   # Constructor
@@ -324,6 +324,7 @@ my($separator_chars) = '\s{}=;\#';
     my($char, $old_token);
     my($look, $skipped_something);
 
+    # Check the token stack for pushed tokens. Return if found.
     if (defined($old_token = pop(@{$self->{'token_stack'}})))
     {
       $self->{'token_value'} = $old_token->{'token_value'} if (defined($old_token->{'token_value'}));
@@ -432,7 +433,8 @@ my($separator_chars) = '\s{}=;\#';
 	return(ERROR);
       }
       
-      chomp($self->{'token_value'} = substr($self->string, $start, $self->{'pos'} - $start - 1));
+      $self->{'pos'}--;
+      chomp($self->{'token_value'} = substr($self->string, $start, $self->{'pos'} - $start));
       print "LEX: Returning STRING: **$self->{'token_value'}**\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
       return(STRING);
     }
