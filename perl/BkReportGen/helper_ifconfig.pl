@@ -153,7 +153,7 @@ sub helper_ifconfig($$$$)
 	next;
       }
 
-      if ($interinfo{$int}->{'TX-collisions'} > $oldinfo->{$int}->{'TX-colisions'})
+      if ($interinfo{$int}->{'TX-collisions'} > $oldinfo->{$int}->{'TX-collisions'})
       {
 	push(@warnings,"Interface $int saw some collisions (not usually major problem, consider moving to a switch), was $oldinfo->{$int}->{'TX-collisions'} now $interinfo{$int}->{'TX-collisions'}!\n");
 	$confidence -= .001;

@@ -52,13 +52,16 @@ sub helper_df($$$$)
     }
     push(@warnings,$line);
   }
+  push(@$Outputarrayref, \%Output);
 
   if ($#warnings >= 0)
   {
-    $Output{'data'} .= "\n\nDISK SPACE WARNING $Output{'operating'}\n".join("\n",@warnings)."\n";
+    my(%Warn);
+    $Warn{'name'} = "DISK SPACE WARNING";
+    $Warn{'data'} = join("\n",@warnings)."\n";
+    push(@$Outputarrayref, \%Warn);
   }
 
-  push(@$Outputarrayref, \%Output);
 
   1;
 }

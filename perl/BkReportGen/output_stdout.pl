@@ -21,7 +21,7 @@ sub output_stdout($$$$;$)
 
   if ($Inforef->{'OutputFormat'} eq "HTML")
   {
-    print "<html><head><title>$subject</title></head><body><pre>\n";
+    print "<html><head><title>$subject</title></head><body>\n";
   }
 
   if (ref($data) eq "ARRAY")
