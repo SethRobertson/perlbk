@@ -33,17 +33,18 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
-  sub create_ticket($;$$$$)
+  sub create_ticket($;$$$$$)
   {
-    my($self, $subject, $source, $queue, $base_priority) = @_;
+    my($self, $subject, $source, $queue, $base_priority, $owner) = @_;
     my($new_ticket);
 
     $queue = $self->queue if (!defined($queue));
     $base_priority = $self->{'base_priority'} if (!defined($base_priority));
     $subject = "Uknown subject" if (!defined($subject));
     $source = "/dev/null" if (!defined($source));
+    $owner = $self->{'nobody'} if (!defined($owner));
 
-    return (-1) if (!defined($queue) || (($self->_execute_cmd("$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$self->{'nobody'}\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq", \$new_ticket)) < 0) || ($new_ticket eq""));
+    return (-1) if (!defined($queue) || (($self->_execute_cmd("$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$owner\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq", \$new_ticket)) < 0) || ($new_ticket eq""));
 
     return ($new_ticket);
   }
@@ -185,7 +186,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     my($ret);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
-    return(-1) if (!$self->valid_ticket($cur_ticket));
+    return(-1) if (!defined($priority) || !$self->valid_ticket($cur_ticket));
 
     return ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --priority=\"$priority\" >/dev/null 2>&1"))
   }
@@ -342,7 +343,7 @@ Returns the I<new object reference> on success; I<undef> on failure.
 
 This creates a ticket. You may optionally pass in the I<subject>, the file
 F<source> from which the body of the ticket will be obtained, the I<queue>,
-and the I<priority>.
+the I<priority>, and the I<owner>.
 
 Returns a I<ticket number> on success, I<-1> on failure.
 
