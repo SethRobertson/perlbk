@@ -32,6 +32,9 @@ use strict;
 
 package Baka::StructuredConf;
 
+# Characters which stop the current round of tokenization
+my($separator_chars) = '\s{}=;\#';
+
 use constant
 {
   # Lexical tokens
@@ -308,7 +311,7 @@ use constant
   {
     my($self) = @_;
     my($char, $old_token);
-    my($look);
+    my($look, $skipped_something);
 
     if (defined($old_token = pop(@{$self->{'token_stack'}})))
     {
@@ -323,16 +326,30 @@ use constant
       return($old_token->{'token'});
     }
 
-    # Skip leading whitspace.
-    while((defined($char = $self->_next_char)) && ($char =~ /\s/)){}
+    # Get next character (unless we have to skip something).
+    $char = $self->_next_char;
 
-    if (defined($char) && ($char eq "#"))
+    # Skip leading whitspace and comments
+    do
     {
-      if (defined($char = $self->_next_char))
+      $skipped_something = 0;
+      while (defined($char) && ($char =~ /\s/))
       {
-	while((defined($char = $self->_next_char)) && ($char ne "\n")) {}
+	$skipped_something = 1;
+	$char = $self->_next_char;
       }
-    }
+
+      if (defined($char) && ($char eq "#"))
+      {
+	$skipped_something = 1;
+	$char = $self->_next_char;
+	while(defined($char) && ($char ne "\n"))
+	{
+	  $char = $self->_next_char;
+	}
+	$char = $self->_next_char;
+      }
+    } while ($skipped_something);
 
     if (!defined($char))
     {
@@ -394,7 +411,7 @@ use constant
     }
     else
     {
-      while((defined($look = $self->_next_char)) && ($look !~ /[\s{}=;]/)){}
+      while((defined($look = $self->_next_char)) && ($look !~ /[$separator_chars]/)){}
       
       if (!defined($look))
       {

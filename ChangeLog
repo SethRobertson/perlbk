@@ -1,3 +1,7 @@
+2004-10-04  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* Baka/StructuredConf.pm: Handle comments.
+
 2004-09-07  Seth Robertson  <seth@cheviot.sysdetect.com>
 
 	* perl/BkReportGen/helper_smart.pl (helper_smart($$$$)): Enable
