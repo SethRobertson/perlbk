@@ -1,22 +1,22 @@
-# $Id: Exception.pm,v 1.3 2003/06/17 05:11:07 seth Exp $
+# $Id: Exception.pm,v 1.4 2003/06/17 06:20:26 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
-# Copyright (c) 2001 System Detection.  All rights reserved.
+# Copyright (c) 2003 System Detection.  All rights reserved.
 #
 # THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF SYSTEM DETECTION.
 # The copyright notice above does not evidence any actual
 # or intended publication of such source code.
 #
 # Only properly authorized employees and contractors of System Detection
-# are authorized to view, posses, to otherwise use this file.
+# are authorized to view, possess, to otherwise use this file.
 #
 # System Detection
-# 5 West 19th Floor 2 Suite K
+# 5 West 19th Street Floor 2K
 # New York, NY 10011-4240
 #
-# +1 212 242 2970
-# <sysdetect@sysdetect.org>
+# +1 212 206 1900
+# <support@sysd.com>
 #
 # --Copyright SYSDETECT--
 
