@@ -1,4 +1,4 @@
-# $Id: Exception.pm,v 1.6 2003/09/09 20:03:47 lindauer Exp $
+# $Id: Exception.pm,v 1.7 2004/01/21 20:22:34 lindauer Exp $
 #
 # ++Copyright LIBBK++
 # 
@@ -59,6 +59,7 @@ $VERSION = 1.00;
   {
     my ($self) = @_;
     return $self unless (isa($self, Baka::Exception));
+    return undef unless (scalar(@{$self->{'errstack'}}) >= 1);
     return $self->{'errstack'}[scalar(@{$self->{'errstack'}}) - 1];
   }
 
