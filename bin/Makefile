@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.3 2004/02/17 03:24:25 seth Exp $
+# $Id: Makefile,v 1.4 2004/03/11 22:42:57 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -24,7 +24,7 @@
 # Perl utility programs Makefile
 #
 
-BK_SIMPLE_SCRIPTS=Oligarchical BkReportGen
+BK_SIMPLE_SCRIPTS=Oligarchical BkReportGen quotexml
 
 GROUPTOP=../..
 GROUPSUBDIR=perlbk/bin

@@ -1,3 +1,8 @@
+2004-03-11  Seth Robertson  <seth@pearl.sysdetect.com>
+
+	* bin/quotexml: Program to quote xml (or html) from people who
+	interpret such
+
 2004-03-05  James Tanis  <jtt@buscemi.sysdetect.com>
 
 	* Baka/Conf.pm: Allow set_uniq_value to reset a commented out key.

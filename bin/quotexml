@@ -1,0 +1,42 @@
+#!/usr/bin/perl -w
+#
+# ++Copyright LIBBK++
+#
+# Copyright (c) $YEAR The Authors. All rights reserved.
+#
+# This source code is licensed to you under the terms of the file
+# LICENSE.TXT in this release for further details.
+#
+# Mail <projectbaka\@baka.org> for further information
+#
+# --Copyright LIBBK--
+#
+#
+######################################################################
+
+use Getopt::Long;
+use strict;
+
+my($USAGE) = "Usage: $0: [-u]\n";
+
+my(%OPTIONS);
+Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat", "require_order");
+GetOptions(\%OPTIONS, 'u') || die $USAGE;
+
+
+while (<>)
+{
+  if ($OPTIONS{'u'})
+  {
+    s/\&lt\;/</g;
+    s/\&gt\;/>/g;
+    s/\&amp\;/&/g;
+  }
+  else
+  {
+    s/\&/&amp;/g;
+    s/\</&lt;/g;
+    s/\>/&gt;/g;
+  }
+  print;
+}
