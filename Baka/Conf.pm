@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.6 2004/03/06 00:56:28 jtt Exp $
+# $Id: Conf.pm,v 1.7 2004/04/27 21:05:28 lindauer Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -116,6 +116,8 @@ $VERSION = 1.00;
     my(@lines);
     my($found_key) = 0;
     my($ret) = 0;
+    my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks);
+
 
     if (!defined($key))
     {
@@ -155,6 +157,12 @@ $VERSION = 1.00;
     print CONF_OUT "" . join ('', @lines);
 
     close(CONF_OUT);
+
+    # Copy permissions
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat("$self->{'filename'}");
+    chown($uid, $gid, "$self->{'filename'}+");
+    chmod($mode & 07777, "$self->{'filename'}+");
+
     if (!rename("$self->{'filename'}+", "$self->{'filename'}"))
     {
       $$error_ref = "Could not rename $self->{'filename'}+ to $self->{'filename'}: $!" if (defined($$error_ref));
