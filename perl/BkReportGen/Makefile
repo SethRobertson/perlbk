@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.1 2004/02/17 03:24:27 seth Exp $
+# $Id: Makefile,v 1.2 2004/02/18 00:35:28 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -24,9 +24,14 @@
 # Perl utility programs Makefile
 #
 
-MODULES=			\
-	output_stdout.pl	\
-	template_helloworld.pl	\
+MODULES=					\
+	helper_df.pl				\
+	helper_loadaverage.pl			\
+	helper_simplereports.pl			\
+	helper_top.pl				\
+	output_stdout.pl			\
+	template_helloworld.pl			\
+	template_stdreporttest.pl		\
 # Line eater fodder -- do no remove
 
 GROUPTOP=../../..

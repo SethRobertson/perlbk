@@ -22,7 +22,7 @@ sub helper_simplereports($$$$$$)
 
   foreach $call (@$CallList)
   {
-    $ret = eval qq^helper_$call(\$Inforef, \$StoredRef, \\\@Output, \$CallData->{"$call"});^;
+    $ret = eval qq^helper_$call(\$Inforef, \$StoredRef, \\\@Output, \$CallData->{"helper_$call"});^;
     if ($@)
     {
       return "helper_$call failed with $@";

@@ -72,6 +72,7 @@ $Info{'VarDir'} = "$FindBin::Bin/../var/BkReportGen";
 die "Modules directory $Info{'LibDir'} missing\n" unless (-d $Info{'LibDir'});
 
 our ($mainarg);
+our ($mainret);
 foreach $mainarg (<$Info{'LibDir'}/*.pl>)
 {
   if ($mainarg !~ m:^.*/([^\-]*)_(.*)\.pl:)
@@ -87,7 +88,7 @@ foreach $mainarg (<$Info{'LibDir'}/*.pl>)
 
 foreach $mainarg (@ARGV)
 {
-  my ($ret,$SavedState);
+  my ($SavedState);
 
   if ($OPTIONS{'locking'})
   {
@@ -110,8 +111,7 @@ foreach $mainarg (@ARGV)
     $SavedState = {};
   }
 
-  eval "package Modules; \$main::ret = template_$mainarg(\\\%Info, \$SavedState); package main;";
-
+  eval "package Modules; \$main::mainret = template_$mainarg(\\\%Info, \$SavedState); package main;";
   if ($OPTIONS{'locking'})
   {
     unlink("$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK");
@@ -122,9 +122,9 @@ foreach $mainarg (@ARGV)
     warn "$mainarg failed with $@";
     next;
   }
-  if (defined($ret) && length($ret) > 1)
+  if (defined($mainret) && length($mainret) > 1)
   {
-    warn "$mainarg terminated abnormally with $ret";
+    warn "$mainarg terminated abnormally with $mainret";
     next;
   }
 
