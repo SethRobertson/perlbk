@@ -13,6 +13,9 @@
 #
 # A standard reports helper
 #
+# <description>A module which will display the results of `df -HTl`
+# and will additionally alert on any non-iso9660 filesystem which is
+# over 90% utilized in either disk space or inodes.</description>
 
 sub helper_df($$$$)
 {

@@ -14,6 +14,9 @@
 # Sample output template to print data to standard out.
 # Note that the "$Subject" does not appear during TEXT output.
 #
+# <description>Send the generated report to BkReportGen's standard
+# output.  Note text output does not get a "subject" line.  Usage
+# similar to -o stdout:</description>
 
 sub output_stdout($$$$;$)
 {

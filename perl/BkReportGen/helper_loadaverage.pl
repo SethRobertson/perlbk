@@ -13,6 +13,9 @@
 #
 # A standard reports helper
 #
+# <description>Display the one, five, and fifteen minute load average,
+# and additionally alert if the fifteen minute load average is over 4.
+# Note the load average (w/o alerting) is displayed in top.</description>
 
 sub helper_loadaverage($$$$)
 {
@@ -37,7 +40,7 @@ sub helper_loadaverage($$$$)
   {
     $Output{'operating'} = .5;
   }
-  elsif ($3 > 8)
+  elsif ($3 > 4)
   {
     $Output{'operating'} = .75;
   }

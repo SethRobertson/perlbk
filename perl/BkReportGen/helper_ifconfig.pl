@@ -13,6 +13,12 @@
 #
 # A standard reports helper
 #
+# <description>A module which will display the results of `ifconfig
+# -a`.  In addition, it will track the various interface statistics
+# available in ifconfig -a and will alert if the error statistics go
+# up, or the non-error statistics (packet/byte counts) do not go up.
+# Note that packet/byte counts alerts might generate FPs for very
+# active sites.</description>
 
 sub helper_ifconfig($$$$)
 {

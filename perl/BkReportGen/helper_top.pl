@@ -13,6 +13,9 @@
 #
 # A standard reports helper
 #
+# <description>Display the results of the `top` command, usually
+# looking for the top ten processes but also highlighting any
+# processes of interest.</description>
 
 sub helper_top($$$$)
 {

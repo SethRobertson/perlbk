@@ -15,6 +15,11 @@
 # Note that the "$Subject" does not appear during TEXT output.
 #
 
+# <description>Send the generated report to a file on disk.  Note text
+# output does not get a "subject" line.  Usage similar to -o
+# "file:/tmp/z"</description>
+
+
 sub output_file($$$$;$)
 {
   my ($Inforef, $output, $subject, $data, $misc) = @_;

@@ -14,6 +14,11 @@
 # Sample output template to print data to a mailer
 #
 
+# <description>Send the generated report to via electronic mail.
+# Usage similar to -o "mailto:general@sysd.com"  Note email is not
+# encrypted.</description>
+
+
 use Mail::Mailer;
 
 sub output_mailto($$$$;$)

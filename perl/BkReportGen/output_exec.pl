@@ -14,6 +14,9 @@
 # Sample output template to print data to a file
 # Note that the "$Subject" does not appear during TEXT output.
 #
+# <description>Send the generated report to a program as standard
+# input.  Note text output does not get a "subject" line.  Usage
+# similar to -o "exec:ttcp -t host"</description>
 
 sub output_exec($$$$;$)
 {
