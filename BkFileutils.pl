@@ -1,3 +1,5 @@
+# $Id: BkFileutils.pl,v 1.2 2003/06/12 04:44:20 lindauer Exp $
+#
 # ++Copyright SYSDETECT++
 #
 # Copyright (c) 2001 System Detection.  All rights reserved.
@@ -17,6 +19,14 @@
 # <sysdetect@sysdetect.org>
 # 
 # --Copyright SYSDETECT--
+
+
+
+##
+# @file
+# File utilties
+#
+
 
 
 use POSIX;

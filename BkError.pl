@@ -1,3 +1,34 @@
+# $Id: BkError.pl,v 1.5 2003/06/12 04:44:20 lindauer Exp $
+#
+# ++Copyright SYSDETECT++
+#
+# Copyright (c) 2001 System Detection.  All rights reserved.
+#
+# THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF SYSTEM DETECTION.
+# The copyright notice above does not evidence any actual
+# or intended publication of such source code.
+# 
+# Only properly authorized employees and contractors of System Detection
+# are authorized to view, posses, to otherwise use this file.
+# 
+# System Detection
+# 5 West 19th Floor 2 Suite K
+# New York, NY 10011-4240
+# 
+# +1 212 242 2970
+# <sysdetect@sysdetect.org>
+# 
+# --Copyright SYSDETECT--
+
+
+
+##
+# @file
+# Error logger.
+#
+
+
+
 use Log::Dispatch;
 use Log::Dispatch::Syslog;
 use Log::Dispatch::Screen;
@@ -5,6 +36,17 @@ use Log::Dispatch::Screen;
 package BkError;
 use strict;
 {
+  ##
+  # Constructor.  
+  # Valid log levels are emerg, alert, crit, err, 
+  # warning, notice, info, and debug.
+  #
+  # @param ident identifier for syslog output (program name)
+  # @param print_level threshold for printing an error
+  # @param log_level threshold for logging an error
+  # @param log_method inet (default) or unix
+  # @param debug debugging verbosity (larger means more messages)
+  #
   sub new()
   {
     my ($class, $ident, $print_level, $log_level, $log_method, $debug) = @_;
@@ -50,9 +92,11 @@ use strict;
 
 
 
-  ###################################
-  # msg - debug message to print
-  # level - Minimum debug level to print message (default 1)
+  ##
+  # Print a debugging message.
+  #
+  # @param msg debug message to print
+  # @param level Minimum debug level to print message (default 1)
   #
   sub dprint($$$)
   {
@@ -70,6 +114,12 @@ use strict;
 
 
 
+  ##
+  # Print/log an error message
+  #
+  # @param message message to print
+  # @param level level at which to print/log the message (see constructor comment).
+  #
   sub err_print($$$)
   {
     my ($self, $message, $level) = @_;
