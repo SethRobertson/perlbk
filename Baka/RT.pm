@@ -20,6 +20,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     $self->queue($queue) if (defined($queue));
     $self->base_priority(defined($base_priority)?$base_priority:30);
     $self->{'no_rt_ticket'} = "NO_RT_TICKET";
+    $self->cur_ticket("");
     $self->{'nobody'}="Nobody";
     
     return($self);
@@ -31,7 +32,8 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   {
     my($self, $rtdir) = @_;
 
-    if (defined($rtdir)) {
+    if (defined($rtdir)) 
+    {
       $self->{'rtdir'} = $rtdir;
       $self->{'rt'} = "$rtdir/bin/rt";
     }
@@ -54,13 +56,16 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   {
     my($self, $cur_ticket) = @_;
 
-    if (defined($cur_ticket)) {
-      if ($cur_ticket eq "") {
+    if (defined($cur_ticket)) 
+    {
+      if ($cur_ticket eq "") 
+      {
 	$self->{'cur_ticket'} = $self->{'no_rt_ticket'};
-      } else {
+      } 
+      else 
+      {
 	$self->{'cur_ticket'} = $cur_ticket;
       }
-
     }
 
     return($self->{'cur_ticket'});
@@ -110,12 +115,32 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
+  sub valid_ticket($;$)
+  {
+    my($self, $cur_ticket) = @_;
+
+    $cur_ticket = $self->cur_ticket if (!defined($cur_ticket));
+
+    return ($cur_ticket ne $self->{'no_rt_ticket'});
+  }
+
+
+
+  sub valid_owner($;$)
+  {
+    my($self, $owner) = @_;
+
+    return (defined($owner) && ($owner ne $self->{'nobody'}));
+  }
+
+
+
   sub create_ticket($$$;$$)
   {
     my($self, $subject, $source, $queue, $base_priority) = @_;
     my($new_ticket);
 
-    $queue = $self->{'my_queue'} if (!defined($queue));
+    $queue = $self->queue if (!defined($queue));
     $base_priority = $self->{'base_priority'} if (!defined($base_priority));
     $subject = "Uknown subject" if (!defined($subject));
     $source = "/dev/null" if (!defined($source));
@@ -140,13 +165,13 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
-  sub get_ticket_owner($;$)
+  sub get_owner($;$)
   {
     my($self, $cur_ticket) = @_;
     my($cur_owner);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
-    return(-1) if ($cur_ticket eq $self->no_rt_ticket);
+    return(undef) if ($cur_ticket eq $self->{'no_rt_ticket'});
 
     $cur_owner = $self->{'nobody'} if ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%owner100' 2>/dev/null | sed -e '1d' | tr -d ' '", \$cur_owner) < 0);
     
@@ -155,13 +180,13 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
-  sub get_ticket_priority($;$)
+  sub get_priority($;$)
   {
     my($self, $cur_ticket) = @_;
     my($cur_priority);
   
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
-    return(-1) if ($cur_ticket eq $self->no_rt_ticket);
+    return(-1) if ($cur_ticket eq $self->{'no_rt_ticket'});
 
     $cur_priority = -1 if ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%priority100' 2>/dev/null | sed -e '1d' | tr -d ' '", \$cur_priority) < 0);
     
@@ -176,7 +201,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     my($ret);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
-    return(-1) if ($cur_ticket eq $self->no_rt_ticket);
+    return(-1) if ($cur_ticket eq $self->{'no_rt_ticket'});
 
     return ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --priority=\"$priority\" >/dev/null 2>&1"))
   }
@@ -189,7 +214,8 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     my($output);
     my($ret) = 0;
   
-    if (!$self->{'no_execute'}) {
+    if (!$self->{'no_execute'}) 
+    {
       print "Executing: **$cmd**\n" if ($self->{'verbose'});
 
       chomp($output = `$cmd`);
@@ -199,7 +225,9 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
       $$outputr = $output if (defined($outputr));
 
       $ret = $? >> 8;
-    } else {
+    } 
+    else 
+    {
       print "Suppressing execution of: **$cmd**\n" if ($self->{'verbose'});
     }
   
