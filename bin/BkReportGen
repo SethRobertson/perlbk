@@ -55,7 +55,7 @@ $OPTIONS{'OutputFormat'} = "TEXT" unless ($OPTIONS{'OutputFormat'});
 
 my ($tmp);
 $tmp = quotemeta($OPTIONS{'Condition'});
-die "Invalid -C Conditionn\n$USAGE\n" unless (grep(/^$tmp$/,('onsuccess','onfailure','always')));
+die "Invalid -C Condition\n$USAGE\n" unless (grep(/^$tmp$/,('onsuccess','onfailure','always')));
 $tmp = quotemeta($OPTIONS{'Verbosity'});
 die "Invalid -V Verbosity\n$USAGE\n" unless (grep(/^$tmp$/,('returncode','tinysummary','summary','full')));
 $tmp = quotemeta($OPTIONS{'OutputFormat'});
