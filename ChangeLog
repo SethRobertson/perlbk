@@ -1,3 +1,9 @@
+2003-08-26  Seth Robertson  <seth@startide.sysdetect.com>
+
+	* bin/genup*.pl: Set my copyright on these programs I wrong many years ago.
+
+	* bin/Oligarchical: Program to monitor and control programs in various, evil, ways.
+
 2003-01-01  Brian Lindauer  <lindauer@projector.sysdetect.com>
 
 	* BkFileutils.pl: Intial import.

@@ -1,0 +1,253 @@
+#!/usr/bin/perl
+#
+# ++Copyright LIBBK++
+#
+# Copyright (c) $YEAR The Authors. All rights reserved.
+#
+# This source code is licensed to you under the terms of the file
+# LICENSE.TXT in this release for further details.
+#
+# Mail <projectbaka\@baka.org> for further information
+#
+# --Copyright LIBBK--
+#
+#
+######################################################################
+# startblock
+# name [pidofargs] <processname>
+# pid <processid> ...
+# startifmissinginitially yes/no
+# exitifmissinginitially yes/no
+# startifmissinglater yes/no
+# exitifmissinglater yes/no
+# period seconds
+# periodcmd <cmd args>   ## %p gets substituted with space seperated process list
+# periodcmdiftrue <cmd args>
+# periodcmdiffalse <cmd args>
+# command <cmd args>     ## Must self-background
+# endblock
+######################################################################
+
+use Getopt::Long;
+use strict;
+
+
+
+my($USAGE) = "Usage: $0: [-nvx] <--config filename>\n";
+my(%OPTIONS);
+Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat", "require_order");
+GetOptions(\%OPTIONS, 'n', 'x', 'v', 'config=s') || die $USAGE;
+die $USAGE unless ($OPTIONS{'config'});
+
+
+my ($blockcount, $x, @group);
+
+if ($OPTIONS{'config'} ne "-")
+{
+  open(C,$OPTIONS{'config'}) || die "Cannot open configuration file $OPTIONS{'config'}: $!\n";
+  $x = "C";
+}
+else
+{
+  $x = "STDIN";
+}
+$blockcount = 0;
+while (<$x>)
+{
+  s/\#.*//;
+  chomp;
+  next if (/^\s*$/);
+
+  if (/^endblock/)
+  {
+    $blockcount++;
+    next;
+  }
+
+  next unless /^(\S+)\s*(.*)/;
+  $group[$blockcount]->{$1} = $2;
+}
+close($x);
+
+
+print STDERR "Blockcount is $blockcount\n" if ($OPTIONS{'v'});
+exit(0) unless ($blockcount > 0);
+######################################################################
+#
+# Prerequisite pass
+#
+for ($x = 0; $x < $blockcount; $x++)
+{
+  $group[$x]->{'period'} = 60 unless ($group[$x]->{'period'});
+  print STDERR "Group $x period $group[$x]->{'period'} name $group[$x]->{'name'} pid $group[$x]->{'pid'}\n" if ($OPTIONS{'v'});
+}
+
+
+exit(0) unless ($blockcount > 0);
+######################################################################
+#
+# Initial pass
+#
+my (@p);
+my ($next) = 2**32-1;
+for ($x = 0; $x < $blockcount; $x++)
+{
+  @p = getpidlist($group[$x]);
+  print STDERR "Found pid list of @p\n" if ($OPTIONS{'v'});
+  if ($#p < 0 || (kill 0, @p) < 1)
+  {
+    if ($group[$x]->{'startifmissinginitially'} =~ /yes/i)
+    {
+      runcommand($group[$x]->{'command'},\%OPTIONS);
+    }
+    if ($group[$x]->{'exitifmissinginitially'} =~ /yes/i)
+    {
+      delblock(\$x,\$blockcount,\@group,\%OPTIONS);
+      next;
+    }
+  }
+  $group[$x]->{'next'} = time + $group[$x]->{'period'};
+  $next = min($next, $group[$x]->{'next'});
+}
+
+
+
+######################################################################
+#
+# Monitoring pass
+#
+while (1)
+{
+  my ($newtime);
+  exit(0) unless ($blockcount > 0);
+
+  $newtime = 0 if (($newtime = $next - time) < 0);
+  print STDERR "Sleeping for $newtime seconds until $next\n" if ($OPTIONS{'v'});
+  sleep($newtime);
+  $newtime = $next;
+  $next = 2**32-1;
+
+  for ($x = 0; $x < $blockcount; $x++)
+  {
+    if ($group[$x]->{'next'} <= $newtime)
+    {
+      @p = getpidlist($group[$x]);
+      my($p) = join(' ',@p);
+      print STDERR "Found pid list of $p\n" if ($OPTIONS{'v'});
+      my($tmp);
+
+      if ($#p >= 0 && $group[$x]->{'periodcmd'})
+      {
+	$tmp = $group[$x]->{'periodcmd'};
+	$tmp =~ s/\%p/$p/g;
+	if (runcommand($tmp,\%OPTIONS))
+	{
+	  if ($group[$x]->{'periodcmdiffalse'})
+	  {
+	    $tmp = $group[$x]->{'periodcmdiffalse'};
+	    $tmp =~ s/\%p/$p/g;
+	    runcommand($tmp,\%OPTIONS);
+	    if ($? != 0)
+	    {
+	      delblock(\$x,\$blockcount,\@group,\%OPTIONS);
+	      next;
+	    }
+	  }
+	}
+	else
+	{
+	  if ($group[$x]->{'periodcmdiftrue'})
+	  {
+	    $tmp = $group[$x]->{'periodcmdiftrue'};
+	    $tmp =~ s/\%p/$p/g;
+	    runcommand($tmp,\%OPTIONS);
+	    if ($? != 0)
+	    {
+	      delblock(\$x,\$blockcount,\@group,\%OPTIONS);
+	      next;
+	    }
+	  }
+	}
+      }
+      else
+      {
+	if ((kill 0, @p) < 1)
+	{
+	  if ($group[$x]->{'startifmissinglater'} =~ /yes/i)
+	  {
+	    runcommand($group[$x]->{'command'},\%OPTIONS);
+	  }
+	  if ($group[$x]->{'exitifmissinglater'} =~ /yes/i)
+	  {
+	    delblock(\$x,\$blockcount,\@group,\%OPTIONS);
+	    next;
+	  }
+	}
+      }
+
+      $group[$x]->{'next'} = time + $group[$x]->{'period'};
+    }
+    $next = min($next, $group[$x]->{'next'});
+  }
+}
+
+
+
+######################################################################
+#
+# Run a command
+#
+sub runcommand($$)
+{
+  my($command,$OPTIONS) = @_;
+
+  print STDERR "run: $command\n" if ($OPTIONS->{'x'});
+  system($command) unless ($OPTIONS->{'n'});
+  print STDERR "Command exited with return $?\n" if ($OPTIONS->{'v'});
+  $?;
+}
+
+
+
+######################################################################
+#
+# Get list of PIDs
+#
+sub getpidlist($)
+{
+  my ($info) = @_;
+
+  return split(/\s+/, $info->{'pid'}) if ($info->{'pid'});
+
+  die "Invalid configuration--neither NAME or PID section\n" unless ($info->{'name'});
+
+  return split(/\s+/, `pidof $info->{'name'}`);
+}
+
+
+
+######################################################################
+#
+# Min of a&b
+#
+sub min($$)
+{
+  $_[0] > $_[1]?$_[1]:$_[0];
+}
+
+
+
+######################################################################
+#
+# Delete the current block
+#
+sub delblock($$$$)
+{
+  my ($xr,$bcr,$br,$Or) = @_;
+
+  print STDERR "Deleting current block $$xr\n" if ($Or->{'v'});
+
+  splice(@{$br},$$xr,1);
+  $$xr--;			# Reset to previous for increment
+  $$bcr--;
+};
