@@ -156,7 +156,8 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
   {
     my($self) = @_;
 
-    $self->{'tree'} = $self->_directive_list;
+    $self->{'_tree'} = $self->_directive_list;
+    $self->{'_tree'}->{'_back'} = undef;
 
     if ($self->_get_token != EOF)
     {
@@ -176,7 +177,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     my($tree);
 
     $tree = {};
-    
+        
     while(1)
     {
       $ret = $self->_directive;
@@ -196,6 +197,8 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       $tree->{$ret->{'key'}} = $ret->{'value'} if (defined($ret));
 
       push(@{$tree->{'_keys'}}, $ret->{'key'});
+
+      $ret->{'value'}->{'_back'} = $tree  if (ref($ret->{'value'}) eq "HASH")
     }
     return($tree);
   }
@@ -238,7 +241,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     if (($tok = $self->_get_token) == LEFT_BRACE)
     {
       $ret = $self->_directive_list;
-      
+
       if (($tok = $self->_get_token) != RIGHT_BRACE)
       {
 	$self->_push_token(ERROR);
@@ -255,7 +258,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       $self->_push_token($tok);
       $ret = undef;
     }
-
+    
     # Finish off directive.
 
     return($ret);
@@ -509,7 +512,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       return(-1);
     }
 
-    $ret = $self->_print_tree($self->{'tree'}, $handle, "");
+    $ret = $self->_print_tree($self->{'_tree'}, $handle, "");
 
     $handle->close;
 
@@ -558,6 +561,68 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     return(@{$tree->{'_keys'}})
   }
 
+  # Search upwards for a key
+  sub search_up($$$)
+  {
+    my($self, $tree, $key) = @_;
+    my($keys);
+
+    if (!defined($self) || !defined($tree) || ref($tree) ne "HASH" || !defined($key))
+    {
+      $self->error("Illegal arguments");
+      return(undef);
+    }
+
+    while(defined($tree))
+    {
+      return($tree->{$key}) if (defined($tree->{$key}));
+      $tree = $tree->{'_back'};
+    }
+    
+    return(undef);
+  }
+
+
+  sub search_down($$)
+  {
+    my($self, $key) = @_;
+    return($self->search_subtree_down($self->{'_tree'}, $key));
+  }
+
+
+
+  sub search_subtree_down($$$)
+  {
+    my($self, $tree, $key) = @_;
+    my($tkey);
+    my($answer);
+
+    if (!defined($key))
+    {
+      $self->error("Illegal arguments");
+      return(undef);
+    }
+
+    # Recurive base case.
+    return(undef) if (!defined($tree));
+
+    if (ref($tree) ne "HASH")
+    {
+      $self->error("Illegal arguments");
+      return(undef);
+    }
+
+    foreach $tkey ($self->keys($tree))
+    {
+      return ($tree->{$tkey}) if ($tkey eq $key);
+      if (ref($tree->{$tkey}) eq "HASH")
+      {
+	return($answer) if (defined($answer = $self->search_subtree_down($tree->{$tkey}, $key)));
+      }
+    }
+    
+    return(undef);
+  }
 }
 
 
@@ -587,6 +652,10 @@ Baka::StructuredConf - Use a hierarchical configuration file.
       $conf_file_lines = $conf->string;
       $conf->string($adjusted_conf_file_lines);
 
+      $value = $conf->search_down($key);
+      $value = $conf->search_subtree_down($tree, $key);
+      $value = $conf->search_up($tree, $key);
+      
       $debug = $conf->debug;
       $conf->debug(1);
 
@@ -662,6 +731,29 @@ modify the string, you will have to reparse later.
 
 Returns the I<configuration file string> on success; I<undef>x on failure.
 
+=item search_down
+
+Returns the I<value> associated with the first instance of I<key> located
+in a depth first search starting from the top of the parse tree. If you
+intend to use this method, use of unique keys is stronly suggested.
+
+It returns I<undef> if no matching key is found.
+
+=item search_subtree_down
+
+Returns the I<value> associated with the first instance of I<key> located
+in a depth first search starting from I<tree>. If you intend to use this
+method, use of unique keys is stronly suggested.
+
+It returns I<undef> if no matching key is found.
+
+=item search_up
+
+Returns the I<value> associated wiht the first instance of I<key> located
+in one of the ancesters of I<tree>.
+
+It returns I<undef> if no matching key is found.
+
 =item debug
 
 Set or retrive the current debug value. I<0> turns off debuggin; all other
@@ -679,7 +771,6 @@ Returns I<0> on success; I<-1> on failure.
 =item error
 
 Returns the I<current error string>; it cannot fail.
-
 
 =back       
 
@@ -735,8 +826,10 @@ which is returned and how to traverse it.
 
 It's not clear or promised that C<$self-E<gt>debug(1)> does anything useful.
 
-It's not celar that making the string values *also* be references
-accomplishes anything useful. But it *definitely* confuses people.
+It's not clear that making the string values I<also> be references
+accomplishes anything useful. But it I<definitely> confuses people.
+
+I<search_down> and I<search_substring_down> should be depth limited.
 
 =head1 AUTHOR
 

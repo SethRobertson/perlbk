@@ -1,3 +1,9 @@
+2004-10-28  James Tanis  <jtt@fry.sysdetect.com>
+
+	* Baka/StructuredConf.pm: search_up: Method for finding a key
+	within an ancestor of a node.
+	search_down: Method for locating a key in a subtree.
+
 2004-10-19  James Tanis  <jtt@buscemi.sysdetect.com>
 
 	* Baka/StructuredConf.pm: Check for non-unique keys.
