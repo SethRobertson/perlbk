@@ -96,9 +96,7 @@ use constant
   {
     my($self, $string) = @_;
 
-    $string = $self->string("$string");
-
-    if (!defined($string))
+    if (!defined($string = $self->string("$string")))
     {
       $self->error("Parse string is undefined");
       return(-1);
@@ -147,33 +145,41 @@ use constant
   {
     my($self) = @_;
 
-    return (-1) if ($self->_directive_list < 0);
-      
+    $self->{'tree'} = $self->_directive_list;
+
     if ($self->_get_token != EOF)
     {
       $self->parse_error("Failed parse");
       return(-1);
     }
-
+    
     return(0);
   }	       
+
 
 
   sub _directive_list($;)
   {
     my($self) = @_;
-    my($tok);
+    my($tok, $ret);
+    my($tree);
+
+    $tree = {};
     
     while(1)
     {
-      return (-1) if ($self->_directive < 0);
+      $ret = $self->_directive;
 
       if (($tok = $self->_get_token) != SEMICOLON)
       {
 	$self->_push_token($tok);
-	return(0);
+	return($tree);
       }
+      
+      $tree->{$ret->{'key'}} = $ret->{'value'} if (defined($ret));
+      push(@{$tree->{'keys'}}, $ret->{'key'});
     }
+    return($tree);
   }
 
 
@@ -181,26 +187,26 @@ use constant
   sub _directive($;)
   {
     my($self) = @_;
-    my($name, $tok);
+    my($ret, $tok);
 
     if (($tok = $self->_get_token) != STRING)
     {
       $self->_push_token($tok);
-      return(0);
+      return(undef);
     }
     
-    $name = $self->{'token_value'};
+    $ret->{'key'} = $self->{'token_value'};
 
-    print "Found name: **$name**\n";
+    print "Found name: **$ret->{'key'}**\n";
 
     if (($tok = $self->_get_token) != EQUALS)
     {
-      $self->_push_token(STRING, $name);
-      $self->_push_token($tok);
-      return(0);
+      $self->_push_token(ERROR);
+      return(undef);
     }
-
-    return ($self->_block)
+    
+    return(undef) if (!defined($ret->{'value'} = $self->_block));
+    return($ret);
   }
 
 
@@ -208,29 +214,33 @@ use constant
   sub _block($)
   {
     my($self) = @_;
-    my($tok);
+    my($tok, $ret);
     
     if (($tok = $self->_get_token) == LEFT_BRACE)
     {
-      return (-1) if ($self->_directive_list < 0);
+      $ret = $self->_directive_list;
       
       if (($tok = $self->_get_token) != RIGHT_BRACE)
       {
-	$self->_push_token($tok);
+	#$self->_push_token($tok);
+	$self->_push_token(ERROR);
+	return(undef);
       }
     }
     elsif ($tok == STRING)
     {
+      $ret = \$self->{'token_value'};
       print "Found simple value: **$self->{'token_value'}**\n";
     }
     else
     {
       $self->_push_token($tok);
+      $ret = undef;
     }
 
     # Finish off directive.
 
-    return(0);
+    return($ret);
   }
 
 
