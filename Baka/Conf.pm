@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.10 2005/01/22 20:25:03 jtt Exp $
+# $Id: Conf.pm,v 1.11 2005/02/03 18:14:57 seth Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -28,7 +28,7 @@ $VERSION = 1.00;
   sub new($)
   {
     my ($type, $filename) = @_;
-    my ($fh, $line, $section);
+    my ($fh, $line, $section,$lineno);
     my $self = {};
     bless $self, $type;
     $self->{'filename'} = $filename;
@@ -41,6 +41,7 @@ $VERSION = 1.00;
     $section = 'global';
     while ($line = <$fh>)
     {
+      ++$lineno;
       # strip the whitespace
       $line =~ s/^\s+//;
       $line =~ s/\s+$//;
@@ -63,7 +64,7 @@ $VERSION = 1.00;
       }
       else
       {
-	die "Invalid line in conf file: '$line'";
+	die "Invalid line in conf file $filename line $lineno: '$line'";
       }
     }
 
