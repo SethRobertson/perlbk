@@ -1,4 +1,5 @@
 use strict;
+use FileHandle;
 
 # 
 # start		: directive_list
@@ -32,9 +33,6 @@ use strict;
 
 package Baka::StructuredConf;
 
-# Characters which stop the current round of tokenization
-my($separator_chars) = '\s{}=;\#';
-
 use constant
 {
   # Lexical tokens
@@ -48,23 +46,32 @@ use constant
   DEBUG_FLAG_LEX	=>	1,
 };
 
+
+# Characters which stop the current round of tokenization
+my($separator_chars) = '\s{}=;\#';
+
 {
   # Constructor
-  sub new($;$)
+  sub new($;$$)
   {
-    my($self, $filename) = @_;
+    my($self, $filename, $error) = @_;
     my($class) = ref($self) || $self;
 
     $self = {};
     bless($self);
 
+    $self->{'debug'} = 0;
+    $self->{'saw_eol'} = 0;
+
     if (defined($filename))
     {
       $self->{'filename'} = $filename;
-      $self->parse_file;
+      if ($self->parse_file < 0)
+      {
+	$$error = $self->error if (defined($error));
+	undef($self);
+      }
     }
-    $self->{'debug'} = 0;
-    $self->{'saw_eol'} = 0;
 
     return($self);
   }
@@ -152,7 +159,7 @@ use constant
 
     if ($self->_get_token != EOF)
     {
-      $self->parse_error("Failed parse");
+      $self->_parse_error("Failed parse");
       return(-1);
     }
     
@@ -180,6 +187,7 @@ use constant
       }
       
       $tree->{$ret->{'key'}} = $ret->{'value'} if (defined($ret));
+
       push(@{$tree->{'keys'}}, $ret->{'key'});
     }
     return($tree);
@@ -198,9 +206,8 @@ use constant
       return(undef);
     }
     
+    $ret = {};
     $ret->{'key'} = $self->{'token_value'};
-
-    print "Found name: **$ret->{'key'}**\n";
 
     if (($tok = $self->_get_token) != EQUALS)
     {
@@ -219,6 +226,8 @@ use constant
     my($self) = @_;
     my($tok, $ret);
     
+    undef($ret);
+    
     if (($tok = $self->_get_token) == LEFT_BRACE)
     {
       $ret = $self->_directive_list;
@@ -232,8 +241,8 @@ use constant
     }
     elsif ($tok == STRING)
     {
-      $ret = \$self->{'token_value'};
-      print "Found simple value: **$self->{'token_value'}**\n";
+      my($localized_copy) = $self->{'token_value'};
+      $ret = \$localized_copy;
     }
     else
     {
@@ -273,21 +282,23 @@ use constant
 
 
   # Log an error;
-  sub error($;$)
+  sub error($;$$)
   {
-    my($self, $error_string) = @_;
+    my($self, $error_string, $skip_frame) = @_;
+
+    $skip_frame = 0 if (!defined($skip_frame));
 
     if (defined($error_string))
     {
       $self->{'error'} .= "$/" if (defined($self->{'error'}));
-      $self->{'error'} .= "$error_string";
+      $self->{'error'} .= "In function " . (caller ($skip_frame + 1))[3] . ": $error_string";
     }
     
     return($self->{'error'});
   }
 
   # Log a parse error;
-  sub parse_error($;$)
+  sub _parse_error($;$)
   {
     my($self, $error_string) = @_;
     my($source);
@@ -301,7 +312,7 @@ use constant
       $source = "input";
     }
 
-    return($self->error("$error_string around line $self->{'line'} of $source"));
+    return($self->error("$error_string around line $self->{'line'} of $source ", 1));
   }
 
 
@@ -379,7 +390,7 @@ use constant
 	
 	chomp($substr = substr($self->string, $start, $strlen) . "$elipses");
 
-	$self->parse_error("Premature EOF. Possible runaway string near \"$substr\"");
+	$self->_parse_error("Premature EOF. Possible runaway string near \"$substr\"");
 	print "LEX: Returning ERROR" if ($self->{'debug'} & DEBUG_FLAG_LEX);
 	return(ERROR);
       }
@@ -416,7 +427,7 @@ use constant
       if (!defined($look))
       {
 	# We probably can't reach this code actually.
-	$self->parse_error("Premature EOF");
+	$self->_parse_error("Premature EOF");
 	print "LEX: Returning ERROR\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
 	return(ERROR);
       }
@@ -426,7 +437,7 @@ use constant
       return(STRING);
     }
 
-    $self->parse_error("Parser reached illegal state");
+    $self->_parse_error("Parser reached illegal state");
     print "LEX: Returning ERROR\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
     return(ERROR);
   }
@@ -468,6 +479,69 @@ use constant
 
     return(0);
   }
+
+
+
+  # Write out a configuration file to disk. NB: COMMENTS ARE LOST!!! 
+  sub write_file($$)
+  {
+    my($self, $filename) = @_;
+    my($handle) = FileHandle->new;
+    my($ret);
+    
+    if (!defined($filename))
+    {
+      $self->error("Illegal arguments");
+      return (-1);
+    }
+
+    if (!defined($handle->open(">$filename")))
+    {
+      $self->error("Could not open \"$filename\" for writing: $!");
+      return(-1);
+    }
+
+    $ret = $self->_print_tree($self->{'tree'}, $handle, "");
+
+    $handle->close;
+
+    return($ret);
+  }
+
+
+
+
+  # Recursively print parse tree to file. Also illustrative of how to traverse the tree
+  sub _print_tree($$$$)
+  {
+    my($self, $tree, $handle, $indent) = @_;
+    my($key);
+
+    if (!defined($handle) || !defined($indent))
+    {
+      $self->error("Illegal arugments");
+      return(-1);
+    }
+
+    foreach $key (@{$tree->{'keys'}})
+    {
+      print $handle "$indent$key = ";
+      if (ref($tree->{$key}) eq "SCALAR")
+      {
+	print $handle "\"${$tree->{$key}}\";\n";
+      }
+      else
+      {
+	print $handle "\n";
+	print $handle "$indent\{\n";
+	return (-1) if ($self->_print_tree($tree->{$key}, $handle, "\t$indent") < 0);
+	print $handle "$indent\};\n\n";
+      }
+    }
+    return(0);
+  }
+
 }
+
 
 1;
