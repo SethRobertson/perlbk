@@ -152,7 +152,14 @@ sub OutputAll($$$)
   foreach $Outputref (@{$OutputAllInforef->{'OutputList'}})
   {
     next unless ($Outputref =~ /([^:]+)(:(.*))?/);
-    eval "package Modules; \$main::Outputret = output_$1(\$main::OutputAllInforef, \$main::Outputref, \$main::OutputAllSubject, \$main::OutputAlldataref); package main;";
+    if (!$Info{'Loaded'}->{'output'}->{$1})
+    {
+      warn "Invalid output method $1\n";
+      next;
+    }
+    my ($eval) = "package Modules; \$main::Outputret = output_$1(\$main::OutputAllInforef, \$main::Outputref, \$main::OutputAllSubject, \$main::OutputAlldataref); package main;";
+#    print "Evalling $eval\n";
+    eval $eval;
     $fullret .= $Outputret if (length($Outputret) > 1);
     if ($@)
     {

@@ -1,3 +1,8 @@
+2004-03-04  Seth Robertson  <seth@startide.sysdetect.com>
+
+	* bin/BkReportGen: Generate warning messages if the output methods
+	are invalid, instead of wierd eval errors.
+
 2004-02-27  Seth Robertson  <seth@pearl.sysdetect.com>
 
 	* Baka/Conf.pm: Handle more of standard bkconf notations.
