@@ -22,7 +22,7 @@
 # exitifmissinglater yes/no
 # period seconds
 # periodcmd <cmd args>   ## %p gets substituted with space seperated process list
-# periodcmdretry <#>
+# retrymax <#>
 # periodcmdpause <secs>
 # periodcmdiftrue <cmd args>
 # periodcmdiffalse <cmd args>
@@ -90,13 +90,13 @@ for ($x = 0; $x < $blockcount; $x++)
   $group[$x]->{'startifmissinginitially'} = "no" if (!defined($group[$x]->{'startifmissinginitially'}));
   $group[$x]->{'exitifmissinglater'} = "no" if (!defined($group[$x]->{'exitifmissinglater'}));
   $group[$x]->{'startifmissinglater'} = "no" if (!defined($group[$x]->{'startifmissinglater'}));
-  $group[$x]->{'retrylives'} = $group[$x]->{'periodcmdretry'};
+  $group[$x]->{'retrylives'} = $group[$x]->{'retrymax'};
   if ($OPTIONS{'v'})
-    {
-      print STDERR "Group $x period $group[$x]->{'period'} name $group[$x]->{'name'} ";
-      print STDERR "$group[$x]->{'pid'}" if (defined($group[$x]->{'pid'}));
-      print STDERR "\n";
-    }
+  {
+    print STDERR "Group $x period $group[$x]->{'period'} name $group[$x]->{'name'} ";
+    print STDERR "$group[$x]->{'pid'}" if (defined($group[$x]->{'pid'}));
+    print STDERR "\n";
+  }
 }
 
 
@@ -145,6 +145,7 @@ while (1)
 
   for ($x = 0; $x < $blockcount; $x++)
   {
+    $group[$x]->{'notifymsg'} = "";
     if ($group[$x]->{'next'} <= $newtime)
     {
       @p = getpidlist($group[$x]);
@@ -154,34 +155,27 @@ while (1)
 
       if ($#p >= 0 && $group[$x]->{'periodcmd'})
       {
-	my($periodcmd);
-	$periodcmd = $group[$x]->{'periodcmd'};
-	$periodcmd =~ s/\%p/$p/g;
-	if (runcommand($periodcmd,\%OPTIONS))
+	$tmp = $group[$x]->{'periodcmd'};
+	$tmp =~ s/\%p/$p/g;
+	if (runcommand($tmp,\%OPTIONS))
 	{
 	  if ($group[$x]->{'periodcmdiffalse'})
 	  {
-	    my($restartcmd);
-	    $restartcmd = $group[$x]->{'periodcmdiffalse'};
-	    $restartcmd =~ s/\%p/$p/g;
+	    $tmp = $group[$x]->{'periodcmdiffalse'};
+	    $tmp =~ s/\%p/$p/g;
 
-	    print STDERR "Have to try to restart $group[$x]->{'name'}..." if ($OPTIONS{'v'});
+	    print STDERR "Have to run startiffalse for $group[$x]->{'name'}..." if ($OPTIONS{'v'});
 	    
 	    # Run restart and if successful, rerun period check
-	    if ((runcommand($restartcmd,\%OPTIONS) == 0) &&
-		(runcommand($periodcmd,\%OPTIONS) == 0))
-	      {
-		print STDERR "succeeded.\n" if ($OPTIONS{'v'});
-		# If the period check is successful, give back all lives (if needed).
-		$group[$x]->{'retrylives'} = $group[$x]->{'periodcmdretry'};
-	      }
+	    if (runcommand($tmp,\%OPTIONS) == 0)
+	    {
+	      print STDERR "succeeded.\n" if ($OPTIONS{'v'});
+	    }
 	    else
-	      {
-		print STDERR "failed.\n" if ($OPTIONS{'v'});
-		# If *either* the restart or period commands fail, delete the block
-		# if we've run out of lives (or just decrement if we have lives to spare).
-		delblock(\$x,\$blockcount,\@group,\%OPTIONS) if (!$group[$x]->{'retrylives'}--);
-	      }
+	    {
+	      print STDERR "failed.\n" if ($OPTIONS{'v'});
+	      delblock(\$x,\$blockcount,\@group,\%OPTIONS);
+	    }
 	    next;
 	  }
 	}
@@ -189,7 +183,6 @@ while (1)
 	{
 	  if ($group[$x]->{'periodcmdiftrue'})
 	  {
-	    $group[$x]->{'retrylives'} = $group[$x]->{'periodcmdretry'};
 	    $tmp = $group[$x]->{'periodcmdiftrue'};
 	    $tmp =~ s/\%p/$p/g;
 	    runcommand($tmp,\%OPTIONS);
@@ -205,22 +198,41 @@ while (1)
       {
 	if ((kill 0, @p) < 1)
 	{
+	  my ($cur_retry_lives);
+
 	  if ($group[$x]->{'startifmissinglater'} =~ /yes/i)
 	  {
+	    $group[$x]->{'notifymsg'} .= "$group[$x]->{'name'} had to be restarted at " . localtime() . "\n";
 	    runcommand($group[$x]->{'command'},\%OPTIONS);
 	  }
-	  if ($group[$x]->{'exitifmissinglater'} =~ /yes/i)
+	  
+	  $group[$x]->{'retrylives'}-- if ($cur_retry_lives = $group[$x]->{'retrylives'});
+
+	  if (!$cur_retry_lives && $group[$x]->{'exitifmissinglater'} =~ /yes/i)
 	  {
 	    delblock(\$x,\$blockcount,\@group,\%OPTIONS);
 	    next;
 	  }
 	}
+	else
+	{
+	  $group[$x]->{'retrylives'} = $group[$x]->{'retrymax'};
+	}
       }
 
       $group[$x]->{'next'} = time + $group[$x]->{'period'};
     }
+
+    if ($group[$x]->{'notifymsg'} ne "" && $group[$x]->{'notify'} &&
+	open (MAIL, " | /usr/bin/Mail -s\"Antura Process Monitor Alert\" $group[$x]->{'notify'}"))
+    {
+      print STDERR "$group[$x]->{'notifymsg'}" if ($OPTIONS{'v'});
+      print MAIL "$group[$x]->{'notifymsg'}";
+      close(MAIL);
+    }
     $next = min($next, $group[$x]->{'next'});
   }
+  
 }
 
 
@@ -289,6 +301,7 @@ sub delblock($$$$)
   my ($xr,$bcr,$br,$Or) = @_;
 
   print STDERR "Deleting current block $$xr\n" if ($Or->{'v'});
+  $$br[$$xr]->{'notifymsg'} .= "$$br[$$xr]->{'name'} was removed from monitor at " . localtime() . "\n";
 
   splice(@{$br},$$xr,1);
   $$xr--;			# Reset to previous for increment
