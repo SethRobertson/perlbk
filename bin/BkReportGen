@@ -96,10 +96,18 @@ foreach $mainarg (@ARGV)
 
   if ($OPTIONS{'locking'})
   {
-    if (-f "$Info{'VarDir'}/template-$mainarg-$Info{'PeriodSeconds'}.LOCK")
+    if (-f "$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK")
     {
-      warn "Template $mainarg is locked!!!  Skipping.\n";
-      next;
+      if ((stat(_))[9] + 86300 < time)
+      {
+	warn "STALE LOCK (I hope--it is at least a day old anyway), removing\n";
+	unlink("$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK");
+      }
+      else
+      {
+	warn "Template $mainarg is locked!!!  Skipping.\n";
+	next;
+      }
     }
     open(L,">$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK") || die "Cannot lock $mainarg\n";
     print L hostname."-$$\n" || die "Cannot lock $mainarg write\n";
