@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.3 2004/02/28 01:27:51 seth Exp $
+# $Id: Conf.pm,v 1.4 2004/02/28 01:38:26 seth Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -53,7 +53,7 @@ $VERSION = 1.00;
 	# new section
 	$section = $1;
       }
-      elsif ($line =~ /(\S+?)\s*=\s*(\S+)/)
+      elsif ($line =~ /^(\S+?)\s*=\s*(.*)$/)
       {
 	my $key = $1;
 	my $val = $2;
