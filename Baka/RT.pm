@@ -10,7 +10,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 {
   sub new($;$$$)
   {
-    my($self, $queue, $base_priority, $flags) = @_;
+    my($self, $queue, $base_priority) = @_;
     my($class) = ref($self) || $self;
 
     $self = {};
@@ -26,6 +26,22 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     return($self);
   }
 
+
+
+  sub create_ticket($;$$$$)
+  {
+    my($self, $subject, $source, $queue, $base_priority) = @_;
+    my($new_ticket);
+
+    $queue = $self->queue if (!defined($queue));
+    $base_priority = $self->{'base_priority'} if (!defined($base_priority));
+    $subject = "Uknown subject" if (!defined($subject));
+    $source = "/dev/null" if (!defined($source));
+
+    return (-1) if (!defined($queue) || ($self->_execute_cmd("$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$self->{'nobody'}\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq", \$new_ticket)) < 0);
+
+    return ($new_ticket);
+  }
 
 
   sub rtdir($;$)
@@ -73,7 +89,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
-  sub verbose($)
+  sub verbose($;$)
   {
     my($self, $verbose) = @_;
 
@@ -83,7 +99,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
-  sub no_execute($)
+  sub no_execute($;$)
   {
     my($self, $no_execute) = @_;
 
@@ -135,23 +151,6 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
 
 
-  sub create_ticket($$$;$$)
-  {
-    my($self, $subject, $source, $queue, $base_priority) = @_;
-    my($new_ticket);
-
-    $queue = $self->queue if (!defined($queue));
-    $base_priority = $self->{'base_priority'} if (!defined($base_priority));
-    $subject = "Uknown subject" if (!defined($subject));
-    $source = "/dev/null" if (!defined($source));
-
-    return (-1) if (!defined($queue) || ($self->_execute_cmd("$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$self->{'nobody'}\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq", \$new_ticket)) < 0);
-
-    return ($new_ticket);
-  }
-
-
-
   sub close_ticket($;$)
   {
     my($self, $cur_ticket) = @_;
@@ -197,7 +196,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
   sub set_priority($$;$)
   {
-    my($self, $cur_ticket, $priority) = @_;
+    my($self, $priority, $cur_ticket) = @_;
     my($ret);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
@@ -210,7 +209,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
   sub add_kewords($$$)
   {
-    my($self, $cur_ticket, $keywords_listr) = @_;
+    my($self, $keywords_listr, $cur_ticket) = @_;
     my($kw_args);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
@@ -249,4 +248,117 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     return (!$ret?0:-1);
   }
 }
+
 1;
+
+__END__;
+
+=head1 NAME
+
+Baka::RT -- Perl API to the RT ticketing system.
+
+=head1 SYNOPSIS
+
+=over 6
+
+      use Baka::RT;
+
+      $rt = Baka::RT->new;
+      $rt = Baka::RT->new($queue_name, $base_priority);
+
+      $rt->create_ticket($subject, $source);
+      $rt->create_ticket($subject, $source, $queue, $base_priority);
+
+      $rt->search_for_ticket($subject);
+
+      $rt->cur_ticket;
+      $rt->cur_ticket($ticket);
+
+      $rt->close_ticket:
+      $rt->close_ticket($ticket);
+
+      $rt->valid_ticket;
+      $rt->valid_ticket($ticket);
+      
+      $rt->rtdir;
+      $rt->rtdir($dir);
+      
+      $rt->queue;
+      $rt->queue($queue);
+
+      $rt->base_priority;
+      $rt->base_priority($priority);
+
+      $rt->get_owner;
+      $rt->get_owner($ticket);
+
+      $rt->get_priority;
+      $rt->get_priority($ticket);
+
+      $rt->set_priority($priority);
+      $rt->set_priority($priority, $ticket);
+
+      $rt->add_kewords($keywords_list_ref);
+      $rt->add_kewords($keywords_list_ref, $ticket);
+
+      $rt->verbose;
+      $rt->verbose(1);
+
+      $rt->no_execute;
+      $rt->no_execute(1);
+
+=back
+
+=head1 DESCRIPTION
+
+=head1 API
+
+=over 6
+
+=item new
+
+The contructor may be called with either no arguments to simply obtain the
+object reference or with either (or both) I<queue_name> or
+I<base_priority>. These two values will be used as defaults in
+C<$self-E<gt>create_ticket>). There is no default I<queue> (ie you have to
+set it here, via the C<$self-E<gt>queue> method, or when you invoke
+C<$self-E<gt>create_ticket>)
+
+Returns the I<new object reference> on success; I<undef> on failure.
+
+=item create_ticket
+
+This creates a ticket. You may optionally pass in the I<subject>, the file
+F<source> from which the body of the ticket will be obtained, the I<queue>,
+and the I<priority>.
+
+Returns the I<ticket number> on success, I<-1> on failure.
+
+=item search_for_ticket
+
+Search for a ticket with the given I<subject>. This function has the side
+effect of setting the located ticket as the default ticket for the object.
+
+Returns the I<ticket number> on success; a I<special toket> on failure (see
+alos the description of C<valid_ticket>).
+
+=item close_ticket
+
+Close the specified I<ticket> or the current ticket by default.
+
+Returns I<0> on success; I<-1> on failure.
+
+=item valid_ticket
+
+Determines whether the supplied I<ticket> or the current ticket is valid. 
+
+Returns I<1> if the ticket is valid, I<0> otherwise.
+
+=back
+
+=head1 AUTHOR
+
+James Tanis (jtt@sysd.com)
+
+=cut
+

@@ -1,3 +1,9 @@
+2004-10-15  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* lib/libbk.pl (normalize_path($;$)): Function to eliminate
+	unwanted ..'s and .'s from paths. Optionally convert real paths to
+	amd paths.
+
 2004-10-13  James Tanis  <jtt@buscemi.sysdetect.com>
 
 	* Baka/RT.pm: /dev/null RT output from keyword addition.
