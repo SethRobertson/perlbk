@@ -154,27 +154,35 @@ while (1)
 
       if ($#p >= 0 && $group[$x]->{'periodcmd'})
       {
-	$tmp = $group[$x]->{'periodcmd'};
-	$tmp =~ s/\%p/$p/g;
-	if (runcommand($tmp,\%OPTIONS))
+	my($periodcmd);
+	$periodcmd = $group[$x]->{'periodcmd'};
+	$periodcmd =~ s/\%p/$p/g;
+	if (runcommand($periodcmd,\%OPTIONS))
 	{
 	  if ($group[$x]->{'periodcmdiffalse'})
 	  {
-	    $tmp = $group[$x]->{'periodcmdiffalse'};
-	    $tmp =~ s/\%p/$p/g;
-	    if (runcommand($tmp,\%OPTIONS))
-	    {
-	      if (!$group[$x]->{'retrylives'})
-		{
-		  delblock(\$x,\$blockcount,\@group,\%OPTIONS);
-		}
-	      else
-		{
-		  # NB We *only* get here if retrylives was set positive.
-		  $group[$x]->{'retrylives'}--;
-		}
-	      next;
-	    }
+	    my($restartcmd);
+	    $restartcmd = $group[$x]->{'periodcmdiffalse'};
+	    $restartcmd =~ s/\%p/$p/g;
+
+	    print STDERR "Have to try to restart $group[$x]->{'name'}..." if ($OPTIONS{'v'});
+	    
+	    # Run restart and if successful, rerun period check
+	    if ((runcommand($restartcmd,\%OPTIONS) == 0) &&
+		(runcommand($periodcmd,\%OPTIONS) == 0))
+	      {
+		print STDERR "succeeded.\n" if ($OPTIONS{'v'});
+		# If the period check is successful, give back all lives (if needed).
+		$group[$x]->{'retrylives'} = $group[$x]->{'periodcmdretry'};
+	      }
+	    else
+	      {
+		print STDERR "failed.\n" if ($OPTIONS{'v'});
+		# If *either* the restart or period commands fail, delete the block
+		# if we've run out of lives (or just decrement if we have lives to spare).
+		delblock(\$x,\$blockcount,\@group,\%OPTIONS) if (!$group[$x]->{'retrylives'}--);
+	      }
+	    next;
 	  }
 	}
 	else
