@@ -43,7 +43,7 @@ sub helper_ifconfig($$$$)
   # Parse the interface information
   foreach $interface (split(/\n\n/,$ifconfig))
   {
-    if ($interface !~ /^(\S+)[^\n]+\n(\s+inet addr:(\S+)[^\n]+\n|)\s+(\S+)[^\n]+\n\s+RX\s+(\S+):(\S+)\s+(\S+):(\S+)\s+(\S+):(\S+)\s+(\S+):(\S+)\s+(\S+):(\S+)[^\n]*\n\s+TX\s+(\S+):(\S+)\s+(\S+):(\S+)\s+(\S+):(\S+)\s+(\S+):(\S+)\s+(\S+):(\S+)\s+(\S+):(\S+)\s+(\S+):(\S+)[^\n]*\n\s+RX (\S+):(\d+).*TX (\S+):(\d+)/)
+    if ($interface !~ /^(\S+)[^\n]+\n(\s+inet addr:(\S+)[^\n]+\n|)(?:\s+inet6 addr: [^\n]+\n|)(?# flags)\s+(\S+)[^\n]+\n\s+RX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# frame)(\S+):(\S+)[^\n]*\n\s+TX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# carrier)(\S+):(\S+)\s+(?# Collisions)(\S+):(\S+)\s+(?# txqueuelen)(\S+):(\S+)[^\n]*\n\s+RX (?# bytes)(\S+):(\d+).*TX (?# bytes)(\S+):(\d+)/)
     {
       return "Non-matching interface line $interface\n";
     }
