@@ -1,3 +1,7 @@
+2004-10-19  James Tanis  <jtt@buscemi.sysdetect.com>
+
+	* Baka/StructuredConf.pm: Check for non-unique keys.
+
 2004-10-18  James Tanis  <jtt@buscemi.sysdetect.com>
 
 	* Baka/RT.pm (Baka): Documentation

@@ -187,6 +187,12 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 	return($tree);
       }
       
+      if (defined($tree->{$ret->{'key'}}))
+      {
+	$self->error("Illegal non-unique key: $$ret->{'key'}\n");
+	return(undef);
+      }
+
       $tree->{$ret->{'key'}} = $ret->{'value'} if (defined($ret));
 
       push(@{$tree->{'_keys'}}, $ret->{'key'});
@@ -235,7 +241,6 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       
       if (($tok = $self->_get_token) != RIGHT_BRACE)
       {
-	#$self->_push_token($tok);
 	$self->_push_token(ERROR);
 	return(undef);
       }
