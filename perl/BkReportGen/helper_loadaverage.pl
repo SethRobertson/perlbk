@@ -28,28 +28,28 @@ sub helper_loadaverage($$$$)
     return "uptime command failed: $?\n";
   }
 
-  $Output{'name'} = "Load Average";
   $Output{'data'} = "1 Minute Load=$1  5 Minute Load=$2  15 Minute Load=$3\n";
 
   # This probably should be based on the number of CPUs
   if ($3 > 16)
   {
     $Output{'operating'} = .1;
-    $Output{'name'} = "Tremendously High Load Average";
+    $Output{'name'} = "TREMENDOUSLY HIGH Load Average";
   }
   elsif ($3 > 8)
   {
     $Output{'operating'} = .5;
-    $Output{'name'} = "Very High Load Average";
+    $Output{'name'} = "VERY HIGH Load Average";
   }
   elsif ($3 > 4)
   {
     $Output{'operating'} = .75;
-    $Output{'name'} = "High Load Average";
+    $Output{'name'} = "HIGH Load Average";
   }
   else
   {
     $Output{'operating'} = 1;
+    $Output{'name'} = "Load Average";
   }
   push(@$Outputarrayref, \%Output);
 
