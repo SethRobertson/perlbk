@@ -35,14 +35,17 @@ sub helper_loadaverage($$$$)
   if ($3 > 16)
   {
     $Output{'operating'} = .1;
+    $Output{'name'} = "Tremendously High Load Average";
   }
   elsif ($3 > 8)
   {
     $Output{'operating'} = .5;
+    $Output{'name'} = "Very High Load Average";
   }
   elsif ($3 > 4)
   {
     $Output{'operating'} = .75;
+    $Output{'name'} = "High Load Average";
   }
   else
   {
