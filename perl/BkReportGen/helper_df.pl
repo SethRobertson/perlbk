@@ -38,6 +38,7 @@ sub helper_df($$$$)
   }
 
   $Output{'name'} = "Disk Usage";
+  $Output{'id'} = "df";
   $Output{'data'} = "$dfkb";
   $operating = $Output{'operating'} = 1;
 
@@ -64,13 +65,15 @@ sub helper_df($$$$)
   }
   push(@$Outputarrayref, \%Output);
 
+  my(%Warn);
+  $Warn{'id'} = "DISK SPACE WARNING";
+  push(@$Outputarrayref, \%Warn);
+
   if ($#warnings >= 0)
   {
-    my(%Warn);
     $Warn{'name'} = "DISK SPACE WARNING";
     $Warn{'data'} = join("\n",@warnings)."\n";
     $Warn{'operating'} = $operating;
-    push(@$Outputarrayref, \%Warn);
   }
 
 

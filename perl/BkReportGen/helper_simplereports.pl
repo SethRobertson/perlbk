@@ -47,6 +47,8 @@ sub helper_simplereports($$$$$$)
   $$OperatingMinRef = 1;
   foreach $line (@Output)
   {
+    next unless ($line->{'name'});
+
     # <TODO>Do more clever things with operating (Bold/blink/etc)</TODO>
 
     if (defined($line->{'operating'}))
@@ -97,6 +99,7 @@ sub helper_simplereports($$$$$$)
     unshift(@$Outputarrayref, sprintf("                                Operating at %.0f%%\n\n",$$OperatingMinRef*100));
   }
 
+  $Inforef->{'LastOutputArray'} = \@Output;
   $Inforef->{'LastOperatingMin'} = int($$OperatingMinRef*100);
   1;
 }

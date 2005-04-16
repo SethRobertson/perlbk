@@ -37,6 +37,7 @@ sub helper_smart($$$$)
 
   $Output{'name'} = "S.M.A.R.T. Hard Drive Information";
   $Output{'data'} = $smart;
+  $Output{'id'} = "smart";
 
   push(@$Outputarrayref, \%Output);
 

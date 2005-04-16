@@ -38,6 +38,7 @@ sub helper_ifconfig($$$$)
   }
 
   $Output{'name'} = "Interface Status";
+  $Output{'id'} = "ifconfig";
   $Output{'data'} = $ifconfig;
 
   # Parse the interface information
@@ -207,13 +208,15 @@ sub helper_ifconfig($$$$)
 
   push(@$Outputarrayref, \%Output);
 
+  $Out1{'id'} = "INTERFACE WARNINGS";
+  push(@$Outputarrayref, \%Out1);
   if ($#warnings >= 0)
   {
     my (%Out1);
 
+    $Out1{'operating'} = $confidence<0?0:$confidence;
     $Out1{'name'} = "INTERFACE WARNINGS";
     $Out1{'data'} = join("",@warnings);;
-    push(@$Outputarrayref, \%Out1);
   }
 
   1;

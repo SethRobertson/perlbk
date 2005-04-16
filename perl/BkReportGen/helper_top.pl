@@ -31,6 +31,7 @@ sub helper_top($$$$)
   }
 
   $Output{'name'} = "Top Status";
+  $Output{'id'} = "top";
 
   my ($num);
 

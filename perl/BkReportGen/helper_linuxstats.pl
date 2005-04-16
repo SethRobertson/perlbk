@@ -29,6 +29,7 @@ sub helper_linuxstats($$$$)
 
   undef($Outref);
   $Outref->{'name'} = "vmstat";
+  $Outref->{'id'} = "vmstat";
   $Outref->{'data'} = $data;
   push(@$Outputarrayref, $Outref);
 
@@ -44,6 +45,7 @@ sub helper_linuxstats($$$$)
 
       undef($Outref);
       $Outref->{'name'} = "$f (for expert diagnostics)";
+      $Outref->{'id'} = "$f";
       $Outref->{'data'} = $data;
       push(@$Outputarrayref, $Outref);
     }

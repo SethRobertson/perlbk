@@ -29,6 +29,7 @@ sub helper_sensors($$$$)
 
     # We also don't process for voltage/fan violations.  Just record for the future.
     $Output{'name'} = "Hardware Sensor Report";
+    $Output{'id'} = "sensors";
     $Output{'data'} = $sensor;
     push(@$Outputarrayref, \%Output);
   }

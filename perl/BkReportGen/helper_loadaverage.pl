@@ -51,6 +51,8 @@ sub helper_loadaverage($$$$)
     $Output{'operating'} = 1;
     $Output{'name'} = "Load Average";
   }
+
+  $Output{'id'} = "loadaverage";
   push(@$Outputarrayref, \%Output);
 
   1;

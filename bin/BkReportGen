@@ -105,7 +105,7 @@ foreach $mainarg (@ARGV)
       }
       else
       {
-	warn "Template $mainarg is locked!!!  Skipping.\n";
+	warn "Template $mainarg is locked!!! (by @{[qq^$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK^]})  Skipping.\n";
 	next;
       }
     }
@@ -122,6 +122,8 @@ foreach $mainarg (@ARGV)
   {
     $SavedState = {};
   }
+
+  $Info{'Template'} = $mainarg;
 
   eval "package Modules; \$main::mainret = template_$mainarg(\\\%Info, \$SavedState); package main;";
   if ($OPTIONS{'locking'})
