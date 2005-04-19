@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.7 2005/03/11 21:08:09 seth Exp $
+# $Id: Makefile,v 1.8 2005/04/19 00:18:59 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -36,6 +36,7 @@ MODULES=					\
 	output_exec.pl				\
 	output_file.pl				\
 	output_mailto.pl			\
+	output_postgres.pl			\
 	output_stdout.pl			\
 	template_helloworld.pl			\
 	template_stdreporttest.pl		\

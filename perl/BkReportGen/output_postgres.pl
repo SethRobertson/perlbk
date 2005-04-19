@@ -107,9 +107,8 @@ sub output_postgres($$$$;$)
   $title_item =~ s/\"\"/NULL/g;
   $result_item =~ s/\"\"/NULL/g;
 
-  my ($sql) = qq(insert into $table values (DEFAULT, DEFAULT, DEFAULT, '@{[$Inforef->{'Template'}."-".$Inforef->{'PeriodSeconds'}]}', $Inforef->{'LastOperatingMin'}, '$subject', '{$operating}', '{$name_item}', '{$title_item}', '{$result_item}'););
+  my ($sql) = qq(insert into $table (report_name, operating, subject, operating_item, name_item, title_item,result_item) values ('@{[$Inforef->{'Template'}]}', $Inforef->{'LastOperatingMin'}, '$subject', '{$operating}', '{$name_item}', '{$title_item}', '{$result_item}'););
 
-print STDERR "$sql\n";
   dosql($dbh, "set search_path to antura;", 0);
   dosql($dbh, $sql, 0);
 
