@@ -12,6 +12,8 @@ use constant
 # If this isn't set to something, rt won't let you submit tickets
 $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 
+my($rt3);
+
 {
   sub new($;$$$)
   {
@@ -21,7 +23,16 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
     $self = {};
     bless($self);
 
-    $self->rtdir("/usr/local/rt2");
+    if (0 && -d "/usr/local/rt3")
+    {
+      $self->rtdir("/usr/local/rt3");
+      $rt3 = 1;
+    }
+    else
+    {
+      $self->rtdir("/usr/local/rt2");
+      $rt3 = 0;
+    }
     $self->queue($queue) if (defined($queue));
     $self->base_priority(defined($base_priority)?$base_priority:BASE_PRIORITY);
     $self->{'no_rt_ticket'} = "NO_RT_TICKET";
@@ -36,15 +47,23 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   sub create_ticket($;$$$$$)
   {
     my($self, $subject, $source, $queue, $base_priority, $owner) = @_;
-    my($new_ticket);
+    my($new_ticket, $cmd);
 
     $queue = $self->queue if (!defined($queue));
     $base_priority = $self->{'base_priority'} if (!defined($base_priority));
     $subject = "Uknown subject" if (!defined($subject));
     $source = "/dev/null" if (!defined($source));
     $owner = $self->{'nobody'} if (!defined($owner));
+    
+    if ($rt3)
+    {
+    }
+    else
+    {
+      $cmd = "$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$owner\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq";
+    }
 
-    return (-1) if (!defined($queue) || (($self->_execute_cmd("$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$owner\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq", \$new_ticket)) < 0) || ($new_ticket eq""));
+    return (-1) if (!defined($queue) || (($self->_execute_cmd($cmd, \$new_ticket)) < 0) || ($new_ticket eq""));
 
     return ($new_ticket);
   }
@@ -53,9 +72,17 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   sub search_for_ticket($$)
   {
     my($self, $subject) = @_;
-    my($cur_ticket);
+    my($cur_ticket, $cmd);
 
-    $cur_ticket = "" if ($self->_execute_cmd("$self->{'rt'} --limit-subject=\"$subject\" --limit-status=\"new\" --limit-status=\"open\" --summary='%id20' 2>/dev/null | sed '1d' | awk '{ print \$1 }'", \$cur_ticket) < 0);
+    if ($rt3)
+    {
+    }
+    else
+    {
+      $cmd = "$self->{'rt'} --limit-subject=\"$subject\" --limit-status=\"new\" --limit-status=\"open\" --summary='%id20' 2>/dev/null | sed '1d' | awk '{ print \$1 }'";
+    }
+
+    $cur_ticket = "" if ($self->_execute_cmd($cmd, \$cur_ticket) < 0);
 
     return($self->cur_ticket($cur_ticket));
   }
@@ -86,12 +113,20 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   sub close_ticket($;$)
   {
     my($self, $cur_ticket) = @_;
-    my($ret);
+    my($ret, $cmd);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return(-1) if ($cur_ticket eq $self->{'no_rt_ticket'});
 
-    return ($self->_execute_cmd("$self->{'rt'} --status=\"resolved\" --id=\"$cur_ticket\" >/dev/null 2>&1"));
+    if ($rt3)
+    {
+    }
+    else
+    {
+      $cmd = "$self->{'rt'} --status=\"resolved\" --id=\"$cur_ticket\" >/dev/null 2>&1";
+    }
+
+    return ($self->_execute_cmd($cmd));
   }
 
 
@@ -144,12 +179,21 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   sub get_owner($;$)
   {
     my($self, $cur_ticket) = @_;
-    my($cur_owner);
+    my($cur_owner, $cmd);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return(undef) if ($cur_ticket eq $self->{'no_rt_ticket'});
+    
+    if ($rt3)
+    {
+    }
+    else
+    {
+      $cmd = "$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%owner100' 2>/dev/null | sed -e '1d' | tr -d ' '";
+    }
+    
 
-    $cur_owner = $self->{'nobody'} if ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%owner100' 2>/dev/null | sed -e '1d' | tr -d ' '", \$cur_owner) < 0);
+    $cur_owner = $self->{'nobody'} if ($self->_execute_cmd($cmd, \$cur_owner) < 0);
     
     return($cur_owner);
   }
@@ -168,12 +212,20 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   sub get_priority($;$)
   {
     my($self, $cur_ticket) = @_;
-    my($cur_priority);
+    my($cur_priority, $cmd);
   
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return(-1) if ($cur_ticket eq $self->{'no_rt_ticket'});
 
-    $cur_priority = -1 if ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%priority100' 2>/dev/null | sed -e '1d' | tr -d ' '", \$cur_priority) < 0);
+    if ($rt3)
+    {
+    }
+    else
+    {
+      $cmd = "$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%priority100' 2>/dev/null | sed -e '1d' | tr -d ' '";
+    }
+
+    $cur_priority = -1 if ($self->_execute_cmd($cmd, \$cur_priority) < 0);
     
     return($cur_priority);
   }
@@ -183,12 +235,19 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   sub set_priority($$;$)
   {
     my($self, $priority, $cur_ticket) = @_;
-    my($ret);
+    my($ret, $cmd);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return(-1) if (!defined($priority) || !$self->valid_ticket($cur_ticket));
 
-    return ($self->_execute_cmd("$self->{'rt'} --id=\"$cur_ticket\" --priority=\"$priority\" >/dev/null 2>&1"))
+    if ($rt3)
+    {
+    }
+    else
+    {
+      $cmd = "$self->{'rt'} --id=\"$cur_ticket\" --priority=\"$priority\" >/dev/null 2>&1";
+    }
+    return ($self->_execute_cmd($cmd))
   }
 
 
@@ -196,14 +255,22 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
   sub add_keywords($$;$)
   {
     my($self, $keywords_listr, $cur_ticket) = @_;
-    my($kw_args);
+    my($kw_args, $cmd);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return (-1) if (!defined($keywords_listr) || !$self->valid_ticket($cur_ticket));
 
     $kw_args = join (" --keywords=", @$keywords_listr);
     
-    return($self->_execute_cmd("$self->{'rt'} --id=$cur_ticket --keywords=$kw_args >/dev/null 2>&1"));
+    if ($rt3)
+    {
+    }
+    else
+    {
+      $cmd = "$self->{'rt'} --id=$cur_ticket --keywords=$kw_args >/dev/null 2>&1"
+    }
+    
+    return($self->_execute_cmd($cmd));
   }
 
 
