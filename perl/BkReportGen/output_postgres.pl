@@ -87,11 +87,11 @@ sub output_postgres($$$$;$)
     $line->{'name'} =~ s/\\/\\\\\\\\/g;
     $line->{'name'} =~ s/\n/\\\\\n/g;
     $line->{'name'} =~ s/\"/\\\\\"/g;
-    $line->{'name'} =~ s/\'/\\\\\'/g;
+    $line->{'name'} =~ s/\'/\\\\\\\'/g;
     $line->{'data'} =~ s/\\/\\\\\\\\/g;
     $line->{'data'} =~ s/\n/\\\\\n/g;
     $line->{'data'} =~ s/\"/\\\\\"/g;
-    $line->{'data'} =~ s/\'/\\\\\'/g;
+    $line->{'data'} =~ s/'/\\\'/g;
 
     push(@operating, int(($line->{'operating'}||1)*100));
     print $line->{'name'}." has null id\n" unless defined($line->{'id'});
