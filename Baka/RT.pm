@@ -23,10 +23,13 @@ my($rt3);
     $self = {};
     bless($self);
 
-    if (0 && -d "/usr/local/rt3")
+    if (-d "/usr/local/rt3")
     {
       $self->rtdir("/usr/local/rt3");
       $rt3 = 1;
+      $ENV{'RTUSER'} = 'nightly';
+      $ENV{'RTSERVER'} = 'http://rt.sysdetect.com';
+      $ENV{'RTPASSWD'} = 'whyarentyousleeping';
     }
     else
     {
@@ -37,9 +40,24 @@ my($rt3);
     $self->base_priority(defined($base_priority)?$base_priority:BASE_PRIORITY);
     $self->{'no_rt_ticket'} = "NO_RT_TICKET";
     $self->cur_ticket("");
-    $self->{'nobody'}="Nobody";
+    $self->{'nobody'} = "Nobody";
+    $self->{'limit'} = 0;
     
     return($self);
+  }
+
+
+
+  # Get/set the limit of how many lines may appear as text in the ticket.
+  # This is only availalble in rt3;
+  sub text_limit($;$)
+  {
+    my($self, $limit) = @_;
+
+    return (0) if (!$rt3);
+    
+    $self->{'limit'} = $limit if (defined($limit));
+    return($self->{'limit'});
   }
 
 
@@ -47,7 +65,10 @@ my($rt3);
   sub create_ticket($;$$$$$)
   {
     my($self, $subject, $source, $queue, $base_priority, $owner) = @_;
-    my($new_ticket, $cmd);
+    my($new_ticket);
+    my($attachment_file, $cmd);
+    my($ticket_file) = "/tmp/ticket_form";
+
 
     $queue = $self->queue if (!defined($queue));
     $base_priority = $self->{'base_priority'} if (!defined($base_priority));
@@ -57,15 +78,56 @@ my($rt3);
     
     if ($rt3)
     {
+      my($text, @text, $formatted, );
+      my($min_index) = 0;
+
+      $self->_execute_cmd("cat $source", \$text);
+
+      @text = split(/\n/, $text);
+
+      if ($self->{'limit'} && (@text > $self->{'limit'}))
+      {
+	$attachment_file = "/tmp/attach";
+	open(FILE, "> $attachment_file") || goto error;
+	print FILE "" . join("\n", $text) . "\n";
+	close(FILE);
+
+	$min_index = @text - $self->{'limit'} - 1;
+      }
+
+      $formatted = join("\n\t", $text[$min_index..$#text]);
+
+      undef($text);
+      
+      goto error if ($self->_execute_cmd(qq^$self->{'rt'} create -o -t ticket set subject="$subject" owner="$owner" priority="$base_priority" queue="$queue" status="new"^, \$text) < 0);
+
+      open(FILE, "> $ticket_file") || goto error;
+      print FILE "$text\n";
+      print FILE "Text: $formatted\n";
+      close(FILE);
+
+      $cmd = "cat $ticket_file | $self->{'rt'} create -i -t ticket | grep 'created' | awk '{ print \$3 }'";
+
+#      $cmd = qq^self->{'rt'} create -o -t ticket set subject="$subject" owner="$owner" priority="$base_priority" queue="$queue" status="new" text="^ . $text . qq^" 2>/dev/null| grep 'created' | awk '{ print \$3 }'^;
+
     }
     else
     {
-      $cmd = "$self->{'rt'} --create --noedit --subject=\"$subject\" --owner=\"$owner\" --priority=\"$base_priority\" --queue=\"$queue\" --status=\"new\" --source=\"$source\"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq";
+      $cmd = qq^$self->{'rt'} --create --noedit --subject="$subject" --owner="$owner" --priority="$base_priority" --queue="$queue" --status="new" --source="$source"  2>/dev/null | grep 'created in queue' | awk '{ print \$2 }' | uniq^;
     }
 
-    return (-1) if (!defined($queue) || (($self->_execute_cmd($cmd, \$new_ticket)) < 0) || ($new_ticket eq""));
+    goto error if (!defined($queue) || (($self->_execute_cmd($cmd, \$new_ticket)) < 0) || ($new_ticket eq""));
 
-    return ($new_ticket);
+    if (defined($attachment_file))
+    {
+      # add attachment file. This is only for RT v. 3
+      goto error if ($self->_execute_cmd("$self->{'rt'} comment -m 'The full details are attached' -a $attachment_file $new_ticket"));
+    }
+
+  error:
+    unlink("$attachment_file") if (defined($attachment_file));
+    unlink("$ticket_file") if (-f $ticket_file);
+    return($new_ticket || -1);
   }
 
 
@@ -76,10 +138,11 @@ my($rt3);
 
     if ($rt3)
     {
+      $cmd = qq^$self->{'rt'} ls -t ticket -i "subject='$subject' and (status='new' or status='open')" 2>/dev/null| sed -e 's|ticket/||'^;
     }
     else
     {
-      $cmd = "$self->{'rt'} --limit-subject=\"$subject\" --limit-status=\"new\" --limit-status=\"open\" --summary='%id20' 2>/dev/null | sed '1d' | awk '{ print \$1 }'";
+      $cmd = qq^$self->{'rt'} --limit-subject="$subject" --limit-status="new" --limit-status="open" --summary='%id20' 2>/dev/null | sed '1d' | awk '{ print \$1 }'^;
     }
 
     $cur_ticket = "" if ($self->_execute_cmd($cmd, \$cur_ticket) < 0);
@@ -120,10 +183,11 @@ my($rt3);
 
     if ($rt3)
     {
+      $cmd = qq^$self->{'rt'} edit ticket/${cur_ticket} set status=resolved >/dev/null 2>&1^;
     }
     else
     {
-      $cmd = "$self->{'rt'} --status=\"resolved\" --id=\"$cur_ticket\" >/dev/null 2>&1";
+      $cmd = qq^$self->{'rt'} --status="resolved" --id="$cur_ticket" >/dev/null 2>&1^;
     }
 
     return ($self->_execute_cmd($cmd));
@@ -186,10 +250,11 @@ my($rt3);
     
     if ($rt3)
     {
+      $cmd = qq^rt show ticket/${cur_ticket} -f owner | sed '1d' | awk -F: '{ print \$2 }' | tr -d ' ' 2>/dev/null^;
     }
     else
     {
-      $cmd = "$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%owner100' 2>/dev/null | sed -e '1d' | tr -d ' '";
+      $cmd = qq^$self->{'rt'} --id="$cur_ticket" --summary='%owner100' 2>/dev/null | sed -e '1d' | tr -d ' '^;
     }
     
 
@@ -219,10 +284,11 @@ my($rt3);
 
     if ($rt3)
     {
+      $cmd = qq^rt show ticket/${cur_ticket} -f priority 2>/dev/null | sed '1d' | awk -F: '{ print \$2 }' | tr -d ' '^;
     }
     else
     {
-      $cmd = "$self->{'rt'} --id=\"$cur_ticket\" --limit-status=\"open\" --limit-status=\"new\" --summary='%priority100' 2>/dev/null | sed -e '1d' | tr -d ' '";
+      $cmd = qq^$self->{'rt'} --id="$cur_ticket" --summary='%priority100' 2>/dev/null | sed -e '1d' | tr -d ' '^;
     }
 
     $cur_priority = -1 if ($self->_execute_cmd($cmd, \$cur_priority) < 0);
@@ -242,10 +308,11 @@ my($rt3);
 
     if ($rt3)
     {
+      $cmd = qq^$self->{'rt'} edit ticket/${cur_ticket} set priority="$priority" >/dev/null 2>&1^;
     }
     else
     {
-      $cmd = "$self->{'rt'} --id=\"$cur_ticket\" --priority=\"$priority\" >/dev/null 2>&1";
+      $cmd = qq^$self->{'rt'} --id="$cur_ticket" --priority="$priority" >/dev/null 2>&1^;
     }
     return ($self->_execute_cmd($cmd))
   }
@@ -260,14 +327,16 @@ my($rt3);
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return (-1) if (!defined($keywords_listr) || !$self->valid_ticket($cur_ticket));
 
-    $kw_args = join (" --keywords=", @$keywords_listr);
     
     if ($rt3)
     {
+      # You can't do this in bloody rt3. Not even as a separate transacton. Bastards. 
+      return(0);
     }
     else
     {
-      $cmd = "$self->{'rt'} --id=$cur_ticket --keywords=$kw_args >/dev/null 2>&1"
+      $kw_args = join (" --keywords=", @$keywords_listr);
+      $cmd = qq^$self->{'rt'} --id=$cur_ticket >/dev/null 2>&1^;
     }
     
     return($self->_execute_cmd($cmd));
@@ -386,6 +455,9 @@ Baka::RT -- Perl API to the RT ticketing system.
 
       $rt->no_execute;
       $rt->no_execute(1);
+
+      $rt->text_limit;
+      $rt->text_limit(15);
 
 =back
 
@@ -513,15 +585,25 @@ to I<0> turns off "no execute" (the default setting). All other values turn
 it on.  In this mode (generally most useful with I<verbose>), the RT
 operations will not actually execute.
 
-I<NB> This method has not really ben tested.
+B<NB> This method has not really ben tested.
 
 Returns the I<current "no execute" value>.
+
+=item text_limit
+
+Set or retrieve the current text limit. If using RT version 3, you may
+select the limit of of the number of lines which will be inserted into the
+text portion of the ticket. If the output is longer than this, then the
+B<final> N lines will appear in the text portion, and the entire text will
+be attached.
+
+Returns the I<current text limit>. 
 
 =back
 
 =head1 AUTHOR
 
-James Tanis (jtt@sysd.com)
+James Tanis (james.tanis@counterstorm.com)
 
 =cut
 

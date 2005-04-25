@@ -1,3 +1,8 @@
+2005-04-25  James Tanis  <jtt@cheviot.sysdetect.com>
+
+	* Baka/RT.pm: Port ticket modifying and searching functions to RT
+	version 3.
+
 2005-01-22  James Tanis  <jtt@cheviot.sysdetect.com>
 
 	* Baka/Conf.pm: Evidently $f->{f}{b} != $f->{f}->{b} in 5.8.5. Let's
