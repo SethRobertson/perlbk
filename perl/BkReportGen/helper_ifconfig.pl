@@ -200,7 +200,7 @@ sub helper_ifconfig($$$$)
       }
     }
   }
-  $Output{'operating'} = $confidence<0?0:$confidence;
+  $Output{'operating'} = 1;
 
   $Storedref->{'helper_ifconfig_init'} = 1;
 
