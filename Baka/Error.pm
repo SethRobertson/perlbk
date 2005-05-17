@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.11 2004/12/16 18:00:44 lindauer Exp $
+# $Id: Error.pm,v 1.12 2005/05/17 17:34:16 lindauer Exp $
 #
 # ++Copyright LIBBK++
 # 
@@ -24,6 +24,7 @@
 use Log::Dispatch;
 use Log::Dispatch::Syslog;
 use Log::Dispatch::Screen;
+use FileHandle;
 
 package Baka::Error;
 require Exporter;
@@ -186,7 +187,39 @@ use strict;
     }
   }
 
-   
+
+  ##
+  # Print a message to be included in the next health check message
+  #
+  # @param message message to print
+  # @param pct health check percent, default 90%, lowest wins
+  # @return <i>1</i> on success
+  # @return <i>undef</i> on failure
+  #
+  sub write_health($;$)
+  {
+    my ($message, $pct) = @_;
+    my ($fh);
+    my $health_check_file = $ENV{'ANTURA_HOME'} . "/tmp/HEALTH_INCLUDE";
+
+    $fh = new FileHandle;
+    if (!($fh->open(">> $health_check_file")))
+    {
+      return undef;
+    }
+
+    print $fh "\n";
+
+    if (defined($pct) && ($pct >=0) && ($pct <= 99))
+    {
+      print $fh "HEALTH=$pct\n";
+    }
+
+    print $fh "$message\n";
+
+    $fh->close();
+    return 0;
+  }
 }
 
 return 1;
