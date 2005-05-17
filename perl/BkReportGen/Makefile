@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.8 2005/04/19 00:18:59 seth Exp $
+# $Id: Makefile,v 1.9 2005/05/17 19:56:22 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -26,6 +26,7 @@
 
 MODULES=					\
 	helper_df.pl				\
+	helper_health_include.pl		\
 	helper_ifconfig.pl			\
 	helper_linuxstats.pl			\
 	helper_loadaverage.pl			\
