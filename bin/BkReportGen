@@ -90,6 +90,7 @@ foreach $mainarg (<$Info{'LibDir'}/*.pl>)
   package main;
 }
 
+$Info{'LastOperatingMin'} = -1;
 foreach $mainarg (@ARGV)
 {
   my ($SavedState);
@@ -109,6 +110,7 @@ foreach $mainarg (@ARGV)
 	next;
       }
     }
+    $SIG{'INT'} = sub { unlink("$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK"); };
     open(L,">$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}.LOCK") || die "Cannot lock $mainarg\n";
     print L hostname."-$$\n" || die "Cannot lock $mainarg write\n";
     close(L) || die "Cannot lock $mainarg close\n";
