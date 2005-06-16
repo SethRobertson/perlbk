@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.12 2005/05/17 17:34:16 lindauer Exp $
+# $Id: Error.pm,v 1.13 2005/06/16 16:07:27 jtt Exp $
 #
 # ++Copyright LIBBK++
 # 
@@ -161,7 +161,7 @@ use strict;
   # @param message message to print
   # @param level level at which to print/log the message (see constructor comment).
   #
-  sub err_print($$$)
+  sub err_print($$;$)
   {
     my ($self, $message, $level) = @_;
     my $print_level = $self->{'print_level'};
