@@ -1,14 +1,14 @@
-# $Id: Error.pm,v 1.13 2005/06/16 16:07:27 jtt Exp $
+# $Id: Error.pm,v 1.14 2005/06/24 17:32:17 seth Exp $
 #
 # ++Copyright LIBBK++
-# 
+#
 # Copyright (c) 2003 The Authors. All rights reserved.
-# 
+#
 # This source code is licensed to you under the terms of the file
 # LICENSE.TXT in this release for further details.
-# 
+#
 # Mail <projectbaka\@baka.org> for further information
-# 
+#
 # --Copyright LIBBK--
 #
 
@@ -34,7 +34,7 @@ $VERSION = 1.00;
 use strict;
 {
   ##
-  # Constructor. 
+  # Constructor.
   # Valid log levels are emerg, alert, crit, err,
   # warning, notice, info, and debug.
   #
@@ -55,7 +55,7 @@ use strict;
     bless $self;
 
     $self->{'debug'} = $debug || 0;
-    
+
     $self->{'want_pid'} = $want_pid;
 
     if ($log_method)
@@ -69,26 +69,26 @@ use strict;
     {
       $log_method = 'unix';
     }
-   
+
     die "Invalid print level ($print_level).\n" if !Log::Dispatch->level_is_valid($print_level);
     die "Invalid log level ($log_level).\n" if !Log::Dispatch->level_is_valid($log_level);
 
     my $logger = Log::Dispatch->new();
-   
+
     $logger->add( Log::Dispatch::Syslog->new( name => 'syslogger',
 					      min_level => $log_level,
 					      ident => $ident,
 					      logopt => 'pid',
 					      facility => 'user',
 					      socket => $log_method ));
-   
+
     if ((-t STDERR) || $debug)
     {
       $logger->add( Log::Dispatch::Screen->new( name => 'screenlogger',
 						min_level => $print_level,
 						stderr => 1 ));
     }
-   
+
     $self->{'logger'} = $logger;
 
     return $self;
@@ -176,7 +176,7 @@ use strict;
       $level = 'err';
     }
 
-    $message = "[$$] $message" if $want_pid; 
+    $message = "[$$] $message" if $want_pid;
 
     $logger->log(level => $level, message => $message);
 

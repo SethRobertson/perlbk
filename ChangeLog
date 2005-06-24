@@ -1,3 +1,9 @@
+2005-06-24  Seth Robertson  <seth@blue.sysdetect.com>
+
+	* perl/BkReportGen/helper_health_include.pl
+	(helper_health_include($$$$)): Do not include HEALTH= in message
+	presented to user.  Fix some outright syntax errors.
+
 2005-04-25  James Tanis  <jtt@cheviot.sysdetect.com>
 
 	* Baka/RT.pm: Port ticket modifying and searching functions to RT

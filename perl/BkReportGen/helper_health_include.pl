@@ -20,17 +20,17 @@ sub helper_health_include($$$$)
   my ($Inforef, $Storedref, $Outputarrayref, $Opt) = @_;
   my (%Output);
   my (@warnings);
-  my ($confidence);
+  my ($operating);
 
   return 1 unless ($Opt->{'filename'});
   return 1 unless (open(H, $Opt->{'filename'}));
 
   foreach my $line (<H>)
   {
-    if ($line =~ /^HEALTH=([0-9]+)/)
+    if ($line =~ s/^HEALTH=([0-9]+)\s*//)
     {
       my ($tmp) = $1/100;
-      $confidence = $confidence>$tmp?$tmp:$confidence;
+      $operating = (defined($operating) && $operating>$tmp)?$tmp:$operating;
     }
     push(@warnings,$line);
   }
