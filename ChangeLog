@@ -1,3 +1,7 @@
+2005-07-15  James Tanis  <jtt@cheviot.sysdetect.com>
+
+	* lib/installlib.pl (spin($)): Option to supress spinner.
+
 2005-06-24  Seth Robertson  <seth@blue.sysdetect.com>
 
 	* perl/BkReportGen/helper_health_include.pl
