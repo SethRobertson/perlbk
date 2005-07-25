@@ -30,18 +30,22 @@ sub helper_loadaverage($$$$)
 
   $Output{'data'} = "1 Minute Load=$1  5 Minute Load=$2  15 Minute Load=$3\n";
 
+  my($extremely_high_load_average) = $Opt->{'extremely_high_load_average'} ||  16;
+  my($very_high_load_average) = $Opt->{'very_high_load_average'} ||  8;
+  my($high_load_average) = $Opt->{'high_load_average'} ||  4;
+
   # This probably should be based on the number of CPUs
-  if ($3 > 16)
+  if ($3 > $extremely_high_load_average)
   {
     $Output{'operating'} = .1;
-    $Output{'name'} = "TREMENDOUSLY HIGH Load Average";
+    $Output{'name'} = "EXTREMELY HIGH Load Average";
   }
-  elsif ($3 > 8)
+  elsif ($3 > $very_high_load_average)
   {
     $Output{'operating'} = .5;
     $Output{'name'} = "VERY HIGH Load Average";
   }
-  elsif ($3 > 4)
+  elsif ($3 > $high_load_average)
   {
     $Output{'operating'} = .75;
     $Output{'name'} = "HIGH Load Average";
