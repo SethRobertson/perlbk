@@ -30,6 +30,7 @@ sub helper_loadaverage($$$$)
 
   $Output{'data'} = "1 Minute Load=$1  5 Minute Load=$2  15 Minute Load=$3\n";
 
+  # If you alter the defaults here you must alter the defaults in customize-health-check.pl
   my($extremely_high_load_average) = $Opt->{'extremely_high_load_average'} ||  16;
   my($very_high_load_average) = $Opt->{'very_high_load_average'} ||  8;
   my($high_load_average) = $Opt->{'high_load_average'} ||  4;
