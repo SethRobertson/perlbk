@@ -18,10 +18,27 @@
 # Usage similar to -o "mailto:general@sysd.com"  Note email is not
 # encrypted.</description>
 
-
 use Mail::Mailer;
+use MIME::Entity;
 
 sub output_mailto($$$$;$)
+{
+  my ($Inforef, $output, $subject, $data, $misc) = @_;
+
+  return(output_basic_mailto(@_)) if (($Inforef->{'OutputFormat'} eq "HTML") || 
+				      $Inforef->{'CmdLine'}->{'NoMIME'});
+  return(output_MIME_mailto(@_));
+}
+
+
+################################################################
+#
+# Create a basic one part mail. For use with HTML mail (where the 
+# problems are clearly marked by a red background) and when the site
+# has added NoMIME=1 to their ${mode}_health_check_args in their 
+# local Baka conf file.
+#
+sub output_basic_mailto($$$$;$)
 {
   my ($Inforef, $output, $subject, $data, $misc) = @_;
 
@@ -62,6 +79,110 @@ sub output_mailto($$$$;$)
 
   close($mailer);
 
+  $ret;
+}
+
+
+################################################################
+#
+# Create a multipart MIME message where the first part is the comprised
+# of teh operational percentage and any problems which might exist and 
+# the second part consists of the full report.
+#
+sub output_MIME_mailto($$$$;$)
+{
+  my($Inforef, $output, $subject, $data, $misc) = @_;
+  my($sep_re) = '^\+-+\+$';
+  my($ret) = 1;
+  my(@data);
+  my($to);
+  my($top);
+  my(%headers, $header);
+  my($from);
+  my($attachment, $fh);
+  my ($charset) = $Inforef->{'CmdLine'}->{'output_mailto_charset'} || 'us-ascii';
+
+  ($headers{'To'} = $output) =~ s/^mailto://;
+  $headers{'Subject'} = $subject;
+  $headers{'Encoding'} = '-SUGGEST';
+  $headers{'Type'} = 'multipart/mixed';
+
+  foreach $header (grep(/^output_mailto_header_/,keys %{$Inforef->{'CmdLine'}}))
+  {
+    my ($h) = $header;
+    $h =~ s/output_mailto_header_//;
+    $headers{$h} = $Inforef->{'CmdLine'}->{$header};
+  }
+
+  if ($from = $Inforef->{'mailto_from'})
+  {
+    $headers{'From'} = $from;
+  }
+
+  $top = MIME::Entity->build(%headers);
+  $top->make_multipart;
+
+  if (ref($data) eq "ARRAY")
+  {
+    @data = @$data;
+  }
+  else
+  {
+    @data = split(/\n/, $$data);
+  }
+  chomp(@data);
+
+  my(@summary) = $data[0];
+
+  $data[0] =~ /\s*Operating at (\d+)/;
+  
+  if ($1 != 100)
+  {
+    my($index) = 1;
+    while ($data[$index] !~ /$sep_re/)
+    {
+      push @summary, "$data[$index++]\n";
+    }
+
+    push @summary, "$data[$index++]\n";
+
+    while (1)
+    {
+      last if ($data[$index] !~ /.*PROBLEM.*/);
+      while ($data[$index] !~ /$sep_re/)
+      {
+	push @summary, "$data[$index++]\n";
+      }
+      push @summary, "$data[$index++]\n";
+    }
+  }
+
+  $attachment = $top->attach(
+			     Type	 	=> "text/plain; charset=$charset",
+			     Encoding		=> '-SUGGEST',
+			     Data		=> '',
+			     );
+  $fh = $attachment->open("w");
+  
+  output_standard($fh, $Inforef, $output, $subject, \@summary, $misc);
+
+  $fh->close;
+  
+  $attachment = $top->attach(
+			     Type	 	=> "text/plain; charset=$charset",
+			     Encoding		=> '-SUGGEST',
+			     Data		=> '',
+			     );
+  $fh = $attachment->open("w");
+  
+  output_standard($fh, $Inforef, $output, $subject, $data, $misc);
+
+  $fh->close;
+  
+  open (MAIL, "| sendmail -t") || die "Could not spawn sendmail: $!\n";
+  $top->print(\*MAIL);
+  close(MAIL);
+  
   $ret;
 }
 

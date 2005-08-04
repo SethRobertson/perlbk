@@ -37,7 +37,6 @@ use Sys::Hostname;
 use Getopt::Long;
 use Storable('nstore','retrieve');
 use strict;
-use Baka::Conf;
 
 my($USAGE) = "Usage: $0: BkReportGen <--locking> [[-v name=variable]...] [-C <onsuccess|onfailure|*always>] [-V <returncode|tinysummary|summary|*full>] [-O <*TEXT|HTML>] [-P <seconds>] <<-o <outputname<:address>>> ...> templatename...\n";
 

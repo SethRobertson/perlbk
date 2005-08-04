@@ -14,11 +14,17 @@
 # A standard helper to run over other standard helpers and generate a standard report
 #
 
+use constant
+{
+  LINELEN => 70,
+};
+
 sub helper_simplereports($$$$$$)
 {
   my ($Inforef, $StoredRef, $Outputarrayref, $CallList, $CallData, $OperatingMinRef) = @_;
   my (@Output);
   my ($call,$ret,$line,$badop);
+  my ($linelen) = LINELEN;
 
   foreach $call (@$CallList)
   {
@@ -39,7 +45,7 @@ sub helper_simplereports($$$$$$)
   }
   else
   {
-    unshift(@$Outputarrayref, "".("-"x70)."\n");
+    unshift(@$Outputarrayref, "+".("-"x($linelen-2))."+\n");
     unshift(@$Outputarrayref, "\n");
   }
 
@@ -66,9 +72,11 @@ sub helper_simplereports($$$$$$)
       }
       else
       {
-	unshift(@$Outputarrayref, "".("-"x70)."\n");
+	# Prepend this failed test, so it appears at the top of the report.
+	unshift(@$Outputarrayref, "+".("-"x($linelen-2))."+\n");
 	unshift(@$Outputarrayref, "$line->{'data'}");
 	unshift(@$Outputarrayref, "* $line->{'name'}:\n");
+	unshift(@$Outputarrayref, center("* * * PROBLEM * * *") . "\n");
       }
     }
     else
@@ -80,9 +88,10 @@ sub helper_simplereports($$$$$$)
       }
       else
       {
+	# Append results of the test.
 	push(@$Outputarrayref, "$line->{'name'}:\n");
 	push(@$Outputarrayref, "$line->{'data'}");
-	push(@$Outputarrayref, "".("-"x70)."\n");
+	push(@$Outputarrayref, "+".("-"x($linelen-2))."+\n");
       }
     }
   }
@@ -95,13 +104,30 @@ sub helper_simplereports($$$$$$)
   }
   else
   {
-    unshift(@$Outputarrayref, "".("-"x70)."\n") if ($badop);
+    unshift(@$Outputarrayref, "+".("-"x($linelen-2))."+\n") if ($badop);
     unshift(@$Outputarrayref, sprintf("                                Operating at %.0f%%\n\n",$$OperatingMinRef*100));
   }
 
   $Inforef->{'LastOutputArray'} = \@Output;
   $Inforef->{'LastOperatingMin'} = int($$OperatingMinRef*100);
   1;
+}
+
+
+
+sub center($)
+{
+  my($string) = @_;
+  my($space_over) = (LINELEN - length($string))/2;
+  my($centered) = "";
+
+  if ($space_over)
+  {
+    $centered .= (" "x$space_over);
+  }
+  $centered .= "$string";
+  
+  return($centered);
 }
 
 1;

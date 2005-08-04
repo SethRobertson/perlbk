@@ -1,3 +1,13 @@
+2005-08-04  James Tanis  <jtt@cheviot.sysdetect.com>
+
+	* perl/BkReportGen/output_mailto.pl (output_MIME_mailto($$$$;$)):
+	Email text reports as MIME mail with two attachments. May be
+	turned off via baka conf.
+
+	* perl/BkReportGen/helper_simplereports.pl
+	(helper_simplereports($$$$$$)): Mark tests with bad return codes
+	more explicitly when preparing a text report.
+
 2005-07-15  James Tanis  <jtt@cheviot.sysdetect.com>
 
 	* lib/installlib.pl (spin($)): Option to supress spinner.
