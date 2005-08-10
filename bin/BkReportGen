@@ -36,6 +36,7 @@ use lib "$FindBin::Bin/../lib";
 use Sys::Hostname;
 use Getopt::Long;
 use Storable('nstore','retrieve');
+use Baka::Conf;
 use strict;
 
 my($USAGE) = "Usage: $0: BkReportGen <--locking> [[-v name=variable]...] [-C <onsuccess|onfailure|*always>] [-V <returncode|tinysummary|summary|*full>] [-O <*TEXT|HTML>] [-P <seconds>] <<-o <outputname<:address>>> ...> templatename...\n";
