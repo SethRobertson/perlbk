@@ -44,7 +44,7 @@ sub output_basic_mailto($$$$;$)
 
   $output =~ s/^mailto://;
 
-  my ($mailer) = new Mail::Mailer;
+  my ($mailer) = new Mail::Mailer @{$Inforef->{'mailto_args'}};
   my (%headers,$header);
   my ($charset) = $Inforef->{'CmdLine'}->{'output_mailto_charset'} || 'us-ascii';
 
@@ -99,6 +99,7 @@ sub output_MIME_mailto($$$$;$)
   my($top);
   my(%headers, $header);
   my($from);
+  my($sendmail_args);
   my($attachment, $fh);
   my ($charset) = $Inforef->{'CmdLine'}->{'output_mailto_charset'} || 'us-ascii';
 
@@ -117,6 +118,20 @@ sub output_MIME_mailto($$$$;$)
   if ($from = $Inforef->{'mailto_from'})
   {
     $headers{'From'} = $from;
+  }
+
+  $sendmail_args = '';
+  if (@{$Inforef->{'mailto_args'}})
+  {
+    $sendmail_args = join(' ', @{$Inforef->{'mailto_args'}});
+    if ($sendmail_args !~ /sendmail/)
+    {
+      $sendmail_args = '';
+    }
+    else
+    {
+      $sendmail_args =~ s/sendmail//;
+    }
   }
 
   $top = MIME::Entity->build(%headers);
@@ -179,7 +194,7 @@ sub output_MIME_mailto($$$$;$)
 
   $fh->close;
   
-  open (MAIL, "| sendmail -t") || die "Could not spawn sendmail: $!\n";
+  open (MAIL, "| sendmail $sendmail_args -t") || die "Could not spawn sendmail: $!\n";
   $top->print(\*MAIL);
   close(MAIL);
   
