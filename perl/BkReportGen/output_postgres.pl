@@ -93,7 +93,7 @@ sub output_postgres($$$$;$)
     $line->{'data'} =~ s/\"/\\\\\"/g;
     $line->{'data'} =~ s/'/\\\'/g;
 
-    push(@operating, int(($line->{'operating'}||1)*100));
+    push(@operating, int((defined($line->{'operating'})?$line->{'operating'}:1)*100));
     print $line->{'name'}." has null id\n" unless defined($line->{'id'});
     push(@name_item, '"'.$line->{'id'}.'"');
     push(@title_item, '"'.($line->{'name'}||"").'"');
