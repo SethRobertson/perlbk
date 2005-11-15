@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.11 2005/02/03 18:14:57 seth Exp $
+# $Id: Conf.pm,v 1.12 2005/11/15 00:19:03 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -124,7 +124,7 @@ $VERSION = 1.00;
 
   # Set a value in a simple baka conf with no sections and unique values
   # Return 1 on success, 0 on failure.
-  sub set_uniq_value($$$;$)
+  sub set_uniq_value($$;$$)
   {
     my($self, $key, $value, $error_ref) = @_;
     my(@lines);
