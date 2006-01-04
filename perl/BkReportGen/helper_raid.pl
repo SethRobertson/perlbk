@@ -38,7 +38,11 @@ sub helper_raid($$$$)
   {
     $_ = `megarc -ldInfo -a0 -Lall`;
     $raid .= $_;
-    $Output{'operating'} = .1 if (/Status: (?!OPTIMAL)/)
+    if (/Status: (?!OPTIMAL)/)
+    {
+      $Output{'operating'} = .1;
+      $raid .= "You may silence any beeping through the Manage link for this system\n";
+    }
   }
 
   if ($raid)
