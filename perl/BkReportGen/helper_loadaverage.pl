@@ -21,7 +21,13 @@ sub helper_loadaverage($$$$)
 {
   my ($Inforef, $Storedref, $Outputarrayref, $Opt) = @_;
   my ($uptime) = `uptime`;
+  my ($ps_cmd) = "ps axw";
+  # gawk is awk on FC4. We use "gawk" so we can filter on it while
+  # minimizing the changes that we're filtering out another awk processes
+  # (since most people will use "awk" instead of "gawk).
+  my (@ps) = `$ps_cmd -o pid,stat,uid,%cpu,vsize,priority,start,cmd | egrep -v "$ps_cmd|gawk" | gawk '\$1 == \"PID\" || \$2 ~ /[DR]/ { print }'`;
   my (%Output);
+  my ($need_ps) = 0;
 
   if ($? != 0 || $uptime !~ /average: ([0-9\.]+)[^0-9\.]+([0-9\.]+)[^0-9\.]+([0-9\.]+)/)
   {
@@ -40,16 +46,19 @@ sub helper_loadaverage($$$$)
   {
     $Output{'operating'} = .1;
     $Output{'name'} = "EXTREMELY HIGH Load Average";
+    $need_ps = 1;
   }
   elsif ($3 > $very_high_load_average)
   {
     $Output{'operating'} = .5;
     $Output{'name'} = "VERY HIGH Load Average";
+    $need_ps = 1;
   }
   elsif ($3 > $high_load_average)
   {
     $Output{'operating'} = .75;
     $Output{'name'} = "HIGH Load Average";
+    $need_ps = 1;
   }
   else
   {
@@ -57,6 +66,7 @@ sub helper_loadaverage($$$$)
     $Output{'name'} = "Load Average";
   }
 
+  $Output{'data'} .= "\n" . join("", @ps) if ($need_ps);
   $Output{'id'} = "loadaverage";
   push(@$Outputarrayref, \%Output);
 
