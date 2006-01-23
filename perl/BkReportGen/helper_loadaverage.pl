@@ -36,12 +36,13 @@ sub helper_loadaverage($$$$)
 
   $Output{'data'} = "1 Minute Load=$1  5 Minute Load=$2  15 Minute Load=$3\n";
 
-  # If you alter the defaults here you must alter the defaults in customize-health-check.pl
+  # If you alter the defaults here you must alter the defaults in
+  # admin-lib/customize-health-check.pl and awb-ids/etc/antura.conf
   my($extremely_high_load_average) = $Opt->{'extremely_high_load_average'} ||  16;
   my($very_high_load_average) = $Opt->{'very_high_load_average'} ||  8;
   my($high_load_average) = $Opt->{'high_load_average'} ||  4;
 
-  # This probably should be based on the number of CPUs
+  # This probably should be based on the number of CPUs (and disks?)
   if ($3 > $extremely_high_load_average)
   {
     $Output{'operating'} = .1;
