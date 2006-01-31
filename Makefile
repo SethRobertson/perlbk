@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.9 2004/03/02 22:13:23 seth Exp $
+# $Id: Makefile,v 1.10 2006/01/31 09:22:24 jtt Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -28,6 +28,7 @@ BK_PERL_MODS=			\
 	Baka/Error.pm		\
 	Baka/Exception.pm	\
 	Baka/Conf.pm		\
+	Baka/StructuredConf.pm	\
 # Line eater fodder
 
 BK_SUBDIR=bin perl/BkReportGen lib
