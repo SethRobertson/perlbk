@@ -1,3 +1,8 @@
+2006-02-01  James Tanis  <jtt@swift.sysdetect.com>
+
+	* Baka/StructuredConf.pm: Convience function to return value of a
+	key without derefercing yourself.
+
 2005-08-10  Alex Dupuy  <alex.dupuy@counterstorm.com>
 
 	* bin/BkReportGen: need Baka::Conf

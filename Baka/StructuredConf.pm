@@ -53,9 +53,9 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 
 {
   # Constructor
-  sub new($;$$)
+  sub new($;$$$ )
   {
-    my($self, $filename, $error) = @_;
+    my($self, $filename, $error, $debug) = @_;
     my($class) = ref($self) || $self;
 
     $self = {};
@@ -63,6 +63,8 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 
     $self->{'debug'} = 0;
     $self->{'saw_eol'} = 0;
+
+    $self->debug($debug);
 
     if (defined($filename))
     {
@@ -558,8 +560,19 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 
     return(undef) if (!defined($tree));
 
-    return(@{$tree->{'_keys'}})
+    return(@{$tree->{'_keys'}});
   }
+
+  # Convience function for returning the value of a key, which also returns of undef if the
+  # key does not exist.
+  sub val($$)
+  {
+    my($self, $key) = @_;
+    
+    return undef if (!defined($key) || (ref($key) ne "SCALAR"));
+    return (${$key});
+  }
+
 
   # Search upwards for a key
   sub search_up($$$)
@@ -689,8 +702,8 @@ value of the key.
 The contsructor may be called to simply create the object or may optionally
 pass in a F<filename> to be parsed. In addition you may pass in a scalar
 reference which will be filled out with the error string should an error
-occr. Once the object is created, all errors are retrieved via
-C<$self-E<gt>error>.
+occur. The optional third parameter is the debug level.  Once the object is
+created, all errors are retrieved via C<$self-E<gt>error>.
 
 Returns an I<object reference> on success; I<undef> on failure.
 
@@ -700,13 +713,13 @@ Takes a I<string> which contains the text of a configuration file and parses
 it. If the I<string> is not defined, it parse the current value of
 C<$self-E<gt>string>. 
 
-Returns a I<hash reference> on success; I<undef> on failure.
+Returns a I<0> on success; I<-1> on failure.
 
 =item parse_file
 
 Like C<$self-E<gt>parse($string)> but takes a F<filename> instead.
 
-Returns a I<hash reference> on success; I<undef> on failure.
+Returns a I<0> on success; I<-1> on failure.
 
 =item keys
 
@@ -724,12 +737,16 @@ It returns the keys in the top-down order in which they were parsed. Using perl'
 
 =back
 
+=item val
+
+Returns the actual string assosciated with I<key>, provided that I<key> exists I<and> that is a scalar reference, otherwise it return I<undef>.
+
 =item string
 
 Retrieve or modify the string representing the configuration file. If you
 modify the string, you will have to reparse later.
 
-Returns the I<configuration file string> on success; I<undef>x on failure.
+Returns the I<configuration file string> on success; I<undef> on failure.
 
 =item search_down
 
