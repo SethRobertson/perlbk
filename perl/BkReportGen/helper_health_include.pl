@@ -14,6 +14,13 @@
 # A standard reports helper
 #
 # <description>A module which will include a one-time-health file</description>
+#
+# Example (typically in $ANTURA_HOME/tmp/HEALTH_INCLUDE
+# HEALTH=50
+# The frobnoz is overloaded
+# HEALTH=0
+# The biftrap is broken
+
 
 sub helper_health_include($$$$)
 {
