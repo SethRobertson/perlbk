@@ -37,7 +37,7 @@ sub helper_health_include($$$$)
     if ($line =~ s/^HEALTH=([0-9]+)\s*//)
     {
       my ($tmp) = $1/100;
-      $operating = (defined($operating) && $operating>$tmp)?$tmp:$operating;
+      $operating = (defined($operating) && $operating<$tmp)?$operating:$tmp;
     }
     push(@warnings,$line);
   }
@@ -49,7 +49,7 @@ sub helper_health_include($$$$)
 
   if ($#warnings >= 0)
   {
-    unlink($Opt->{'filename'});
+    unlink($Opt->{'filename'}) || push(@warning,"\nAnd could not delete $Opt->{'filename'}: $!\n");
     $Output{'data'} = join('',@warnings);
     $Output{'operating'} = defined($operating)?$operating:.9;
   }
