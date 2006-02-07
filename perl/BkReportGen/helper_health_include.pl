@@ -29,6 +29,9 @@ sub helper_health_include($$$$)
   my (@warnings);
   my ($operating);
 
+  push(@$Outputarrayref, \%Output);
+  $Output{'id'} = "health_include";
+
   return 1 unless ($Opt->{'filename'});
   return 1 unless (open(H, $Opt->{'filename'}));
 
@@ -42,14 +45,11 @@ sub helper_health_include($$$$)
     push(@warnings,$line);
   }
   close(H);
-
-  push(@$Outputarrayref, \%Output);
-  $Output{'name'} = "Miscellaneous Health Warnings";
-  $Output{'id'} = "health_include";
+  unlink($Opt->{'filename'}) || push(@warning,"\nAnd could not delete $Opt->{'filename'}: $!\n");
 
   if ($#warnings >= 0)
   {
-    unlink($Opt->{'filename'}) || push(@warning,"\nAnd could not delete $Opt->{'filename'}: $!\n");
+    $Output{'name'} = "Miscellaneous Health Warnings";
     $Output{'data'} = join('',@warnings);
     $Output{'operating'} = defined($operating)?$operating:.9;
   }
