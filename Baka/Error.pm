@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.14 2005/06/24 17:32:17 seth Exp $
+# $Id: Error.pm,v 1.15 2006/02/10 21:48:55 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -183,7 +183,8 @@ use strict;
     if ($self->{'dyn_debug_file'})
     {
       my $fh = $self->{'dyn_debug_file'};
-      print $fh $message;
+      chomp($message);
+      print $fh "$message\n";
     }
   }
 
