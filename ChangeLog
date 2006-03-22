@@ -1,3 +1,8 @@
+2006-03-21  James Tanis  <jtt@swift.sysdetect.com>
+
+	* lib/installlib.pl (start_job($$;$)): Use -Default- queue endrun
+	for submitting jobs.
+
 2006-02-01  James Tanis  <jtt@swift.sysdetect.com>
 
 	* Baka/StructuredConf.pm: Convience function to return value of a
