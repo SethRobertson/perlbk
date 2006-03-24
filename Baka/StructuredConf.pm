@@ -109,7 +109,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
   {
     my($self, $string) = @_;
 
-    if (!defined($string = $self->string("$string")))
+    if (!defined($string = $self->string($string)))
     {
       $self->error("Parse string is undefined");
       return(-1);
