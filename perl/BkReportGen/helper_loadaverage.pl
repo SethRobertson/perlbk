@@ -39,8 +39,8 @@ sub helper_loadaverage($$$$)
   # If you alter the defaults here you must alter the defaults in
   # admin-lib/customize-health-check.pl and awb-ids/etc/antura.conf
   my($extremely_high_load_average) = $Opt->{'extremely_high_load_average'} ||  16;
-  my($very_high_load_average) = $Opt->{'very_high_load_average'} ||  8;
-  my($high_load_average) = $Opt->{'high_load_average'} ||  4;
+  my($very_high_load_average) = $Opt->{'very_high_load_average'} ||  12;
+  my($high_load_average) = $Opt->{'high_load_average'} ||  9;
 
   # This probably should be based on the number of CPUs (and disks?)
   if ($3 > $extremely_high_load_average)
