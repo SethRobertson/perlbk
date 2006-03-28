@@ -36,7 +36,7 @@ sub normalize_path($;$)
       pop @norm_components;
       next;
     }
-    
+
     push @norm_components, $component;
   }
 
