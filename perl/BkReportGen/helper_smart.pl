@@ -22,6 +22,8 @@ sub helper_smart($$$$)
   my ($disk);
   my (%Output);
 
+  $Output{'name'} = "S.M.A.R.T. Hard Drive Information";
+
   open(X, "/etc/smartd.conf") || return(1);
   foreach $disk (grep(s:^(/dev\S+).*:$1:, <X>))
   {
@@ -29,13 +31,16 @@ sub helper_smart($$$$)
     `smartctl -H $disk`;
 
     # In theory we could decode exit code to be more precise here...
-    $Output{'operating'} = .1 if ($?);
+    if ($?)
+    {
+      $Output{'operating'} = .1;
+      $Output{'name'} = "S.M.A.R.T. Hard Drive Warnings";
+    }
 
     $smart .= `smartctl -a $disk`;
   }
   close(X);
 
-  $Output{'name'} = "S.M.A.R.T. Hard Drive Information";
   $Output{'data'} = $smart;
   $Output{'id'} = "smart";
 

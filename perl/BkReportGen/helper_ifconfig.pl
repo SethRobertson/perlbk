@@ -208,14 +208,14 @@ sub helper_ifconfig($$$$)
 
   push(@$Outputarrayref, \%Output);
 
-  $Out1{'id'} = "INTERFACE WARNINGS";
+  $Out1{'id'} = "Interface Warnings";
   push(@$Outputarrayref, \%Out1);
   if ($#warnings >= 0)
   {
     my (%Out1);
 
     $Out1{'operating'} = $confidence<0?0:$confidence;
-    $Out1{'name'} = "INTERFACE WARNINGS";
+    $Out1{'name'} = "Interface Warnings";
     $Out1{'data'} = join("",@warnings);;
   }
 

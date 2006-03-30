@@ -1,3 +1,10 @@
+2006-03-30  Seth Robertson  <seth@startide.sysdetect.com>
+
+	* perl/BkReportGen/helper_loadaverage.pl
+	(helper_loadaverage($$$$)): Ensure 1 and 15 minute load averages
+	are over thresholds instead of just 15 minute, so that a high load
+	average problem that was resolved will no longer be alarmed on.
+
 2006-03-21  James Tanis  <jtt@swift.sysdetect.com>
 
 	* lib/installlib.pl (start_job($$;$)): Use -Default- queue endrun

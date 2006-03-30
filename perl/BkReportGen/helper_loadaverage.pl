@@ -43,22 +43,22 @@ sub helper_loadaverage($$$$)
   my($high_load_average) = $Opt->{'high_load_average'} ||  9;
 
   # This probably should be based on the number of CPUs (and disks?)
-  if ($3 > $extremely_high_load_average)
+  if ($3 > $extremely_high_load_average && $1 > $extremely_high_load_average)
   {
     $Output{'operating'} = .1;
-    $Output{'name'} = "EXTREMELY HIGH Load Average";
+    $Output{'name'} = "Extremely High Load Average";
     $need_ps = 1;
   }
-  elsif ($3 > $very_high_load_average)
+  elsif ($3 > $very_high_load_average && $1 > $very_high_load_average)
   {
     $Output{'operating'} = .5;
-    $Output{'name'} = "VERY HIGH Load Average";
+    $Output{'name'} = "Very High Load Average";
     $need_ps = 1;
   }
-  elsif ($3 > $high_load_average)
+  elsif ($3 > $high_load_average && $1 > $high_load_average)
   {
     $Output{'operating'} = .75;
-    $Output{'name'} = "HIGH Load Average";
+    $Output{'name'} = "High Load Average";
     $need_ps = 1;
   }
   else

@@ -49,7 +49,7 @@ sub helper_raid($$$$)
   {
     if (defined($Output{'operating'}) && $Output{'operating'} < 1)
     {
-      $Output{'name'} = "RAID Status (DEGRADED)";
+      $Output{'name'} = "Degraded RAID Status";
     }
     else
     {

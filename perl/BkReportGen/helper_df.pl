@@ -66,12 +66,12 @@ sub helper_df($$$$)
   push(@$Outputarrayref, \%Output);
 
   my(%Warn);
-  $Warn{'id'} = "DISK SPACE WARNING";
+  $Warn{'id'} = "Disk Space Warning";
   push(@$Outputarrayref, \%Warn);
 
   if ($#warnings >= 0)
   {
-    $Warn{'name'} = "DISK SPACE WARNING";
+    $Warn{'name'} = "Disk Space Warning";
     $Warn{'data'} = join("\n",@warnings)."\n";
     $Warn{'operating'} = $operating;
   }
