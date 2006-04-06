@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.12 2005/11/15 00:19:03 jtt Exp $
+# $Id: Conf.pm,v 1.13 2006/04/06 22:51:48 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -25,7 +25,7 @@ use FileHandle;
 @EXPORT_OK = qw(get get_sections get_keys set_uniq_value);
 $VERSION = 1.00;
 {
-  sub new($)
+  sub new($$)
   {
     my ($type, $filename) = @_;
     my ($fh, $line, $section,$lineno);
