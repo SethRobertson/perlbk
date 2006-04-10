@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.2 2006/04/10 20:24:54 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.3 2006/04/10 20:37:37 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -74,11 +74,20 @@ sub bruncmd($;$$$$$$ )
 {
   my($cmd, $log, $output_r, $retcode_r, $ignore_error_code, $success_code, $ignore_output) = @_;
 
+  if ($output_r)
+  {
+    switch (ref($output_r))
+    {
+      case "ARRAY" { @$output_r = (); }
+      case "SCALAR" { $$output_r = ""; }
+    }
+  }
+
   $success_code = 0 if (!defined($success_code));
 
   print $log "Running cmd: $cmd: ";
     
-  my @lines = `$cmd 2>/dev/stdout`;
+  chomp(my @lines = `$cmd 2>/dev/stdout`);
   
   my $sig = $?&0x7f;
   my $ret = ($?>>8)&0xff;
@@ -86,22 +95,26 @@ sub bruncmd($;$$$$$$ )
   print $log "$ret";
   print $log " [signal: $sig]" if ($sig);
   print $log " (ignored)" if ($ignore_error_code && ($ret != $success_code));
+  print $log "\n";
 
-  my $output_str = "" . join("$/", @lines) . "$/";
+  if (@lines)
+  {
+    my $output_str = "" . join("$/", @lines) . "$/";
 
-  if (!$ignore_output)
-  {
-    print $log "------------------------------------------------------------";
-    print $log "$output_str";
-    print $log "------------------------------------------------------------";
-  }
-  
-  if ($output_r)
-  {
-    switch (ref($output_r))
+    if (!$ignore_output)
     {
-      case "ARRAY" { @$output_r = @lines; }
-      case "SCALAR" { $$output_r = $output_str; }
+      print $log "------------------------------------------------------------\n";
+      print $log "$output_str";
+      print $log "------------------------------------------------------------\n";
+    }
+    
+    if ($output_r)
+    {
+      switch (ref($output_r))
+      {
+	case "ARRAY" { @$output_r = @lines; }
+	case "SCALAR" { $$output_r = $output_str; }
+      }
     }
   }
   
