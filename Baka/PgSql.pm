@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: PgSql.pm,v 1.1 2006/04/10 20:03:22 jtt Exp $
+# $Id: PgSql.pm,v 1.2 2006/04/10 22:38:39 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -16,23 +16,23 @@
 
 ##
 # @file
-# Read bk.conf format file
+# Connect and query routines for Posgres SQL.
+#
+# Note the $error may be either a Baka::Error instance or IO::File handle.
 #
 package Baka::PgSql;
+@ISA = qw (Exporter);
+@EXPORT_OK = qw (sqlcmd sqlquery disconnect);
 use DBI;
 use DBD::Pg;
-require Exporter;
-
-use strict;
-
-@ISA = qw (Exporter);
-@EXPORT_OK = qw();
-$VERSION = 1.00;
+use Baka::ScriptUtils;
 {
   sub new($;$$$$$$$)
   {
-    my ($dbpass, $dbname, $dbhost, $dbport, $dbuser, $dbschema, $error, $timeout) = @_;
+    my ($type, $dbpass, $dbname, $dbhost, $dbport, $dbuser, $dbschema, $error, $timeout) = @_;
+
     my $self = {};
+    bless $self, $type;
 
     $self->{'dbname'} = $dbname || $ENV{'PGDATABASE'};
     $self->{'dbpass'} = $dbpass || $ENV{'PGPASS'};
@@ -43,14 +43,14 @@ $VERSION = 1.00;
 
     if (!$self->{'dbpass'})
     {
-      $error->err_print("Database password is required") if ($error);
+      berror("Database password is required", $error) if ($error);
       return(undef);
     }
 
     my (@dsn);
-    push(@dsn,"dbname=$dbname") if ($self->{'dbname'});
-    push(@dsn,"host=$dbhost") if ($self->{'dbhost'});
-    push(@dsn,"port=$dbport") if ($self->{'dbport'});
+    push(@dsn,"dbname=$self->{dbname}") if ($self->{'dbname'});
+    push(@dsn,"host=$self->{dbhost}") if ($self->{'dbhost'});
+    push(@dsn,"port=$self->{dbport}") if ($self->{'dbport'});
 
     eval
     {
@@ -59,9 +59,9 @@ $VERSION = 1.00;
 	$SIG{'ALRM'} = sub { die "DB connect timed out\n"; };
 	alarm($timeout);
       }
-      $self->{'dbh'} = DBI->conect("dbi:Pg:" . join(";", @dsn), $self->{'dbuser'}, 
-				   $self->{'dbpass'},
-				   { AutoCommit => 1, Warn => 0, PrintError => 0 })
+      $self->{'dbh'} = DBI->connect("dbi:Pg:" . join(";", @dsn), $self->{'dbuser'}, 
+				    $self->{'dbpass'},
+				    { AutoCommit => 1, Warn => 0, PrintError => 0 })
 	|| die "Database connect error: " . $DBI::errstr . "\n";
     };
 
@@ -69,16 +69,22 @@ $VERSION = 1.00;
     
     if ($@)
     {
-      $error->err_print("$@") if ($error);
+      berror("$@", $error) if ($error);
       return undef;
+    }
+
+    if ($dbschema && (!$self->sqlcmd("set search_path to $dbschema, public", undef, $error, $timeout)))
+    {
+      print "OK\n" if ($error);
+      berror("Could not set search path to: $dbschema, public", $error) if ($error);
+      $self->{'dbh'}->disconnect;
+      return(undef);
     }
 
     return($self);
   }
 
-
-
-  sub do_sql_cmd($$;$$$$)
+  sub sqlcmd($$;$$$$)
   {
     my($self, $cmd, $attr_r, $error, $timeout) = @_;
     my $dbh = $self->{'dbh'};
@@ -92,14 +98,14 @@ $VERSION = 1.00;
 	alarm($timeout);
       }
       
-      die "SQL command failed: $dbh->errstr\n" if (!($rows = $dbh->do($sql, $attr_r)))
-    }
+      die "SQL command failed: $dbh->errstr\n" if (!($rows = $dbh->do($sql, $attr_r)));
+    };
 
     $SIG{'ALRM'} = 'DEFAULT' if ($timeout);
 
-    if (@)
+    if ($@)
     {
-      $error->err_print("$@") if ($error);
+      berror("$@", $error) if ($error);
       return(undef);
     }
 
@@ -108,9 +114,9 @@ $VERSION = 1.00;
 
 
 
-  sub do_sql_query($$;$$)
+  sub sqlquery($$;$$)
   {
-    my($self, $query, $error, $timeout) =  @_;
+    my($self, $sql, $error, $timeout) =  @_;
     my $dbh = $self->{'dbh'};
     my($sth, $rows);
 
@@ -124,13 +130,13 @@ $VERSION = 1.00;
 
       die "Could not prepare SQL query\n" if (!($sth = $dbh->prepare($sql)));
       die "Could not execute SQL query\n" if (!$sth->execute);
-    }
+    };
 
     $SIG{'ALRM'} = 'DEFAULT' if ($timeout);
 
     if ($@)
     {
-      $error->err_print("$@") if ($error);
+      berror("$@", $error) if ($error);
       return(undef);
     }
 
@@ -144,7 +150,6 @@ $VERSION = 1.00;
     my($self) = @_;
     $self->{'dbh'}->disconnect();
   }
-
 };
 
 1;

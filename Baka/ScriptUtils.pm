@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.3 2006/04/10 20:37:37 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.4 2006/04/10 22:38:39 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -31,19 +31,23 @@ use Exporter 'import';
 #
 # Print an error message to an optional log or error source.
 #
-sub berror($;$$ )
+sub berror($$ )
 {
-  my($msg, $log, $error) = @_;
+  my($msg, $log) = @_;
 
   # Make sure the message a separator at the end.
   chomp($msg);
   $msg .= $/;  
 
-  #print STDERR "MSG: $msg";
-  
-  #$error->err_print("$msg") if ($error);
-  print $log "$msg" if ($log);
-  
+  if (ref($log) eq "Baka::Error")
+  {
+    $log->err_print($msg);
+  }
+  else
+  {
+    print $log "$msg";
+  }
+
   return;
 }
 
@@ -53,12 +57,12 @@ sub berror($;$$ )
 #
 # Die with an optional message and error code
 #
-sub bdie($;$$$ )
+sub bdie($;$$ )
 {
-  my($msg, $log, $error, $ecode) = @_;
+  my($msg, $log, $ecode) = @_;
 
   $ecode = 1 if (!defined($ecode));
-  berror($msg, $log, $error);
+  berror($msg, $log);
   exit($ecode);
 }
 

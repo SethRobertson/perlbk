@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.15 2006/02/10 21:48:55 jtt Exp $
+# $Id: Error.pm,v 1.16 2006/04/10 22:38:39 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -18,8 +18,6 @@
 # @file
 # Error logger.
 #
-
-
 
 use Log::Dispatch;
 use Log::Dispatch::Syslog;
