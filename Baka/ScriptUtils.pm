@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.1 2006/04/10 20:03:22 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.2 2006/04/10 20:24:54 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -22,6 +22,7 @@
 package Baka::ScriptUtils;
 use Switch;
 use IO::File;
+use Baka::Error;
 use Exporter 'import';
 @EXPORT_OK = qw (berror bdie bruncmd bopen_log);
 
@@ -37,8 +38,10 @@ sub berror($;$$ )
   # Make sure the message a separator at the end.
   chomp($msg);
   $msg .= $/;  
+
+  #print STDERR "MSG: $msg";
   
-  $error->err_print("$msg") if ($error);
+  #$error->err_print("$msg") if ($error);
   print $log "$msg" if ($log);
   
   return;
@@ -55,7 +58,7 @@ sub bdie($;$$$ )
   my($msg, $log, $error, $ecode) = @_;
 
   $ecode = 1 if (!defined($ecode));
-  berror($msg, $error, $log);
+  berror($msg, $log, $error);
   exit($ecode);
 }
 
