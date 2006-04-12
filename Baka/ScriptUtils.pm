@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.4 2006/04/10 22:38:39 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.5 2006/04/12 04:25:09 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -24,12 +24,12 @@ use Switch;
 use IO::File;
 use Baka::Error;
 use Exporter 'import';
-@EXPORT_OK = qw (berror bdie bruncmd bopen_log);
+@EXPORT_OK = qw (berror bmsg bdebug bdie bruncmd bopen_log);
 
 
 ################################################################
 #
-# Print an error message to an optional log or error source.
+# Print an error message to an optional log or Baka::Error stream
 #
 sub berror($$ )
 {
@@ -42,6 +42,58 @@ sub berror($$ )
   if (ref($log) eq "Baka::Error")
   {
     $log->err_print($msg);
+  }
+  else
+  {
+    print $log "$msg";
+  }
+
+  return;
+}
+
+
+
+################################################################
+#
+# Print a message to an optional log or Baka::Error stream (at debug level)
+#
+sub bdebug($$ )
+{
+  my($msg, $log) = @_;
+
+  # Make sure the message a separator at the end.
+  chomp($msg);
+  $msg .= $/;  
+
+  if (ref($log) eq "Baka::Error")
+  {
+    $log->dprint($msg);
+  }
+  else
+  {
+    print $log "$msg";
+  }
+
+  return;
+}
+
+
+
+################################################################
+#
+# Print a message to an optional log or Baka::Error stream (at info level)
+#
+sub bmsg($$ )
+{
+  my($msg, $log) = @_;
+
+  # Make sure the message a separator at the end.
+  chomp($msg);
+  $msg .= $/;  
+
+  if (ref($log) eq "Baka::Error")
+  {
+    $log->dprint($msg, 'info');
   }
   else
   {

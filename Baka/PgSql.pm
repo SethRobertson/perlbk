@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: PgSql.pm,v 1.2 2006/04/10 22:38:39 jtt Exp $
+# $Id: PgSql.pm,v 1.3 2006/04/12 04:25:09 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -25,7 +25,7 @@ package Baka::PgSql;
 @EXPORT_OK = qw (sqlcmd sqlquery disconnect);
 use DBI;
 use DBD::Pg;
-use Baka::ScriptUtils;
+use Baka::ScriptUtils qw(berror bmsg);
 {
   sub new($;$$$$$$$)
   {
@@ -90,6 +90,8 @@ use Baka::ScriptUtils;
     my $dbh = $self->{'dbh'};
     my $rows;
 
+    bmsg("SQL Command: $cmd", $error) if ($error);
+
     eval
     {
       if ($timeout)
@@ -98,7 +100,9 @@ use Baka::ScriptUtils;
 	alarm($timeout);
       }
       
-      die "SQL command failed: $dbh->errstr\n" if (!($rows = $dbh->do($sql, $attr_r)));
+      $rows = $dbh->do($cmd, $attr_r);
+
+      die "SQL command failed: " . $dbh->errstr . "\n" if (!defined($rows));
     };
 
     $SIG{'ALRM'} = 'DEFAULT' if ($timeout);
@@ -119,6 +123,8 @@ use Baka::ScriptUtils;
     my($self, $sql, $error, $timeout) =  @_;
     my $dbh = $self->{'dbh'};
     my($sth, $rows);
+
+    bmsg("SQL Query: $sql", $error) if ($error);
 
     eval
     {
@@ -143,6 +149,20 @@ use Baka::ScriptUtils;
     return($sth);
   }
 
+
+  sub errstr($ )
+  {
+    my($self) = @_;
+    my($dbh) = $self->{'dbh'};
+    return($dbh->errstr);
+  }
+
+
+  sub dbh($ )
+  {
+    my($self) = @_;
+    return($self->{'dbh'});
+  }
 
 
   sub disconnect($)
