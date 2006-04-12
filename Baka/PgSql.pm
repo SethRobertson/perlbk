@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: PgSql.pm,v 1.3 2006/04/12 04:25:09 jtt Exp $
+# $Id: PgSql.pm,v 1.4 2006/04/12 17:32:29 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -86,7 +86,7 @@ use Baka::ScriptUtils qw(berror bmsg);
 
   sub sqlcmd($$;$$$$)
   {
-    my($self, $cmd, $attr_r, $error, $timeout) = @_;
+    my($self, $cmd, $error, $timeout, $attr_r) = @_;
     my $dbh = $self->{'dbh'};
     my $rows;
 
