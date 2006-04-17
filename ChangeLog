@@ -1,3 +1,8 @@
+2006-04-17  James Tanis  <jtt@swift.sysdetect.com>
+
+	* Baka/NetUtils.pm (netmask_from_bits($): Create a netmask from a
+	bit length argument.
+
 2006-03-30  Seth Robertson  <seth@startide.sysdetect.com>
 
 	* perl/BkReportGen/helper_loadaverage.pl

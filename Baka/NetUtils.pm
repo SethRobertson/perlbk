@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: NetUtils.pm,v 1.1 2006/01/29 06:08:53 jtt Exp $
+# $Id: NetUtils.pm,v 1.2 2006/04/17 21:19:59 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -21,7 +21,7 @@
 
 package Baka::NetUtils;
 use Exporter 'import';
-@EXPORT_OK = qw (inet_atoi inet_itoa network_match network_part);
+@EXPORT_OK = qw (inet_atoi inet_itoa network_match network_part netmask_from_bits);
 
 
 ################################################################
@@ -38,7 +38,7 @@ sub inet_atoi( $)
   my($a, $b, $c, $d) = split(/\./, $addr);
 
   $val = ($a<<24) | ($b<<16) | ($c<<8) | $d;
-  return($val);
+  return(($val)&0xffffffff);
 }
 
 
@@ -91,4 +91,18 @@ sub network_part( $$)
   my($val) = ($a&$n)&0xffffffff;
 
   return (inet_itoa($val));
+}
+
+
+################################################################
+#
+# Return the a netmask (as an integer) based on a bit length
+#
+sub netmask_from_bits($ )
+{
+  my($bits) = @_;
+
+  return (-1) if (($bits < 0) || ($bits > 32));
+
+  return ((((2**$bits)-1)<<(32-$bits))&0xffffffff);
 }
