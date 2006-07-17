@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.16 2006/04/10 22:38:39 jtt Exp $
+# $Id: Error.pm,v 1.17 2006/07/17 20:41:18 lindauer Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -80,7 +80,7 @@ use strict;
 					      facility => 'user',
 					      socket => $log_method ));
 
-    if ((-t STDERR) || $debug)
+    if ((! -p STDERR) || $debug)
     {
       $logger->add( Log::Dispatch::Screen->new( name => 'screenlogger',
 						min_level => $print_level,
