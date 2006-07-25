@@ -18,7 +18,7 @@
 sub helper_smart($$$$)
 {
   my ($Inforef, $Storedref, $Outputarrayref, $Opt) = @_;
-  my ($smart);
+  my ($smart) = "";
   my ($disk);
   my (%Output);
 
