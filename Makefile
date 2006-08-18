@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.10 2006/01/31 09:22:24 jtt Exp $
+# $Id: Makefile,v 1.11 2006/08/18 21:58:07 jtt Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -28,6 +28,7 @@ BK_PERL_MODS=			\
 	Baka/Error.pm		\
 	Baka/Exception.pm	\
 	Baka/Conf.pm		\
+	Baka/ScriptUtils.pm	\
 	Baka/StructuredConf.pm	\
 # Line eater fodder
 

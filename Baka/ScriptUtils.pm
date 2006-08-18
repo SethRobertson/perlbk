@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.6 2006/04/13 15:07:03 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.7 2006/08/18 21:58:08 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -25,8 +25,9 @@ use IO::File;
 use Baka::Error;
 use POSIX qw(isatty);
 use Exporter 'import';
-@EXPORT_OK = qw (berror bmsg bdebug bdie bruncmd bopen_log);
+@EXPORT_OK = qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr);
 
+my $want_stderr = 0;
 
 ################################################################
 #
@@ -110,14 +111,14 @@ sub bmsg($$ )
 #
 # Die with an optional message and error code
 #
-sub bdie($;$$ )
+sub bdie($$;$ )
 {
   my($msg, $log, $ecode) = @_;
 
   $ecode = 1 if (!defined($ecode));
   berror($msg, $log);
 
-  if (isatty(fileno(STDERR)))
+  if (isatty(fileno(STDERR)) || $want_stderr)
   {
     # Make sure the message a separator at the end.
     chomp($msg);
@@ -133,7 +134,7 @@ sub bdie($;$$ )
 #
 # Run a shell command. Optionally collect output and return code.
 # May optionally ignore non-success return codes.
-# May optinoally set the value of success
+# May optionally set the value of success
 #
 sub bruncmd($;$$$$$$ )
 {
@@ -152,15 +153,23 @@ sub bruncmd($;$$$$$$ )
 
   print $log "Running cmd: $cmd: ";
     
+  # If the caller is catching SIGCHLD, he probably doesn't want it caught for this, so 
+  # reset it across the backtick call.
+  my $old_chld = $SIG{'CHLD'};
+  $SIG{'CHLD'} = 'DEFAULT';
   chomp(my @lines = `$cmd 2>/dev/stdout`);
+  $SIG{'CHLD'} = $old_chld;
   
-  my $sig = $?&0x7f;
-  my $ret = ($?>>8)&0xff;
+  my $exitcode = ($?&0xffff);
+  my $sig = $exitcode&0x7f;
+  my $ret = ($exitcode>>8)&0xff;
 
   print $log "$ret";
   print $log " [signal: $sig]" if ($sig);
   print $log " (ignored)" if ($ignore_error_code && ($ret != $success_code));
   print $log "\n";
+
+  print $log "------------------------------------------------------------\n";
 
   if (@lines)
   {
@@ -168,7 +177,6 @@ sub bruncmd($;$$$$$$ )
 
     if (!$ignore_output)
     {
-      print $log "------------------------------------------------------------\n";
       print $log "$output_str";
       print $log "------------------------------------------------------------\n";
     }
@@ -193,7 +201,7 @@ sub bruncmd($;$$$$$$ )
 #
 # Open a log file of the type used by these routines.
 #
-sub bopen_log($;$$ )
+sub bopen_log($;$$$ )
 {
   my($filename, $append, $error, $no_autoflush) = @_;
   my $write_open_type;
@@ -222,3 +230,19 @@ sub bopen_log($;$$ )
   return($log);
 }
 
+
+################################################################
+#
+# Obtain or set the value of want_stderr
+#
+sub bwant_stderr(;$)
+{
+  my($preference) = @_;
+
+  return $want_stderr if (!defined($preference));
+  
+  $want_stderr = $preference;
+  return;
+}
+
+1;
