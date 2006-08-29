@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.7 2006/08/18 21:58:08 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.8 2006/08/29 17:55:25 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -158,7 +158,7 @@ sub bruncmd($;$$$$$$ )
   my $old_chld = $SIG{'CHLD'};
   $SIG{'CHLD'} = 'DEFAULT';
   chomp(my @lines = `$cmd 2>/dev/stdout`);
-  $SIG{'CHLD'} = $old_chld;
+  $SIG{'CHLD'} = $old_chld if (defined($old_chld));
   
   my $exitcode = ($?&0xffff);
   my $sig = $exitcode&0x7f;
