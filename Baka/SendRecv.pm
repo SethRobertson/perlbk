@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: SendRecv.pm,v 1.1 2006/09/01 06:40:00 jtt Exp $
+# $Id: SendRecv.pm,v 1.2 2006/09/04 07:11:50 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -218,7 +218,7 @@ our $errstr;
 
   sub recv($@)
   {
-    my($self, @things) = @_;
+    my($self, @wanted_things) = @_;
     my ($socket, $cnt);
 
     if (!defined($socket = $self->{'socket'}))
@@ -227,19 +227,25 @@ our $errstr;
       return(0);
     }
 
-    return (0) if (!$self->_check_refs(@things));
+    return (0) if (!$self->_check_refs(@wanted_things));
 
     chomp(my $frozen_text = $socket->getline);
 
     my @received_things = thaw($frozen_text);
 
-    for($cnt = 0; $cnt < @things; $cnt++)
+    if (@received_things != @wanted_things)
     {
-      switch (ref($things[$cnt]))
+      $self->{'errstr'} = "Received " . scalar(@received_things) . " things, expected " . scalar(@wanted_things);
+      return(0);
+    }
+
+    for($cnt = 0; $cnt < @wanted_things; $cnt++)
+    {
+      switch (ref($wanted_things[$cnt]))
       {
-	case "SCALAR" { ${$things[$cnt]} = ${$received_things[$cnt]}; }
-	case "ARRAY" { @{$things[$cnt]} = @{$received_things[$cnt]}; }
-	case "HASH" { %{$things[$cnt]} = %{$received_things[$cnt]}; }
+	case "SCALAR" { ${$wanted_things[$cnt]} = ${$received_things[$cnt]}; }
+	case "ARRAY" { @{$wanted_things[$cnt]} = @{$received_things[$cnt]}; }
+	case "HASH" { %{$wanted_things[$cnt]} = %{$received_things[$cnt]}; }
       }
     }
     
