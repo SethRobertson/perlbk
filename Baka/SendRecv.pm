@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: SendRecv.pm,v 1.2 2006/09/04 07:11:50 jtt Exp $
+# $Id: SendRecv.pm,v 1.3 2006/09/08 22:19:04 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -37,6 +37,14 @@ use constant
 };
 
 our $errstr;
+
+# Special string which we use as our record separator so that instances of
+# $/ (generally NEWLINE of course) which are embeded in our frozen string
+# do not cause problems on the read side. This valus is modifiable by the
+# user in case our chosen default actually occurs in their data (though
+# binary data should always be uuencoded first). As you can plainly see,
+# the default value is the "EOL" in octal.
+our $eol = "\005\015\012"; 
 
 {
   sub new($%)
@@ -205,7 +213,12 @@ our $errstr;
 
     my $frozen_text = freeze(@things);
 
-    if (!$socket->print("$frozen_text\n"))
+    my $old_eol=$/;
+    $/ = $eol;
+    my $result = $socket->print("$frozen_text$/");
+    $/ = $old_eol;
+    
+    if (!$result)
     {
       $self->{'errstr'} = "Could not write out frozen data: $!";
       return(0);
@@ -229,7 +242,10 @@ our $errstr;
 
     return (0) if (!$self->_check_refs(@wanted_things));
 
+    my $old_eol = $/;
+    $/ = $eol;
     chomp(my $frozen_text = $socket->getline);
+    $/ = $old_eol;
 
     my @received_things = thaw($frozen_text);
 
