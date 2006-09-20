@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.9 2006/09/20 19:51:10 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.10 2006/09/20 21:33:32 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -157,7 +157,7 @@ sub bruncmd($;$$$$$$ )
   # reset it across the backtick call.
   my $old_chld = $SIG{'CHLD'};
   $SIG{'CHLD'} = 'DEFAULT';
-  chomp(my @lines = `exec 2>/dev/stdout $cmd`);
+  chomp(my @lines = `exec 2>/dev/stdout; $cmd`);
   $SIG{'CHLD'} = $old_chld if (defined($old_chld));
   
   my $exitcode = ($?&0xffff);
