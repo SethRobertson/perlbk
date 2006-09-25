@@ -87,9 +87,9 @@ sub helper_mce($$$$)
 
 Machine check exceptions are hardware errors such as memory errors,
 overheating problems, bus errors, or cache errors.  Receiving a
-machine check excpetion is a sign that either your hardware is dying,
+machine check exception is a sign that either your hardware is dying,
 or the environment of the hardware (power, temperature, airflow) is
-bad.  It may often be a good idea to reboot your system and examine
+bad.  It is often a good idea to reboot your system and examine
 the environment; and if the problems persists, replace the hardware.
 Please contact technical support for more information.
 
