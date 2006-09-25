@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.10 2005/09/19 17:45:47 seth Exp $
+# $Id: Makefile,v 1.11 2006/09/25 18:39:25 seth Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -30,6 +30,7 @@ MODULES=					\
 	helper_ifconfig.pl			\
 	helper_linuxstats.pl			\
 	helper_loadaverage.pl			\
+	helper_mce.pl				\
 	helper_raid.pl				\
 	helper_sensors.pl			\
 	helper_simplereports.pl			\
