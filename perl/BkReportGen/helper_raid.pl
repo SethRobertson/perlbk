@@ -28,7 +28,8 @@ sub helper_raid($$$$)
   {
     if (grep(/ARRAY/,<X>))
     {
-      $raid = `mdadm -D -s -v 2>&1`;
+      # FC5 mdadm (v2.3) requires two 'v' options to give details with -Ds
+      $raid = `mdadm -D -s -vv 2>&1`;
       $Output{'operating'} = .1 if (/State : (?!clean)/);
     }
     close(X);
@@ -43,6 +44,20 @@ sub helper_raid($$$$)
       $Output{'operating'} = .1;
       $raid .= "You may silence any beeping through the Manage link for this system\n";
     }
+  }
+
+  if (-c '/dev/twa1')
+  {
+    $_ = `tw_cli show`;
+    $raid .= $_;
+    # Ctl Model Ports Drives Units NotOpt RRate VRate BBU
+    /^(c\d)\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+\d+\s+\d+\s+(\S+)/m;
+    # Battery backup unit problems (write cache automatically disabled)
+    $Output{'operating'} = .8
+      if ($3 !~ /OK|Testing|Charging/i);
+    $Output{'operating'} = .1
+      if ($2 > 0);
+    $raid .= `tw_cli /$1 show unitstatus `;
   }
 
   if ($raid)

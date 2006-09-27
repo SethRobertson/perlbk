@@ -1,3 +1,8 @@
+2006-09-27  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_raid.pl (helper_raid): #8079: do 3ware RAID;
+	actually get details for software RAID on FC5 (requires two -v's)
+	
 2006-09-26  Alexander Dupuy  <alex.dupuy@counterstorm.com>
 
 	* perl/BkReportGen/helper_smart.pl (helper_smart): parse smartctl exit
