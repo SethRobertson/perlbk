@@ -1,3 +1,8 @@
+2006-09-26  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_smart.pl (helper_smart): parse smartctl exit
+	#8079: handle -d device option for SATA and 3ware RAID
+	
 2006-04-17  James Tanis  <jtt@swift.sysdetect.com>
 
 	* Baka/NetUtils.pm (netmask_from_bits($): Create a netmask from a
