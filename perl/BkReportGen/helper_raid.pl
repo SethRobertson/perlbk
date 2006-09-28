@@ -26,11 +26,11 @@ sub helper_raid($$$$)
 
   if (open(X,"/proc/mdstat"))
   {
-    if (grep(/ARRAY/,<X>))
+    if (grep(/active raid/,<X>))
     {
       # FC5 mdadm (v2.3) requires two 'v' options to give details with -Ds
       $raid = `mdadm -D -s -vv 2>&1`;
-      $Output{'operating'} = .1 if (/State : (?!clean)/);
+      $Output{'operating'} = .1 if ($raid =~ /State : (?!clean)/);
     }
     close(X);
   }

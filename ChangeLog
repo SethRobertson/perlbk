@@ -1,7 +1,11 @@
-2006-09-27  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+2006-09-27  Alex Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_df.pl (helper_df): add LVM2 PV and LV stats
+
+	* perl/BkReportGen/helper_raid.pl (helper_raid): REALLY actually
+	get health and details for software RAID on FC5 (this *never* worked!)
 
 	* perl/BkReportGen/helper_raid.pl (helper_raid): #8079: do 3ware RAID;
-	actually get details for software RAID on FC5 (requires two -v's)
 	
 2006-09-26  Alexander Dupuy  <alex.dupuy@counterstorm.com>
 

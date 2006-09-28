@@ -24,12 +24,16 @@ sub helper_df($$$$)
   my (@warnings);
   my ($operating) = 1;
 
-  my ($dfkb,$dfin);
+  my ($dfkb,$dfin,$pvslvs);
   $dfkb = `df -HTl`;
   if ($? != 0)
   {
     return "df command failed: $?\n";
   }
+
+  $pvslvs = "";
+  $pvslvs = `echo; pvs; echo; lvs`
+    if ($dfkb =~ /Vol/);
 
   $dfin = `df -HTli`;
   if ($? != 0)
@@ -39,7 +43,7 @@ sub helper_df($$$$)
 
   $Output{'name'} = "Disk Usage";
   $Output{'id'} = "df";
-  $Output{'data'} = "$dfkb";
+  $Output{'data'} = $dfkb . $pvslvs;
   $operating = $Output{'operating'} = 1;
 
   # Should we attempt to filter out crap?
