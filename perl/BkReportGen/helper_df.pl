@@ -32,7 +32,9 @@ sub helper_df($$$$)
   }
 
   $pvslvs = "";
-  $pvslvs = `echo; pvs; echo; lvs`
+  # LVM commands are cranky about extra open file descriptors; appease them
+  $pvslvs = `f=3; while [ \$f -lt 64 ]; do eval exec "\$f>&-"; ((f=\$f+1)); done;
+		echo; pvs; echo; lvs`
     if ($dfkb =~ /Vol/);
 
   $dfin = `df -HTli`;

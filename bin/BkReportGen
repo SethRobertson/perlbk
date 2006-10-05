@@ -31,8 +31,15 @@
 #
 ######################################################################
 
-use FindBin;
-use lib "$FindBin::Bin/../lib";
+use FindBin qw($Bin);
+use vars qw ($Base);
+sub BEGIN
+{
+  $Base= $Bin;
+  $Base = Cwd::abs_path("$Bin/..")
+    if (!($Base =~ s=/(bin|perl)/?$==));
+}
+use lib "$Base/lib";
 use Sys::Hostname;
 use Getopt::Long;
 use Storable('nstore','retrieve');
