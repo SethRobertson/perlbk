@@ -1,3 +1,8 @@
+2006-10-10  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_df.pl (helper_df): #8514: work around bug in
+	bash-3.1 (no, really!) where 10>&- etc. don't actually close fds > 9
+
 2006-10-05  Alexander Dupuy  <alex.dupuy@counterstorm.com>
 
 	* perl/BkReportGen/helper_df.pl (helper_df): #8514: avoid LVM gripes

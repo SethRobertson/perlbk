@@ -33,8 +33,14 @@ sub helper_df($$$$)
 
   $pvslvs = "";
   # LVM commands are cranky about extra open file descriptors; appease them
-  $pvslvs = `f=3; while [ \$f -lt 64 ]; do eval exec "\$f>&-"; ((f=\$f+1)); done;
-		echo; pvs; echo; lvs`
+
+  # <TRICKY bugid="8514">bash 3.1 won't close fds > 9 (e.g. 16>&-), so we
+  # *move* them to fd 3 and close that - but bash gives Bad file descriptor
+  # errors when moving a closed fd (closing a closed fd won't), so we must
+  # check to see what's open and only attempt to close those extra fds</TRICKY>
+  $pvslvs = `cd /proc/self/fd && for f in *; do case \$f in 0|1|2) :;; *)
+		eval "exec 3>&\$f- 3>&-"; ((f=\$f+1)); esac; done;
+                echo; pvs; echo; lvs`
     if ($dfkb =~ /Vol/);
 
   $dfin = `df -HTli`;
