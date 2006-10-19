@@ -39,8 +39,8 @@ sub helper_df($$$$)
   # errors when moving a closed fd (closing a closed fd won't), so we must
   # check to see what's open and only attempt to close those extra fds</TRICKY>
   $pvslvs = `cd /proc/self/fd && for f in *; do case \$f in 0|1|2) :;; *)
-		eval "exec 3>&\$f- 3>&-"; ((f=\$f+1)); esac; done;
-                echo; pvs; echo; lvs`
+	       test -e \$f && eval "exec 3>&\$f- 3>&-"; ((f=\$f+1)); esac; done;
+               echo; pvs; echo; lvs`
     if ($dfkb =~ /Vol/);
 
   $dfin = `df -HTli`;
