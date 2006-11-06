@@ -3,6 +3,14 @@
 	* perl/BkReportGen/helper_df.pl (helper_df): #8572: verify entries from
 	/proc/self/dev/ to avoid spurious close errors
 
+2006-10-19  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_raid.pl (helper_raid): #8575: "active" is OK
+
+2006-10-16  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_raid.pl (helper_raid): #8544: fix errors
+
 2006-10-10  Alexander Dupuy  <alex.dupuy@counterstorm.com>
 
 	* perl/BkReportGen/helper_df.pl (helper_df): #8514: work around bug in

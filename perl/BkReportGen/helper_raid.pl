@@ -18,8 +18,8 @@
 sub helper_raid($$$$)
 {
   my ($Inforef, $Storedref, $Outputarrayref, $Opt) = @_;
-  my ($raid);
-  my (%Output);
+  my $raid = '';
+  my %Output;
 
   $Output{'id'} = "raid";
   push(@$Outputarrayref, \%Output);
@@ -30,7 +30,7 @@ sub helper_raid($$$$)
     {
       # FC5 mdadm (v2.3) requires two 'v' options to give details with -Ds
       $raid = `mdadm -D -s -vv 2>&1`;
-      $Output{'operating'} = .1 if ($raid =~ /State : (?!clean)/);
+      $Output{'operating'} = .1 if ($raid =~ /State : (?!clean|active)/);
     }
     close(X);
   }
@@ -52,12 +52,15 @@ sub helper_raid($$$$)
     $raid .= $_;
     # Ctl Model Ports Drives Units NotOpt RRate VRate BBU
     /^(c\d)\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+\d+\s+\d+\s+(\S+)/m;
+    my $ctl = $1;
+    my $notopt = $2;
+    my $bbu = $3;
     # Battery backup unit problems (write cache automatically disabled)
     $Output{'operating'} = .8
-      if ($3 !~ /OK|Testing|Charging/i);
+      if ($bbu !~ /OK|Testing|Charging/i);
     $Output{'operating'} = .1
-      if ($2 > 0);
-    $raid .= `tw_cli /$1 show unitstatus `;
+      if ($notopt > 0);
+    $raid .= `tw_cli /$ctl show unitstatus`;
   }
 
   if ($raid)
