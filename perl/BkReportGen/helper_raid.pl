@@ -58,9 +58,24 @@ sub helper_raid($$$$)
     # Battery backup unit problems (write cache automatically disabled)
     $Output{'operating'} = .8
       if ($bbu !~ /OK|Testing|Charging/i);
-    $Output{'operating'} = .1
+
+    # Not Optimal refers to any state except OK and VERIFYING.  Other states
+    # include INITIALIZING, INIT-PAUSED, REBUILDING, REBUILD-PAUSED, DEGRADED,
+    # MIGRATING, MIGRATE-PAUSED, RECOVERY, INOPERABLE, and UNKNOWN.
+    # [we assign 90% health for INITIALIZING and MIGRATING; others dealt with below]
+    $Output{'operating'} = .9
       if ($notopt > 0);
     $raid .= `tw_cli /$ctl show unitstatus`;
+    # special case for initializing/verifying/rebuilding status
+    my @raidunits = grep(/^u[0-9]/, split(/\n/, $raid));
+    $Output{'operating'} = .75
+      if (grep(/-PAUSED/,@raidunits));
+    $Output{'operating'} = .5
+      if (grep(/REBUILDING/,@raidunits));
+    $Output{'operating'} = .25
+      if (grep(/RECOVERY|REBUILD-PAUSED/,@raidunits));
+    $Output{'operating'} = .1
+      if (grep(/DEGRADED|INOPERABLE|UNKNOWN/,@raidunits));
   }
 
   if ($raid)
