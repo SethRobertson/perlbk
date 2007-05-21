@@ -83,27 +83,28 @@ my($rt3);
 
       $self->_execute_cmd("cat $source", \$text);
 
-      @text = split(/\n/, $text);
-
-      if ($self->{'limit'} && (@text > $self->{'limit'}))
+      if (@text = split(/\n/, $text))
       {
-	$attachment_file = "/tmp/attach";
-	open(FILE, "> $attachment_file") || goto error;
-	print FILE "" . join("\n", $text) . "\n";
-	close(FILE);
+	if ($self->{'limit'} && ($#text > $self->{'limit'}))
+	{
+	  $attachment_file = "/tmp/attach";
+	  open(FILE, "> $attachment_file") || goto error;
+	  print FILE "" . join("\n", $text) . "\n";
+	  close(FILE);
 
-	$min_index = @text - $self->{'limit'} - 1;
+	  $min_index = $#text - $self->{'limit'} - 1;
+	}
+
+	$formatted = join("\n\t", $text[$min_index..$#text]);
+
+	undef($text);
       }
-
-      $formatted = join("\n\t", $text[$min_index..$#text]);
-
-      undef($text);
       
       goto error if ($self->_execute_cmd(qq^$self->{'rt'} create -o -t ticket set subject="$subject" owner="$owner" priority="$base_priority" queue="$queue" status="new"^, \$text) < 0);
 
       open(FILE, "> $ticket_file") || goto error;
       print FILE "$text\n";
-      print FILE "Text: $formatted\n";
+      print FILE "Text: $formatted\n" if ($formatted);
       close(FILE);
 
       $cmd = "cat $ticket_file | $self->{'rt'} create -i -t ticket | grep 'created' | awk '{ print \$3 }'";
