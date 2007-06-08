@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.12 2006/09/04 07:11:49 jtt Exp $
+# $Id: Makefile,v 1.13 2007/06/08 20:05:06 jtt Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -25,9 +25,10 @@
 #
 
 BK_PERL_MODS=			\
+	Baka/Conf.pm		\
 	Baka/Error.pm		\
 	Baka/Exception.pm	\
-	Baka/Conf.pm		\
+	Baka/PgSql.pm		\
 	Baka/ScriptUtils.pm	\
 	Baka/SendRecv.pm	\
 	Baka/StructuredConf.pm	\

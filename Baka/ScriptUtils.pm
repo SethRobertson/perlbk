@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.10 2006/09/20 21:33:32 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.11 2007/06/08 20:05:06 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -13,6 +13,101 @@
 # --Copyright LIBBK--
 #
 
+=head1 NAME
+
+Baka::ScriptUtils - Helful routines for writing Baka Perl scripts
+
+=head1 SYNOPSIS
+
+=over 6
+
+  use Baka::ScriptUtils qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr)
+
+  bopen_log($filename);
+  berror($msg, $log);
+  bdebug($msg, $log);
+  bmsg($msg, $log);
+  bdie($mst, $log, $exitcode);
+
+  bruncmd($cmd, $log, \@output, \$retcode, $ignore_error_code, $success_code, $ignore_output);
+  bruncmd($cmd, $log, \$output, \$retcode, $ignore_error_code, $success_code, $ignore_output);
+
+=back
+
+=head1 DESCRIPTION
+
+This library provides convient routines for writing Perl scripts to the
+Baka standard. Mostly they deal with logging issues.
+
+=head1 API
+
+=over 6
+
+=item B<bopen_log>
+
+The routine opens a Baka log which is just an instancw of an
+B<IO::File>. B<filename> is the name of the log. If <append> is set, then
+the log will not be truncated when opened. B<error> is a F<Baka::Error>
+handle. The F<IO::File> object will have autoflush turned on unless the
+B<no_autoflush> argument is set.
+
+=item B<berror>
+
+Print B<msg> to a log opened by B<bopen_log> or to the I<err_print> method
+of a B<Baka::Error> stream.
+
+=item B<bdebug>
+
+Print B<msg> to a log opened by B<bopen_log> or to the I<dprint> method
+of a B<Baka::Error> stream.
+
+=item B<bmsg>
+
+Print B<msg> to a log opened by B<bopen_log> or to the I<dprint> method
+of a B<Baka::Error> stream at the I<info> level..
+
+=item B<bdie>
+
+Call B<berror> with B<msg> and B<log> and then die with the optional
+B<ecode> (1 by default). If B<want_stderr> has been set, then B<msg> will
+also go to stderr.
+
+=item B<bruncmd>
+
+Run a UNIX shell command with the input and output logged. B<cmd> is the
+shell command to run. It and the resulting exit code are always
+logged. B<log> is either the return value of B<bopen_log> or a
+F<Baka::Error> stream. If B<output_r> is an array reference the results are
+returned as an array; if it is a scalar reference the result lines are
+joined into a single string. B<retcode_r> is a copyout of the actual return
+value. If B<ignore_error_code> is set, then exit codes of this value are
+marked as being ignored. If B<success_code> is set, then this value (and
+not 0) is taken as the indication of success. All output is logged unless
+the B<ignore_output> argument is set.
+
+=item B<want_stderr>
+
+Indicate whether to print B<bdie> messages to stderr as well as the log.
+
+=back
+
+=head1 SEE ALSO
+
+F<IO::File.pm>, F<Baka::Error.pm>
+
+=head1 BUGS
+
+"This library provides convient routines for writing Perl scripts to the Baka standard."
+Baka B<standard>? B<What> Baka standard?
+
+These routines should probably also provide an option to print messages to
+standard out/error in addtion to the log.
+
+=head1 AUTHOR
+
+James Tanis
+
+=cut
 
 ##
 # @file
@@ -28,6 +123,7 @@ use Exporter 'import';
 @EXPORT_OK = qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr);
 
 my $want_stderr = 0;
+
 
 ################################################################
 #
@@ -240,7 +336,7 @@ sub bwant_stderr(;$)
   my($preference) = @_;
 
   return $want_stderr if (!defined($preference));
-  
+
   $want_stderr = $preference;
   return;
 }
