@@ -41,8 +41,20 @@ sub helper_raid($$$$)
     $raid .= $_;
     if (/Status: (?!OPTIMAL)/)
     {
+      # <TODO>something cleverer like what we have for 3ware RAID below</TODO>
       $Output{'operating'} = .1;
       $raid .= "You may silence any beeping through the Manage link for this system\n";
+    }
+  }
+
+  if (-c '/dev/megaraid_sas_ioctl_node')
+  {
+    $_ = `megarc -LDInfo -Lall -a0`;
+    $raid .= $_;
+    if (/State: (?!Optimal)/)
+    {
+      # <TODO>something cleverer like what we have for 3ware RAID below</TODO>
+      $Output{'operating'} = .1;
     }
   }
 
