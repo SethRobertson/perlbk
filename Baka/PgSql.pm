@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: PgSql.pm,v 1.5 2007/06/08 20:05:06 jtt Exp $
+# $Id: PgSql.pm,v 1.6 2007/07/24 21:00:46 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -191,7 +191,7 @@ use strict;
     my $dbh = $self->{'dbh'};
     my $rows;
 
-    bmsg("SQL Command: $cmd", $error) if ($error);
+    bmsg("SQL Command: $cmd: ", $error, 1) if ($error);
 
     eval
     {
@@ -211,9 +211,11 @@ use strict;
 
     if ($@)
     {
-      berror("$@", $error) if ($error);
+      berror("\nERROR: $@", $error, 0, 1) if ($error);
       return(undef);
     }
+
+    bmsg("$rows", $error, 0, 1);
 
     return($rows);
   }
@@ -226,7 +228,7 @@ use strict;
     my $dbh = $self->{'dbh'};
     my($sth, $rows);
 
-    bmsg("SQL Query: $sql", $error) if ($error);
+    bmsg("SQL Query: $sql: ", $error, 1) if ($error);
 
     eval
     {
@@ -245,8 +247,17 @@ use strict;
 
     if ($@)
     {
-      berror("$@", $error) if ($error);
+      berror("\nERROR: $@", $error, 0, 1) if ($error);
       return(undef);
+    }
+
+    if ($sth)
+    {
+      bmsg("OK", $error, 0, 1);
+    }
+    else
+    {
+      bmsg("FAILED", $error, 0, 1);
     }
 
     return($sth);

@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.11 2007/06/08 20:05:06 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.12 2007/07/24 21:00:46 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -24,9 +24,9 @@ Baka::ScriptUtils - Helful routines for writing Baka Perl scripts
   use Baka::ScriptUtils qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr)
 
   bopen_log($filename);
-  berror($msg, $log);
-  bdebug($msg, $log);
-  bmsg($msg, $log);
+  berror($msg, $log, $no_break);
+  bdebug($msg, $log, $no_break);
+  bmsg($msg, $log, $no_break);
   bdie($mst, $log, $exitcode);
 
   bruncmd($cmd, $log, \@output, \$retcode, $ignore_error_code, $success_code, $ignore_output);
@@ -54,17 +54,34 @@ B<no_autoflush> argument is set.
 =item B<berror>
 
 Print B<msg> to a log opened by B<bopen_log> or to the I<err_print> method
-of a B<Baka::Error> stream.
+of a B<Baka::Error> stream. B<berror> will ensure there is a line separator
+at the end (ie the current value of F<$/>) unless the I<no_break>
+parameter is set. B<berror> will automatically prepend the string "ERROR: "
+to B<msg> unless the F<no_header> parameter is set.
+
+=item B<bwarn>
+
+Print B<msg> to a log opened by B<bopen_log> or to the I<err_print> method
+of a B<Baka::Error> stream. B<bwarn> will ensure there is a line separator
+at the end (ie the current value of F<$/>) unless the I<no_break>
+parameter is set. B<bwarn> will automatically prepend the string "WARN: "
+to B<msg> unless the F<no_header> parameter is set.
 
 =item B<bdebug>
 
-Print B<msg> to a log opened by B<bopen_log> or to the I<dprint> method
-of a B<Baka::Error> stream.
+Print B<msg> to a log opened by B<bopen_log> or to the I<dprint> method of
+a B<Baka::Error> stream. B<bdebug> will ensure there is a line separator at
+the end (ie the current value of F<$/>) unless the I<no_break> parameter
+is set. B<bdebug> will automatically prepend the string "DEBUG: " to B<msg>
+unless the F<no_header> parameter is set.
 
 =item B<bmsg>
 
-Print B<msg> to a log opened by B<bopen_log> or to the I<dprint> method
-of a B<Baka::Error> stream at the I<info> level..
+Print B<msg> to a log opened by B<bopen_log> or to the I<dprint> method of
+a B<Baka::Error> stream at the I<info> level. B<bdebug> will ensure there
+is a line separator at the end (ie the current value of F<$/>) unless the
+I<no_break> parameter is set. B<bmsg> will automatically prepend the
+string "MSG: " to B<msg> unless the F<no_header> parameter is set.
 
 =item B<bdie>
 
@@ -129,13 +146,16 @@ my $want_stderr = 0;
 #
 # Print an error message to an optional log or Baka::Error stream
 #
-sub berror($$ )
+sub berror($$;$$ )
 {
-  my($msg, $log) = @_;
+  my($msg, $log, $no_break, $no_header) = @_;
 
   # Make sure the message a separator at the end.
-  chomp($msg);
-  $msg .= $/;  
+  if (!$no_break)
+  {
+    chomp($msg);
+    $msg .= $/;  
+  }
 
   if (ref($log) eq "Baka::Error")
   {
@@ -143,7 +163,36 @@ sub berror($$ )
   }
   else
   {
-    print $log "$msg";
+    print $log ((!$no_header)?"ERROR: ":"") . "$msg";
+  }
+
+  return;
+}
+
+
+
+################################################################
+#
+# Print a warning message to an optional log or Baka::Error stream
+#
+sub bwarn($$;$$ )
+{
+  my($msg, $log, $no_break, $no_header) = @_;
+
+  # Make sure the message a separator at the end.
+  if (!$no_break)
+  {
+    chomp($msg);
+    $msg .= $/;  
+  }
+
+  if (ref($log) eq "Baka::Error")
+  {
+    $log->err_print($msg, 'warning');
+  }
+  else
+  {
+    print $log ((!$no_header)?"WARN: ":"") . "$msg";
   }
 
   return;
@@ -155,21 +204,24 @@ sub berror($$ )
 #
 # Print a message to an optional log or Baka::Error stream (at debug level)
 #
-sub bdebug($$ )
+sub bdebug($$;$$ )
 {
-  my($msg, $log) = @_;
+  my($msg, $log, $no_break, $no_header) = @_;
 
   # Make sure the message a separator at the end.
-  chomp($msg);
-  $msg .= $/;  
+  if (!$no_break)
+  {
+    chomp($msg);
+    $msg .= $/;  
+  }
 
   if (ref($log) eq "Baka::Error")
   {
-    $log->dprint($msg);
+    $log->dprint($msg, 'debug');
   }
   else
   {
-    print $log "$msg";
+    print $log ((!$no_header)?"DEBUG: ":"") . "$msg";
   }
 
   return;
@@ -181,13 +233,16 @@ sub bdebug($$ )
 #
 # Print a message to an optional log or Baka::Error stream (at info level)
 #
-sub bmsg($$ )
+sub bmsg($$;$$ )
 {
-  my($msg, $log) = @_;
+  my($msg, $log, $no_break, $no_header) = @_;
 
   # Make sure the message a separator at the end.
-  chomp($msg);
-  $msg .= $/;  
+  if (!$no_break)
+  {
+    chomp($msg);
+    $msg .= $/;  
+  }
 
   if (ref($log) eq "Baka::Error")
   {
@@ -195,7 +250,7 @@ sub bmsg($$ )
   }
   else
   {
-    print $log "$msg";
+    print $log ((!$no_header)?"MSG: ":"") . "$msg";
   }
 
   return;
