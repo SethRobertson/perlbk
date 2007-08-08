@@ -1,5 +1,5 @@
 ######################################################################
-# $Id: Makefile,v 1.11 2006/09/25 18:39:25 seth Exp $
+# $Id: Makefile,v 1.12 2007/08/08 21:01:44 jtt Exp $
 #
 # ++Copyright SYSDETECT++
 #
@@ -36,6 +36,7 @@ MODULES=					\
 	helper_simplereports.pl			\
 	helper_smart.pl				\
 	helper_top.pl				\
+	output_directory.pl			\
 	output_exec.pl				\
 	output_file.pl				\
 	output_mailto.pl			\
