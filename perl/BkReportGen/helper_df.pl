@@ -32,16 +32,37 @@ sub helper_df($$$$)
   }
 
   $pvslvs = "";
-  # LVM commands are cranky about extra open file descriptors; appease them
 
-  # <TRICKY bugid="8514">bash 3.1 won't close fds > 9 (e.g. 16>&-), so we
-  # *move* them to fd 3 and close that - but bash gives Bad file descriptor
-  # errors when moving a closed fd (closing a closed fd won't), so we must
-  # check to see what's open and only attempt to close those extra fds</TRICKY>
-  $pvslvs = `cd /proc/self/fd && for f in *; do case \$f in 0|1|2) :;; *)
+  if ($dfkb =~ /Vol/)
+  {
+    # LVM commands will cause tons of junk errors if there happens to be a
+    # CDROM loaded the first time an LVM command runs, as it puts the cdrom
+    # device into its persistent_filter_cache of valid_devices, and this will
+    # fail if the CDROM is ever ejected.  So we proactively prune those out.
+
+    if (open(CACHE, "< /etc/lvm/.cache"))
+    {
+      my @lvmcache = <CACHE>;
+      my @newlvmcache = grep(!m=/dev/cdrom=, @lvmcache);
+      if ($#lvmcache != $#newlvmcache)
+      {
+	open(CACHE, "> /etc/lvm/.cache");
+	print(CACHE join('', @newlvmcache));
+      }
+      close(CACHE);
+    }
+
+    # LVM commands are cranky about extra open file descriptors; appease them
+
+    # <TRICKY bugid="8514">bash 3.1 won't close fds > 9 (e.g. 16>&-), so we
+    # *move* them to fd 3 and close that - but bash gives Bad file descriptor
+    # errors when moving a closed fd (closing a closed fd won't), so we must
+    # check to see what's open and only attempt to close the extra fds</TRICKY>
+
+    $pvslvs = `cd /proc/self/fd && for f in *; do case \$f in 0|1|2) :;; *)
 	       test -e \$f && eval "exec 3>&\$f- 3>&-"; ((f=\$f+1)); esac; done;
                echo; pvs; echo; lvs`
-    if ($dfkb =~ /Vol/);
+  }
 
   $dfin = `df -HTli`;
   if ($? != 0)
