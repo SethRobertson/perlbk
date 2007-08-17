@@ -61,7 +61,7 @@ sub helper_df($$$$)
 
     $pvslvs = `cd /proc/self/fd && for f in *; do case \$f in 0|1|2) :;; *)
 	       test -e \$f && eval "exec 3>&\$f- 3>&-"; ((f=\$f+1)); esac; done;
-               echo; pvs; echo; lvs`
+               echo; pvs; echo; lvs`;
   }
 
   $dfin = `df -HTli`;
