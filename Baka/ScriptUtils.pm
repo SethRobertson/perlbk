@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.13 2008/02/13 00:38:08 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.14 2008/02/13 07:36:23 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -21,7 +21,7 @@ Baka::ScriptUtils - Helful routines for writing Baka Perl scripts
 
 =over 6
 
-  use Baka::ScriptUtils qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr)
+  use Baka::ScriptUtils qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask)
 
   bopen_log($filename);
   berror($msg, $log, $no_break);
@@ -92,8 +92,9 @@ also go to stderr.
 =item B<bask>
 
 Print B<msg> and wait for the user to reply. The reply is saved to the
-B<reply_r> reference. If B<pattern> is specified, the question is reasked
-until the reply matches B<pattern>.
+B<reply_r> reference. If B<default> is specified, it is substituted for
+emptry replies. If B<pattern> is specified, the question is reasked until
+the reply matches B<pattern>. The question and answer are logged to B<log>.
 
 =item B<bruncmd>
 
@@ -143,7 +144,7 @@ use IO::File;
 use Baka::Error;
 use POSIX qw(isatty);
 use Exporter 'import';
-@EXPORT_OK = qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr);
+@EXPORT_OK = qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask);
 
 my $want_stderr = 0;
 
@@ -407,17 +408,24 @@ sub bwant_stderr(;$)
 #
 # Ask a question with optional reply checking
 #
-sub bask($$$;$)
+sub bask($$$;$$)
 {
-  my($msg, $reply_r, $log, $pattern) = @_;
+  my($msg, $reply_r, $log, $default, $pattern) = @_;
   my $reply;
+
+  my $query = "$msg" . (($default)?" [$default]":"");
 
   while (1)
   {
-    bmsg($msg, $log, 1, 1);
-    chomp($reply = <>);
+    
+    print STDOUT "$query: ";
+    chomp($reply = <STDIN>);
+    
+    $reply = "$default" if (defined($default) && ($reply eq ""));
 
-    last if (!defined($pattern) || (eval "\$reply =~ $pattern"))
+    last if (!defined($pattern) || (eval "\$reply =~ $pattern"));
+    # Note we log only $msg, not $query (too wordy)
+    bmsg("$msg: $$reply", $log);
   }
 
   $$reply_r = $reply;
