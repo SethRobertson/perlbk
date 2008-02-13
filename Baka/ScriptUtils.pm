@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.12 2007/07/24 21:00:46 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.13 2008/02/13 00:38:08 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -27,10 +27,10 @@ Baka::ScriptUtils - Helful routines for writing Baka Perl scripts
   berror($msg, $log, $no_break);
   bdebug($msg, $log, $no_break);
   bmsg($msg, $log, $no_break);
-  bdie($mst, $log, $exitcode);
+  bdie($msg, $log, $exitcode);
+  bask($msg, $reply_r, $log, $pattern);
 
   bruncmd($cmd, $log, \@output, \$retcode, $ignore_error_code, $success_code, $ignore_output);
-  bruncmd($cmd, $log, \$output, \$retcode, $ignore_error_code, $success_code, $ignore_output);
 
 =back
 
@@ -88,6 +88,12 @@ string "MSG: " to B<msg> unless the F<no_header> parameter is set.
 Call B<berror> with B<msg> and B<log> and then die with the optional
 B<ecode> (1 by default). If B<want_stderr> has been set, then B<msg> will
 also go to stderr.
+
+=item B<bask>
+
+Print B<msg> and wait for the user to reply. The reply is saved to the
+B<reply_r> reference. If B<pattern> is specified, the question is reasked
+until the reply matches B<pattern>.
 
 =item B<bruncmd>
 
@@ -396,4 +402,28 @@ sub bwant_stderr(;$)
   return;
 }
 
+
+################################################################
+#
+# Ask a question with optional reply checking
+#
+sub bask($$$;$)
+{
+  my($msg, $reply_r, $log, $pattern) = @_;
+  my $reply;
+
+  while (1)
+  {
+    bmsg($msg, $log, 1, 1);
+    chomp($reply = <>);
+
+    last if (!defined($pattern) || (eval "\$reply =~ $pattern"))
+  }
+
+  $$reply_r = $reply;
+}
+
 1;
+
+
+
