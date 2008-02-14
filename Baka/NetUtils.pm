@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: NetUtils.pm,v 1.3 2006/11/13 20:57:31 jtt Exp $
+# $Id: NetUtils.pm,v 1.4 2008/02/14 16:39:51 dupuy Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -193,7 +193,7 @@ sub linux_intinfo($;$ )
 
   if (defined($log))
   {
-    die "Could not run ifconfig" if (bruncmd("ifconfig -a", $log, \@interface_lines) != 0);
+    die "Could not run ifconfig" if (bruncmd("/sbin/ifconfig -a", $log, \@interface_lines) != 0);
   }
   else
   {
