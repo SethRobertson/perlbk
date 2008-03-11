@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.14 2008/02/13 07:36:23 jtt Exp $
+# $Id: ScriptUtils.pm,v 1.15 2008/03/11 00:10:52 jtt Exp $
 #
 # ++Copyright LIBBK++
 #
@@ -417,7 +417,6 @@ sub bask($$$;$$)
 
   while (1)
   {
-    
     print STDOUT "$query: ";
     chomp($reply = <STDIN>);
     
