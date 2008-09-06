@@ -1,3 +1,51 @@
+2008-09-06  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_ifconfig.pl (helper_ifconfig): handle aliases
+
+2008-02-14  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* Baka/NetUtils.pm, lib/installlib.pl: eliminate dependencies on $PATH
+	containing /usr/sbin:/sbin
+
+2008-02-13  James Tanis  <jtt@counterstorm.com>
+
+	* Baka/ScriptUtils.pm: Different VM's should use different tap devices.
+	Unintended reinstall protection
+
+2007-08-17  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_df.pl: eliminate rare source of junk health
+	e-mail messages every 5 minutes
+
+2007-08-09  James Tanis  <jtt@counterstorm.com>
+
+	* bin/cvs-set-branch-base.pl: Rarely needed, but quite useful, program
+	to recover the branch point of a given branch in each member of a list
+	of files.
+
+2007-08-06  James Tanis  <jtt@counterstorm.com>
+
+	* bin/BkReportGen, perl/BkReportGen/output_directory.pl: Tech support
+	diagnostics generation.
+
+2007-07-24  James Tanis  <jtt@counterstorm.com>
+
+	* Baka/PgSql.pm, Baka/ScriptUtils.pm:
+	Minor changes to clarify various output.
+
+2007-06-08  James Tanis  <jtt@counterstorm.com>
+
+	* Baka/PgSql.pm, Baka/ScriptUtils.pm, Makefile:
+	Various minor fixes and much-needed documentation
+
+2007-01-11  Alexander Dupuy  <alex.dupuy@counterstorm.com>
+
+	* perl/BkReportGen/helper_raid.pl: Dell RAID support
+
+2006-11-13  James Tanis  <jtt@counterstorm.com>
+
+	* Baka/NetUtils.pm: support multiple wormfillers on one machine
+
 2006-10-19  Alexander Dupuy  <alex.dupuy@counterstorm.com>
 
 	* perl/BkReportGen/helper_df.pl (helper_df): #8572: verify entries from

@@ -44,28 +44,32 @@ sub helper_ifconfig($$$$)
   # Parse the interface information
   foreach $interface (split(/\n\n/,$ifconfig))
   {
-    if ($interface !~ /^(\S+)[^\n]+\n(\s+inet addr:(\S+)[^\n]+\n|)(?:\s+inet6 addr: [^\n]+\n)*(?# flags)\s+(\S+)[^\n]+\n\s+RX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# frame)(\S+):(\S+)[^\n]*\n\s+TX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# carrier)(\S+):(\S+)\s+(?# Collisions)(\S+):(\S+)\s+(?# txqueuelen)(\S+):(\S+)[^\n]*\n\s+RX (?# bytes)(\S+):(\d+).*TX (?# bytes)(\S+):(\d+)/)
+    if ($interface !~ /^(\S+)[^\n]+\n(\s+inet addr:(\S+)[^\n]+\n|)(?:\s+inet6 addr: [^\n]+\n)*(?# flags)\s+(\S+)[^\n]+\n(?:\s+RX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# frame)(\S+):(\S+)[^\n]*\n\s+TX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# carrier)(\S+):(\S+)\s+(?# Collisions)(\S+):(\S+)\s+(?# txqueuelen)(\S+):(\S+)[^\n]*\n\s+RX (?# bytes)(\S+):(\d+).*TX (?# bytes)(\S+):(\d+))?/)
     {
       return "Non-matching interface line $interface\n";
     }
 
     $interinfo{$1}->{"status"} = $4;
-    $interinfo{$1}->{"RX-$5"} = $6;
-    $interinfo{$1}->{"RX-$7"} = $8;
-    $interinfo{$1}->{"RX-$9"} = $10;
-    $interinfo{$1}->{"RX-$11"} = $12;
-    $interinfo{$1}->{"RX-$13"} = $14;
+    # get stats for non-alias interfaces
+    if ($1 !~ /:/)
+    {
+      $interinfo{$1}->{"RX-$5"} = $6;
+      $interinfo{$1}->{"RX-$7"} = $8;
+      $interinfo{$1}->{"RX-$9"} = $10;
+      $interinfo{$1}->{"RX-$11"} = $12;
+      $interinfo{$1}->{"RX-$13"} = $14;
 
-    $interinfo{$1}->{"TX-$15"} = $16;
-    $interinfo{$1}->{"TX-$17"} = $18;
-    $interinfo{$1}->{"TX-$19"} = $20;
-    $interinfo{$1}->{"TX-$21"} = $22;
-    $interinfo{$1}->{"TX-$23"} = $24;
-    $interinfo{$1}->{"TX-$25"} = $26;
-    $interinfo{$1}->{"TX-$27"} = $28;
+      $interinfo{$1}->{"TX-$15"} = $16;
+      $interinfo{$1}->{"TX-$17"} = $18;
+      $interinfo{$1}->{"TX-$19"} = $20;
+      $interinfo{$1}->{"TX-$21"} = $22;
+      $interinfo{$1}->{"TX-$23"} = $24;
+      $interinfo{$1}->{"TX-$25"} = $26;
+      $interinfo{$1}->{"TX-$27"} = $28;
 
-    $interinfo{$1}->{"RX-$29"} = $30;
-    $interinfo{$1}->{"TX-$31"} = $32;
+      $interinfo{$1}->{"RX-$29"} = $30;
+      $interinfo{$1}->{"TX-$31"} = $32;
+    }
   }
 
 
@@ -110,8 +114,8 @@ sub helper_ifconfig($$$$)
 	next;
       }
 
-      # Don't both looking further an non-up interfaces
-      next if ($interinfo{$int}->{'status'} ne "UP");
+      # Don't bother looking further at non-up or alias interfaces
+      next if ($interinfo{$int}->{'status'} ne "UP" || $int =~ /:/);
 
       if ($interinfo{$int}->{'RX-packets'} == $oldinfo->{$int}->{'RX-packets'})
       {
