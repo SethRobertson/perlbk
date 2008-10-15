@@ -1,25 +1,18 @@
 ######################################################################
 # $Id: Makefile,v 1.12 2007/08/08 21:01:44 jtt Exp $
 #
-# ++Copyright SYSDETECT++
 #
-# Copyright (c) 2003 System Detection.  All rights reserved.
+# ++Copyright LIBBK++
 #
-# THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF SYSTEM DETECTION.
-# The copyright notice above does not evidence any actual
-# or intended publication of such source code.
+# Copyright (c) 2003 The Authors. All rights reserved.
 #
-# Only properly authorized employees and contractors of System Detection
-# are authorized to view, possess, to otherwise use this file.
+# This source code is licensed to you under the terms of the file
+# LICENSE.TXT in this release for further details.
 #
-# System Detection
-# 5 West 19th Street Floor 2K
-# New York, NY 10011-4240
+# Mail <projectbaka@baka.org> for further information
 #
-# +1 212 206 1900
-# <support@sysd.com>
+# --Copyright LIBBK--
 #
-# --Copyright SYSDETECT--
 #
 # Perl utility programs Makefile
 #

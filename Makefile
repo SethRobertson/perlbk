@@ -1,25 +1,16 @@
 ######################################################################
-# $Id: Makefile,v 1.13 2007/06/08 20:05:06 jtt Exp $
 #
-# ++Copyright SYSDETECT++
+# ++Copyright LIBBK++
 #
-# Copyright (c) 2001 System Detection.  All rights reserved.
+# Copyright (c) 2003 The Authors. All rights reserved.
 #
-# THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF SYSTEM DETECTION.
-# The copyright notice above does not evidence any actual
-# or intended publication of such source code.
+# This source code is licensed to you under the terms of the file
+# LICENSE.TXT in this release for further details.
 #
-# Only properly authorized employees and contractors of System Detection
-# are authorized to view, posses, to otherwise use this file.
+# Mail <projectbaka@baka.org> for further information
 #
-# System Detection
-# 5 West 19th Floor 2 Suite K
-# New York, NY 10011-4240
+# --Copyright LIBBK--
 #
-# +1 212 242 2970
-# <sysdetect@sysdetect.org>
-#
-# --Copyright SYSDETECT--
 #
 # Perl utilities Makefile
 #
@@ -51,4 +42,3 @@ include $(GROUPTOP)/$(PKGTOP)/bkmk/Make.include
 -include ./Make.include
 ## END BKSTANDARD MAKEFILE
 ##################################################
-

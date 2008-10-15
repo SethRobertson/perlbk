@@ -1,3 +1,16 @@
+######################################################################
+#
+# ++Copyright LIBBK++
+#
+# Copyright (c) 2003 The Authors. All rights reserved.
+#
+# This source code is licensed to you under the terms of the file
+# LICENSE.TXT in this release for further details.
+#
+# Mail <projectbaka@baka.org> for further information
+#
+# --Copyright LIBBK--
+#
 use strict;
 
 
@@ -28,8 +41,8 @@ my($rt3);
       $self->rtdir("/usr/local/rt3");
       $rt3 = 1;
       $ENV{'RTUSER'} = 'nightly';
-      $ENV{'RTSERVER'} = 'http://rt.sysdetect.com';
-      $ENV{'RTPASSWD'} = 'whyarentyousleeping';
+      $ENV{'RTSERVER'} = 'http://rt.example.com';
+      $ENV{'RTPASSWD'} = 'XXX';
     }
     else
     {
@@ -42,7 +55,7 @@ my($rt3);
     $self->cur_ticket("");
     $self->{'nobody'} = "Nobody";
     $self->{'limit'} = 0;
-    
+
     return($self);
   }
 
@@ -55,7 +68,7 @@ my($rt3);
     my($self, $limit) = @_;
 
     return (0) if (!$rt3);
-    
+
     $self->{'limit'} = $limit if (defined($limit));
     return($self->{'limit'});
   }
@@ -75,7 +88,7 @@ my($rt3);
     $subject = "Uknown subject" if (!defined($subject));
     $source = "/dev/null" if (!defined($source));
     $owner = $self->{'nobody'} if (!defined($owner));
-    
+
     if ($rt3)
     {
       my($text, @text, $formatted, );
@@ -99,7 +112,7 @@ my($rt3);
 
 	undef($text);
       }
-      
+
       goto error if ($self->_execute_cmd(qq^$self->{'rt'} create -o -t ticket set subject="$subject" owner="$owner" priority="$base_priority" queue="$queue" status="new"^, \$text) < 0);
 
       open(FILE, "> $ticket_file") || goto error;
@@ -157,13 +170,13 @@ my($rt3);
   {
     my($self, $cur_ticket) = @_;
 
-    if (defined($cur_ticket)) 
+    if (defined($cur_ticket))
     {
-      if ($cur_ticket eq "") 
+      if ($cur_ticket eq "")
       {
 	$self->{'cur_ticket'} = $self->{'no_rt_ticket'};
-      } 
-      else 
+      }
+      else
       {
 	$self->{'cur_ticket'} = $cur_ticket;
       }
@@ -211,7 +224,7 @@ my($rt3);
   {
     my($self, $rtdir) = @_;
 
-    if (defined($rtdir)) 
+    if (defined($rtdir))
     {
       $self->{'rtdir'} = $rtdir;
       $self->{'rt'} = "$rtdir/bin/rt";
@@ -248,7 +261,7 @@ my($rt3);
 
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return(undef) if ($cur_ticket eq $self->{'no_rt_ticket'});
-    
+
     if ($rt3)
     {
       $cmd = qq^rt show ticket/${cur_ticket} -f owner | sed '1d' | awk -F: '{ print \$2 }' | tr -d ' ' 2>/dev/null^;
@@ -257,10 +270,10 @@ my($rt3);
     {
       $cmd = qq^$self->{'rt'} --id="$cur_ticket" --summary='%owner100' 2>/dev/null | sed -e '1d' | tr -d ' '^;
     }
-    
+
 
     $cur_owner = $self->{'nobody'} if ($self->_execute_cmd($cmd, \$cur_owner) < 0);
-    
+
     return($cur_owner);
   }
 
@@ -279,7 +292,7 @@ my($rt3);
   {
     my($self, $cur_ticket) = @_;
     my($cur_priority, $cmd);
-  
+
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return(-1) if ($cur_ticket eq $self->{'no_rt_ticket'});
 
@@ -293,7 +306,7 @@ my($rt3);
     }
 
     $cur_priority = -1 if ($self->_execute_cmd($cmd, \$cur_priority) < 0);
-    
+
     return($cur_priority);
   }
 
@@ -328,10 +341,10 @@ my($rt3);
     $cur_ticket = $self->{'cur_ticket'} if (!defined($cur_ticket));
     return (-1) if (!defined($keywords_listr) || !$self->valid_ticket($cur_ticket));
 
-    
+
     if ($rt3)
     {
-      # You can't do this in bloody rt3. Not even as a separate transacton. Bastards. 
+      # You can't do this in bloody rt3. Not even as a separate transacton. Bastards.
       return(0);
     }
     else
@@ -339,7 +352,7 @@ my($rt3);
       $kw_args = join (" --keywords=", @$keywords_listr);
       $cmd = qq^$self->{'rt'} --id=$cur_ticket >/dev/null 2>&1^;
     }
-    
+
     return($self->_execute_cmd($cmd));
   }
 
@@ -366,7 +379,7 @@ my($rt3);
 
 
   ################################################################
-  # 
+  #
   # Execute shell commands. If 'no_execute' is set, do not actually
   # perform the action (but print out a mesage if 'verbose' is on).
   # Returns 0 on success, -1 on faiure.
@@ -376,8 +389,8 @@ my($rt3);
     my($self, $cmd, $outputr) = @_;
     my($output);
     my($ret) = 0;
-  
-    if (!$self->{'no_execute'}) 
+
+    if (!$self->{'no_execute'})
     {
       print "Executing: **$cmd**\n" if ($self->{'verbose'});
 
@@ -388,12 +401,12 @@ my($rt3);
       $$outputr = $output if (defined($outputr));
 
       $ret = $? >> 8;
-    } 
-    else 
+    }
+    else
     {
       print "Suppressing execution of: **$cmd**\n" if ($self->{'verbose'});
     }
-  
+
     return (!$ret?0:-1);
   }
 }
@@ -428,7 +441,7 @@ Baka::RT -- Perl API to the RT ticketing system.
 
       $rt->valid_ticket;
       $rt->valid_ticket($ticket);
-      
+
       $rt->rtdir;
       $rt->rtdir($dir);
 
@@ -503,7 +516,7 @@ Returns I<0> on success; I<-1> on failure.
 
 =item valid_ticket
 
-Determines whether the supplied I<ticket> or the current ticket is valid. 
+Determines whether the supplied I<ticket> or the current ticket is valid.
 
 B<NB> This method is a legacy of the old shell implementation. While it
 will always be supported to maintain backwards compatibility it may by
@@ -568,7 +581,7 @@ Adds keywords to a ticket. If not ticket is specified, the the method
 operates on the current ticket.  Keyword strings must be exactly the same
 as the RT command line interface would accept (eg:
 "+Impact/Broken"). The keyword argument must be a reference to an array of
-keword strings (so all keywords may be inserted in one call). 
+keword strings (so all keywords may be inserted in one call).
 
 Returns I<0> on success; I<-1> on failure.
 
@@ -598,7 +611,7 @@ text portion of the ticket. If the output is longer than this, then the
 B<final> N lines will appear in the text portion, and the entire text will
 be attached.
 
-Returns the I<current text limit>. 
+Returns the I<current text limit>.
 
 =back
 
@@ -607,4 +620,3 @@ Returns the I<current text limit>.
 James Tanis (james.tanis@counterstorm.com)
 
 =cut
-

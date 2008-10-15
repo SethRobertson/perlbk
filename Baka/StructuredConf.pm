@@ -1,35 +1,48 @@
+######################################################################
+#
+# ++Copyright LIBBK++
+#
+# Copyright (c) 2003 The Authors. All rights reserved.
+#
+# This source code is licensed to you under the terms of the file
+# LICENSE.TXT in this release for further details.
+#
+# Mail <projectbaka@baka.org> for further information
+#
+# --Copyright LIBBK--
+#
 package Baka::StructuredConf;
 use strict;
 use FileHandle;
 
 
-# 
+#
 # start		: directive_list
 # directive_list: directive SEMICOLON directive_list | <null>
 # directive	: STRING EQUALS block
 # block		: LEFT_BRACE directive_list RIGHT_BRACE | STRING
-# 
-# start = 
-# { 
-#   name = "this is token"; 
+#
+# start =
+# {
+#   name = "this is token";
 #   description = "this is another token";
 # };
-# 
-# next = 
-# { 
+#
+# next =
+# {
 #   first_sub_directive =
-#   { 
+#   {
 #     name = "First subdirective name";
 #     description = "First subdirective description";
 #   };
-# 
+#
 #   second_sub_directive =
-#   { 
+#   {
 #     name = "Second subdirective name";
 #     description = "Second subdirective description";
 #   };
 # };
-# 
+#
 # final = "simple token";
 #
 
@@ -37,7 +50,7 @@ use FileHandle;
 use constant
 {
   # Lexical tokens
-  STRING 		=>	1,
+  STRING		=>	1,
   EQUALS		=>	2,
   LEFT_BRACE		=>	3,
   RIGHT_BRACE		=>	4,
@@ -86,7 +99,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     my($self, $string) = @_;
 
     $self->{'string'} = $string if (defined($string));
-    
+
     return($self->{'string'});
   }
 
@@ -98,13 +111,13 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     my($self, $debug_level) = @_;
 
     $self->{'debug'} = $debug_level if (defined($debug_level));
-    
+
     return($self->{'debug'});
   }
 
 
 
-  # Parse 	
+  # Parse
   sub parse_string($;$)
   {
     my($self, $string) = @_;
@@ -114,11 +127,11 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       $self->error("Parse string is undefined");
       return(-1);
     }
-    
+
     $self->{'pos'} = 0;
     $self->{'line'} = 1;
     $self->{'length'} = length($string);
-    
+
     return($self->_start);
   }
 
@@ -130,15 +143,15 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     my($self, $filename) = @_;
     my($old_sep) = $/;
     my($ret);
-    
+
     $filename = $self->{'filename'} if (!defined($filename));
 
     if (!defined($filename))
     {
       $self->error("Filename is not defined");
       return(-1);
-    }	
-    
+    }
+
     if (!open(F, "< $filename"))
     {
       $self->error("Could not open $filename for reading: $!");
@@ -166,9 +179,9 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       $self->_parse_error("Failed parse");
       return(-1);
     }
-    
+
     return(0);
-  }	       
+  }
 
 
 
@@ -179,7 +192,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     my($tree);
 
     $tree = {};
-        
+
     while(1)
     {
       $ret = $self->_directive;
@@ -189,7 +202,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 	$self->_push_token($tok);
 	return($tree);
       }
-      
+
       if (defined($tree->{$ret->{'key'}}))
       {
 	$self->error("Illegal non-unique key: $$ret->{'key'}\n");
@@ -217,7 +230,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       $self->_push_token($tok);
       return(undef);
     }
-    
+
     $ret = {};
     $ret->{'key'} = $self->{'token_value'};
 
@@ -226,7 +239,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       $self->_push_token(ERROR);
       return(undef);
     }
-    
+
     return(undef) if (!defined($ret->{'value'} = $self->_block));
     return($ret);
   }
@@ -237,9 +250,9 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
   {
     my($self) = @_;
     my($tok, $ret);
-    
+
     undef($ret);
-    
+
     if (($tok = $self->_get_token) == LEFT_BRACE)
     {
       $ret = $self->_directive_list;
@@ -260,7 +273,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       $self->_push_token($tok);
       $ret = undef;
     }
-    
+
     # Finish off directive.
 
     return($ret);
@@ -276,7 +289,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     $r->{'token'} = $token;
     $r->{'value'} = $value if (defined($value));
 
-    # If we've pulled off a string we don't want, we have to also push 
+    # If we've pulled off a string we don't want, we have to also push
     # back the string value we probably don't know about.
     $r->{'value'} = $self->{'token_value'} if (($token == STRING) && !defined($value));
 
@@ -286,7 +299,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       print ": $value" if (defined($value));
       print "\n";
     }
-      
+
     push @{$self->{'token_stack'}}, $r;
     return;
   }
@@ -304,7 +317,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       $self->{'error'} .= "$/" if (defined($self->{'error'}));
       $self->{'error'} .= "In function " . (caller ($skip_frame + 1))[3] . ": $error_string";
     }
-    
+
     return($self->{'error'});
   }
 
@@ -379,14 +392,14 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       print "LEX: Returning EOF\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
       return(EOF);
     }
-    
+
     my($start) = $self->{'pos'} - 1;
     if ($char =~ /[\"\'\`]/)
     {
       # looking for a quoted string.
       $start++; # Advance the starting position of the string.
       while((defined($look = $self->_next_char)) && ($look ne $char)){}
-      
+
       if (!defined($look))
       {
 	my($strlen) = $self->{'pos'} - $start;
@@ -399,14 +412,14 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 	  $elipses = "...";
 	  $strlen = 20;
 	}
-	
+
 	chomp($substr = substr($self->string, $start, $strlen) . "$elipses");
 
 	$self->_parse_error("Premature EOF. Possible runaway string near \"$substr\"");
 	print "LEX: Returning ERROR" if ($self->{'debug'} & DEBUG_FLAG_LEX);
 	return(ERROR);
       }
-      
+
       chomp($self->{'token_value'} = substr($self->string, $start, $self->{'pos'} - $start -1));
       print "LEX: Returning STRING: **$self->{'token_value'}**\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
 
@@ -435,7 +448,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     else
     {
       while((defined($look = $self->_next_char)) && ($look !~ /[$separator_chars]/)){}
-      
+
       if (!defined($look))
       {
 	# We probably can't reach this code actually.
@@ -443,7 +456,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 	print "LEX: Returning ERROR\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
 	return(ERROR);
       }
-      
+
       $self->{'pos'}--;
       chomp($self->{'token_value'} = substr($self->string, $start, $self->{'pos'} - $start));
       print "LEX: Returning STRING: **$self->{'token_value'}**\n" if ($self->{'debug'} & DEBUG_FLAG_LEX);
@@ -455,13 +468,13 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
     return(ERROR);
   }
 
-	
+
   sub _next_char($)
   {
     my($self) = @_;
 
     undef($self->{'char'});
-    
+
     if ($self->{'pos'} < $self->{'length'})
     {
       $self->_get_char;
@@ -479,7 +492,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       }
 
     }
-    
+
     return($self->{'char'});
   }
 
@@ -487,7 +500,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
   sub _get_char($)
   {
     my($self) = @_;
-    
+
     $self->{'char'} = substr($self->string, $self->{'pos'}, 1);
 
     return(0);
@@ -495,13 +508,13 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 
 
 
-  # Write out a configuration file to disk. NB: COMMENTS ARE LOST!!! 
+  # Write out a configuration file to disk. NB: COMMENTS ARE LOST!!!
   sub write_file($$)
   {
     my($self, $filename) = @_;
     my($handle) = FileHandle->new;
     my($ret);
-    
+
     if (!defined($filename))
     {
       $self->error("Illegal arguments");
@@ -568,7 +581,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
   sub val($$)
   {
     my($self, $key) = @_;
-    
+
     return undef if (!defined($key) || (ref($key) ne "SCALAR"));
     return (${$key});
   }
@@ -591,7 +604,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
       return($tree->{$key}) if (defined($tree->{$key}));
       $tree = $tree->{'_back'};
     }
-    
+
     return(undef);
   }
 
@@ -633,7 +646,7 @@ my($separator_chars) = '\n\s\{\}\=\;\#';
 	return($answer) if (defined($answer = $self->search_subtree_down($tree->{$tkey}, $key)));
       }
     }
-    
+
     return(undef);
   }
 }
@@ -668,7 +681,7 @@ Baka::StructuredConf - Use a hierarchical configuration file.
       $value = $conf->search_down($key);
       $value = $conf->search_subtree_down($tree, $key);
       $value = $conf->search_up($tree, $key);
-      
+
       $debug = $conf->debug;
       $conf->debug(1);
 
@@ -711,7 +724,7 @@ Returns an I<object reference> on success; I<undef> on failure.
 
 Takes a I<string> which contains the text of a configuration file and parses
 it. If the I<string> is not defined, it parse the current value of
-C<$self-E<gt>string>. 
+C<$self-E<gt>string>.
 
 Returns a I<0> on success; I<-1> on failure.
 
@@ -789,7 +802,7 @@ Returns I<0> on success; I<-1> on failure.
 
 Returns the I<current error string>; it cannot fail.
 
-=back       
+=back
 
 =head1 BAKUS-NAUR FORM
 
@@ -810,27 +823,27 @@ words surrounded by quotes, though typically they are single words.
 
 =head1 EXAMPLE FILE
 
-    start = 
-    { 
-      name = "this is token"; 
+    start =
+    {
+      name = "this is token";
       description = "this is another token";
     };
-    
-    next = 
-    { 
+
+    next =
+    {
       first_sub_directive =
-      { 
-        name = "First subdirective name";
-        description = "First subdirective description";
+      {
+	name = "First subdirective name";
+	description = "First subdirective description";
       };
-    
+
       second_sub_directive =
-      { 
-        name = "Second subdirective name";
-        description = "Second subdirective description";
+      {
+	name = "Second subdirective name";
+	description = "Second subdirective description";
       };
     };
-    
+
     final = "simple token";
 
 =head1 NOTES
@@ -851,5 +864,5 @@ I<search_down> and I<search_substring_down> should be depth limited.
 =head1 AUTHOR
 
 James Tanis (jtt@sysd.com)
- 
+
 =cut
