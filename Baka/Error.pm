@@ -1,4 +1,4 @@
-# $Id: Error.pm,v 1.17 2006/07/17 20:41:18 lindauer Exp $
+# 
 #
 # ++Copyright LIBBK++
 #

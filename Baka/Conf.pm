@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: Conf.pm,v 1.13 2006/04/06 22:51:48 jtt Exp $
+# 
 #
 # ++Copyright LIBBK++
 #

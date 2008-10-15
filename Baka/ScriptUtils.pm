@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: ScriptUtils.pm,v 1.15 2008/03/11 00:10:52 jtt Exp $
+# 
 #
 # ++Copyright LIBBK++
 #

@@ -1,4 +1,4 @@
-# $Id: Exception.pm,v 1.7 2004/01/21 20:22:34 lindauer Exp $
+# 
 #
 # ++Copyright LIBBK++
 # 

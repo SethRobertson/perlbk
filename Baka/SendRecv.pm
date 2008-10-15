@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: SendRecv.pm,v 1.3 2006/09/08 22:19:04 jtt Exp $
+# 
 #
 # ++Copyright LIBBK++
 #

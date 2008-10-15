@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: NetUtils.pm,v 1.4 2008/02/14 16:39:51 dupuy Exp $
+# 
 #
 # ++Copyright LIBBK++
 #

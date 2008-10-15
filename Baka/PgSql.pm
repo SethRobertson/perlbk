@@ -1,5 +1,5 @@
 # -*- perl -*-
-# $Id: PgSql.pm,v 1.6 2007/07/24 21:00:46 jtt Exp $
+# 
 #
 # ++Copyright LIBBK++
 #
