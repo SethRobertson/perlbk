@@ -34,7 +34,7 @@ sub output_directory($$$$;$)
     return "Could not remove $output" if (!rmdir($output));
   }
   return "Could not create $output" if (!mkdir($output));
-  
+
   if (ref($data) eq "ARRAY")
   {
     @Output = @$data;

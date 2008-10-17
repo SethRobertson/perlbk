@@ -126,7 +126,7 @@ sub center($)
     $centered .= (" "x$space_over);
   }
   $centered .= "$string";
-  
+
   return($centered);
 }
 

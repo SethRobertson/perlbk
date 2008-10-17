@@ -19,13 +19,13 @@
 # failed to set the base before branching or if you have inadvertantly
 # moved the base tag and need to revert. If the named file does not contain
 # the branch tag (or is not a CVS file at all), the CVS information is not
-# updated. 
+# updated.
 #
 # The --branch-tag and --base-tag "options" are required and are treated as
 # options simply to make it easier to figure out where the list of files
 # starts.
 #
-# ex: find -type f -print0 | xargs -0 cvs-set-branch-base.pl --branch-tag=BR --base-tag=BR_BP 
+# ex: find -type f -print0 | xargs -0 cvs-set-branch-base.pl --branch-tag=BR --base-tag=BR_BP
 #
 
 use Getopt::Long;

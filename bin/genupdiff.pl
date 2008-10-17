@@ -329,4 +329,3 @@ sub DONTMUCKTEST
   return undef if ($fname =~ m:^/etc/fstab|^/var/db:o);
   1;
 }
-

@@ -1,5 +1,5 @@
 # -*- perl -*-
-# 
+#
 #
 # ++Copyright LIBBK++
 #
@@ -35,9 +35,9 @@ sub inet_atoi($ )
 {
   my($addr) = @_;
   my $val = 0;
-  
+
   my($a, $b, $c, $d) = split(/\./, $addr);
-  
+
   $val = ($a<<24) | ($b<<16) | ($c<<8) | $d;
   return(($val)&0xffffffff);
 }
@@ -56,7 +56,7 @@ sub inet_itoa($ )
   my $b = ($val>>16)&0xff;
   my $c = ($val>>8)&0xff;
   my $d = $val&0xff;
-  
+
   my $addr = join(".", $a, $b, $c, $d);
   return($addr);
 }
@@ -111,7 +111,7 @@ sub netmask_from_bits($ )
 
 
 ################################################################
-# 
+#
 # Return a netmask which "minimally covers" the ip range
 #
 sub minimal_netmask($$ )
@@ -128,7 +128,7 @@ sub minimal_netmask($$ )
   {
     $bit_cnt++;
   }
-  
+
   return(inet_itoa(netmask_from_bits($bit_cnt)));
 }
 
@@ -183,7 +183,7 @@ sub intinfo($;$$ )
     }
   }
 }
- 
+
 sub linux_intinfo($;$ )
 {
   my($intinfo_r, $log) = @_;
@@ -207,7 +207,7 @@ sub linux_intinfo($;$ )
   {
     next if ($line =~ /^\s*$/);
     my @toks = split(/\s+/, $line);
-    if ($line !~ /^\s/) 
+    if ($line !~ /^\s/)
     {
       # New interface
       $int = $toks[0];
@@ -261,7 +261,7 @@ sub linux_intinfo($;$ )
 	  {
 	    @_ = split(/:/, $tok);
 	    $intinfo{$int}{"${direction}_${_[0]}"} = $_[1];
-	    
+
 	  }
 	}
 	elsif ($_[0] eq "bytes")
@@ -278,4 +278,3 @@ sub linux_intinfo($;$ )
   %$intinfo_r = %intinfo;
   return(0);
 }
-

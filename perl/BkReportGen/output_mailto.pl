@@ -25,7 +25,7 @@ sub output_mailto($$$$;$)
 {
   my ($Inforef, $output, $subject, $data, $misc) = @_;
 
-  return(output_basic_mailto(@_)) if (($Inforef->{'OutputFormat'} eq "HTML") || 
+  return(output_basic_mailto(@_)) if (($Inforef->{'OutputFormat'} eq "HTML") ||
 				      $Inforef->{'CmdLine'}->{'NoMIME'});
   return(output_MIME_mailto(@_));
 }
@@ -33,9 +33,9 @@ sub output_mailto($$$$;$)
 
 ################################################################
 #
-# Create a basic one part mail. For use with HTML mail (where the 
+# Create a basic one part mail. For use with HTML mail (where the
 # problems are clearly marked by a red background) and when the site
-# has added NoMIME=1 to their ${mode}_health_check_args in their 
+# has added NoMIME=1 to their ${mode}_health_check_args in their
 # local Baka conf file.
 #
 sub output_basic_mailto($$$$;$)
@@ -86,7 +86,7 @@ sub output_basic_mailto($$$$;$)
 ################################################################
 #
 # Create a multipart MIME message where the first part is the comprised
-# of teh operational percentage and any problems which might exist and 
+# of teh operational percentage and any problems which might exist and
 # the second part consists of the full report.
 #
 sub output_MIME_mailto($$$$;$)
@@ -150,7 +150,7 @@ sub output_MIME_mailto($$$$;$)
   my(@summary) = $data[0];
 
   $data[0] =~ /\s*Operating at (\d+)/;
-  
+
   if ($1 != 100)
   {
     my($index) = 1;
@@ -173,31 +173,31 @@ sub output_MIME_mailto($$$$;$)
   }
 
   $attachment = $top->attach(
-			     Type	 	=> "text/plain; charset=$charset",
+			     Type		=> "text/plain; charset=$charset",
 			     Encoding		=> '-SUGGEST',
 			     Data		=> '',
 			     );
   $fh = $attachment->open("w");
-  
+
   output_standard($fh, $Inforef, $output, $subject, \@summary, $misc);
 
   $fh->close;
-  
+
   $attachment = $top->attach(
-			     Type	 	=> "text/plain; charset=$charset",
+			     Type		=> "text/plain; charset=$charset",
 			     Encoding		=> '-SUGGEST',
 			     Data		=> '',
 			     );
   $fh = $attachment->open("w");
-  
+
   output_standard($fh, $Inforef, $output, $subject, $data, $misc);
 
   $fh->close;
-  
+
   open (MAIL, "| sendmail $sendmail_args -t") || die "Could not spawn sendmail: $!\n";
   $top->print(\*MAIL);
   close(MAIL);
-  
+
   $ret;
 }
 

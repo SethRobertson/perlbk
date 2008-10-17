@@ -1,5 +1,5 @@
 # -*- perl -*-
-# 
+#
 #
 # ++Copyright LIBBK++
 #
@@ -21,10 +21,10 @@ Baka::PgSql - Connect and issue commands/queries to a SQL database.
 =over 6
 
   use Baka::PgSql;
-  
+
   $bdbh = Baka::PgSql->new;
   $bdbh = Baka::PgSql->new($dbpass, $dbname, $dbhost, $dbport, $dbuser, $dbschema, $berror, $timeout);
-  
+
   $rows = $bdbh->sqlcmd($cmd, $error, $timeout, \%attr);
   $sth = $bdbh->sqlquery($query, $error, $timeout);
 
@@ -80,13 +80,13 @@ Returns the F<DBI> statement handle on success; I<undef> on failure.
 
 =item B<lo_import>
 
-This methods imports the named F<filename> as a Postgres large object. 
+This methods imports the named F<filename> as a Postgres large object.
 
 Returns I<lobjid> on success; I<-1> on failure.
 
 =item B<lo_export>
 
-This methods imports the named F<filename> as a Postgres large object. 
+This methods imports the named F<filename> as a Postgres large object.
 
 Returns I<lobjid> on success; I<-1> on failure.
 
@@ -160,14 +160,14 @@ use strict;
 	$SIG{'ALRM'} = sub { die "DB connect timed out\n"; };
 	alarm($timeout);
       }
-      $self->{'dbh'} = DBI->connect("dbi:Pg:" . join(";", @dsn), $self->{'dbuser'}, 
+      $self->{'dbh'} = DBI->connect("dbi:Pg:" . join(";", @dsn), $self->{'dbuser'},
 				    $self->{'dbpass'},
 				    { AutoCommit => 1, Warn => 0, PrintError => 0 })
 	|| die "Database connect error: " . $DBI::errstr . "\n";
     };
 
     $SIG{'ALRM'} = 'DEFAULT' if ($timeout);
-    
+
     if ($@)
     {
       berror("$@", $error) if ($error);
@@ -200,7 +200,7 @@ use strict;
 	$SIG{'ALRM'} = sub { die "SQL command timed out\n"; };
 	alarm($timeout);
       }
-      
+
       $rows = $dbh->do($cmd, $attr_r);
 
       # Do *not* use bdie here. We are inside an eval
@@ -267,9 +267,9 @@ use strict;
   {
     my($self, $filename, $error) = @_;
     my $dbh = $self->dbh();
-    
+
     my $autocommit = $dbh->{AutoCommit};
-    
+
     $dbh->{AutoCommit} = 0;
     my $lobjid = $dbh->func($filename, "lo_import");
     $dbh->{AutoCommit} = $autocommit;
@@ -279,7 +279,7 @@ use strict;
       berror("Could not lo_import file: $filename: " . $dbh->errstr, $error) if ($error);
       return(-1);
     }
-    
+
     return($lobjid);
   }
 
@@ -288,9 +288,9 @@ use strict;
   {
     my($self, $lobjid, $filename, $error) = @_;
     my $dbh = $self->dbh();
-    
+
     my $autocommit = $dbh->{AutoCommit};
-    
+
     $dbh->{AutoCommit} = 0;
     my $ret = $dbh->func($lobjid, $filename, "lo_export");
     $dbh->{AutoCommit} = $autocommit;
@@ -300,7 +300,7 @@ use strict;
       berror("Could not lo_export $lobjid to file: $filename: " . $dbh->errstr, $error) if ($error);
       return(-1);
     }
-    
+
     return(0)
   }
 

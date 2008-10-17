@@ -37,10 +37,10 @@ sub runcommand($$);
 sub getpidlist( $ );
 sub min($$);
 sub delblock($$$$);
-	       
+
 
 my($USAGE) = "Usage: $0: [-nvx] <--config filename>\n";
-	       
+
 my(%OPTIONS);
 Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat", "require_order");
 GetOptions(\%OPTIONS, 'n', 'x', 'v', 'config=s') || die $USAGE;
@@ -165,7 +165,7 @@ while (1)
 	    $tmp =~ s/\%p/$p/g;
 
 	    print STDERR "Have to run startiffalse for $group[$x]->{'name'}..." if ($OPTIONS{'v'});
-	    
+
 	    # Run restart and if successful, rerun period check
 	    if (runcommand($tmp,\%OPTIONS) == 0)
 	    {
@@ -205,7 +205,7 @@ while (1)
 	    $group[$x]->{'notifymsg'} .= "$group[$x]->{'name'} had to be restarted at " . localtime() . "\n";
 	    runcommand($group[$x]->{'command'},\%OPTIONS);
 	  }
-	  
+
 	  $group[$x]->{'retrylives'}-- if ($cur_retry_lives = $group[$x]->{'retrylives'});
 
 	  if (!$cur_retry_lives && $group[$x]->{'exitifmissinglater'} =~ /yes/i)
@@ -232,7 +232,7 @@ while (1)
     }
     $next = min($next, $group[$x]->{'next'});
   }
-  
+
 }
 
 

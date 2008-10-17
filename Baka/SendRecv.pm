@@ -1,5 +1,5 @@
 # -*- perl -*-
-# 
+#
 #
 # ++Copyright LIBBK++
 #
@@ -44,7 +44,7 @@ our $errstr;
 # user in case our chosen default actually occurs in their data (though
 # binary data should always be uuencoded first). As you can plainly see,
 # the default value is the "EOL" in octal.
-our $eol = "\005\015\012"; 
+our $eol = "\005\015\012";
 
 {
   sub new($%)
@@ -55,7 +55,7 @@ our $eol = "\005\015\012";
     bless $self, $type;
     my ($lproto, $laddr, $lport);
     my ($rproto, $raddr, $rport);
-    
+
     $self->{'errstr'} = "";
     $self->{'args'} = %args; # What the hell...
 
@@ -64,7 +64,7 @@ our $eol = "\005\015\012";
       $errstr = "Type => [" . TYPE_ACTIVE . "|" . TYPE_PASSIVE . "] is a required argument";
       return(undef);
     }
-    
+
     $args{'LocalURL'} = "" if (!exists($args{'LocalURL'}));
     $args{'RemoteURL'} = "" if (!exists($args{'RemoteURL'}));
     if (!$self->_parse_url($args{'LocalURL'}, \$lproto, \$laddr, \$lport) ||
@@ -83,7 +83,7 @@ our $eol = "\005\015\012";
 
     my $proto = $lproto; # No longer any need to distinguish.
 
-    if ($proto =~ /tcp|udp/) 
+    if ($proto =~ /tcp|udp/)
     {
       my %tcp_udp_args;
 
@@ -129,18 +129,18 @@ our $eol = "\005\015\012";
 	  $errstr = "Could not listen: $!";
 	  return(undef);
 	}
-	
+
 	if (!($client = $socket->accept))
 	{
 	  $errstr = "Failed to accept the connection: $!";
 	  return(undef);
 	}
-	
+
 	$socket->close;
 	$self->{'socket'} = $client;
       }
 
-    } 
+    }
     elsif ($proto =~ /local|unix/)
     {
       $self->{'proto'} = $proto;
@@ -150,7 +150,7 @@ our $eol = "\005\015\012";
       $errstr = "Unknown protocol: $proto";
       return(undef);
     }
-    
+
     return($self);
   }
 
@@ -158,7 +158,7 @@ our $eol = "\005\015\012";
   {
     my($self) = @_;
     my ($socket, $key);
-    
+
     if (!defined($socket = $self->{'socket'}))
     {
       $self->{'errstr'} = "No socket defined";
@@ -170,7 +170,7 @@ our $eol = "\005\015\012";
       $self->{'errstr'} = "Could not close socket: $!";
       return(0);
     }
-    
+
     foreach $key (keys %$self)
     {
       delete $self->{$key};
@@ -217,7 +217,7 @@ our $eol = "\005\015\012";
     $/ = $eol;
     my $result = $socket->print("$frozen_text$/");
     $/ = $old_eol;
-    
+
     if (!$result)
     {
       $self->{'errstr'} = "Could not write out frozen data: $!";
@@ -264,7 +264,7 @@ our $eol = "\005\015\012";
 	case "HASH" { %{$wanted_things[$cnt]} = %{$received_things[$cnt]}; }
       }
     }
-    
+
     return(1);
   }
 
@@ -292,13 +292,13 @@ our $eol = "\005\015\012";
 	next;
       }
     }
-    
+
     if (@errors)
     {
       $self->{'errstr'} = join("  ", @errors);
       return(0);
     }
-    
+
     return(1);
   }
 
@@ -312,7 +312,7 @@ our $eol = "\005\015\012";
     my($self, $url, $proto_r, $address_r, $port_r) = @_;
     my($proto, $endpt);
     my($host, $port);
-    
+
     $url =~ s/^\s+|\s+$//g if ($url); # Trim off whitespace (this should really be a perl function).
     # assume tcp://0.0.0.0:20001 as the default
     if (!$url)
@@ -331,14 +331,14 @@ our $eol = "\005\015\012";
     elsif (@proto_split == 2)
     {
       ($proto, $endpt) = @proto_split;
-      
+
       $proto = lc($proto);
       if ($proto !~ /tcp|udp|local|unix/)
       {
 	$self->{'errstr'} = "Invalid protocol: $proto";
 	return(0);
       }
-      
+
       $$proto_r = $proto;
     }
     else
@@ -351,14 +351,14 @@ our $eol = "\005\015\012";
     {
       # Parse data a hostname:port pair
       ($host, $port) = split(/:/, $endpt);
-      
+
       $$port_r = $port if (defined($port));
       $$address_r = $host if (defined($host));
     }
     else
     {
       # Parse data as a file name
-      $$address_r = $endpt; 
+      $$address_r = $endpt;
     }
 
     return(1);

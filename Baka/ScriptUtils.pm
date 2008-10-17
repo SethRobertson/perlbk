@@ -1,5 +1,5 @@
 # -*- perl -*-
-# 
+#
 #
 # ++Copyright LIBBK++
 #
@@ -161,7 +161,7 @@ sub berror($$;$$ )
   if (!$no_break)
   {
     chomp($msg);
-    $msg .= $/;  
+    $msg .= $/;
   }
 
   if (ref($log) eq "Baka::Error")
@@ -190,7 +190,7 @@ sub bwarn($$;$$ )
   if (!$no_break)
   {
     chomp($msg);
-    $msg .= $/;  
+    $msg .= $/;
   }
 
   if (ref($log) eq "Baka::Error")
@@ -219,7 +219,7 @@ sub bdebug($$;$$ )
   if (!$no_break)
   {
     chomp($msg);
-    $msg .= $/;  
+    $msg .= $/;
   }
 
   if (ref($log) eq "Baka::Error")
@@ -248,7 +248,7 @@ sub bmsg($$;$$ )
   if (!$no_break)
   {
     chomp($msg);
-    $msg .= $/;  
+    $msg .= $/;
   }
 
   if (ref($log) eq "Baka::Error")
@@ -280,7 +280,7 @@ sub bdie($$;$ )
   {
     # Make sure the message a separator at the end.
     chomp($msg);
-    $msg .= $/;  
+    $msg .= $/;
     print STDERR "$msg";
   }
   exit($ecode);
@@ -310,14 +310,14 @@ sub bruncmd($;$$$$$$ )
   $success_code = 0 if (!defined($success_code));
 
   print $log "Running cmd: $cmd: ";
-    
-  # If the caller is catching SIGCHLD, he probably doesn't want it caught for this, so 
+
+  # If the caller is catching SIGCHLD, he probably doesn't want it caught for this, so
   # reset it across the backtick call.
   my $old_chld = $SIG{'CHLD'};
   $SIG{'CHLD'} = 'DEFAULT';
   chomp(my @lines = `exec 2>/dev/stdout; $cmd`);
   $SIG{'CHLD'} = $old_chld if (defined($old_chld));
-  
+
   my $exitcode = ($?&0xffff);
   my $sig = $exitcode&0x7f;
   my $ret = ($exitcode>>8)&0xff;
@@ -338,7 +338,7 @@ sub bruncmd($;$$$$$$ )
       print $log "$output_str";
       print $log "------------------------------------------------------------\n";
     }
-    
+
     if ($output_r)
     {
       switch (ref($output_r))
@@ -348,7 +348,7 @@ sub bruncmd($;$$$$$$ )
       }
     }
   }
-  
+
   $$retcode_r = $ret if ($retcode_r);
   return($ret);
 }
@@ -363,7 +363,7 @@ sub bopen_log($;$$$ )
 {
   my($filename, $append, $error, $no_autoflush) = @_;
   my $write_open_type;
-  
+
   my $log = new IO::File;
 
   return(undef) if (!$log);
@@ -419,7 +419,7 @@ sub bask($$$;$$)
   {
     print STDOUT "$query: ";
     chomp($reply = <STDIN>);
-    
+
     $reply = "$default" if (defined($default) && ($reply eq ""));
 
     last if (!defined($pattern) || (eval "\$reply =~ $pattern"));
@@ -431,6 +431,3 @@ sub bask($$$;$$)
 }
 
 1;
-
-
-

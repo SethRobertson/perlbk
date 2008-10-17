@@ -1,5 +1,5 @@
 # -*- perl -*-
-# 
+#
 #
 # ++Copyright LIBBK++
 #
@@ -144,14 +144,14 @@ $VERSION = 1.00;
       delete($self->{'sections'}->{'global'}->{$key});
       return 1;
     }
-	     
+
     # Update myself
     $self->{'sections'}->{'global'}->{$key} = $value;
 
     # Update the file. First read and replace the value if the key is found.
     if (!open(CONF_IN, "< $self->{'filename'}"))
     {
-      $$error_ref = "Failed to open $self->{'filename'} for reading: $!.\n" 
+      $$error_ref = "Failed to open $self->{'filename'} for reading: $!.\n"
 	if (defined($error_ref));
       goto error;
     }
@@ -164,7 +164,7 @@ $VERSION = 1.00;
     # Write out new file.
     if (!open(CONF_OUT, "> $self->{'filename'}+"))
     {
-      $$error_ref = "Failed to open $self->{'filename'} for writing: $!.\n" 
+      $$error_ref = "Failed to open $self->{'filename'} for writing: $!.\n"
 	if (defined($$error_ref));
       goto error;
     }
