@@ -80,7 +80,19 @@ use strict;
 					      facility => 'user',
 					      socket => $log_method ));
 
-    if ((! -p STDERR) || $debug)
+    my $stderr_to_logger = 0;
+    if (-p STDERR)
+    {
+      # Use the inode number to find out whether STDERR is piped to logger. This 
+      # still fails if there is another process in between: thisprog | anotherprog | logger.
+      my $lsof = '/usr/sbin/lsof';
+      my @pipe_stat = stat(STDERR);
+      my $inode = $pipe_stat[1];
+      my $stderr_reader = `$lsof -d 0 -F 'ci0' | perl -pe 's/\\0/ /g' | grep -B 1 i$inode | head -n 1 | perl -pe 's/^.+ c(\\S+)\\s*\$/\$1/'`;
+      $stderr_to_logger = 1 if ($stderr_reader eq 'logger');
+    }
+
+    if (!$stderr_to_logger || $debug)
     {
       $logger->add( Log::Dispatch::Screen->new( name => 'screenlogger',
 						min_level => $print_level,
