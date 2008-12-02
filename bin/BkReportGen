@@ -126,10 +126,11 @@ foreach $mainarg (@ARGV)
   if (-f "$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}")
   {
     $SavedState = retrieve("$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}");
+    $Info{'SavedStateRef'} = $SavedState;
   }
   else
   {
-    $SavedState = {};
+    $SavedState = {'LastOperatingMin' => 100};
   }
 
   $Info{'Template'} = $mainarg;
@@ -150,6 +151,8 @@ foreach $mainarg (@ARGV)
     warn "$mainarg terminated abnormally with $mainret";
     next;
   }
+
+  $SavedState->{'LastOperatingMin'} = $Info{'LastOperatingMin'};
 
   nstore($SavedState, "$Info{'VarDir'}/template_$mainarg-$Info{'PeriodSeconds'}") || warn "Could not save state for $mainarg\n";
 }

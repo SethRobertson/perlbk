@@ -25,6 +25,77 @@ sub output_mailto($$$$;$)
 {
   my ($Inforef, $output, $subject, $data, $misc) = @_;
 
+  # For failure-only reports, stop bothering the user if we've
+  # already emailed them the same thing n times.
+
+  my $operating_file = "$Inforef->{'VarDir'}/output_mailto_operating";
+  my $reset_file = "$operating_file.reset";
+
+  # Reset the holddown under any of these conditions:
+  # 1. Someone has created the reset file.
+  # 2. This an onfailure notification and the last health check was 100% healthy.
+  # 3. This is not an onfailure notification and we are telling the admin we are 100% healthy.
+  if ((-f $reset_file) ||
+      (($Inforef->{'Condition'} eq 'onfailure') && ($Inforef->{'SavedStateRef'}->{'LastOperatingMin'} == 100)) || 
+      (($Inforef->{'Condition'} ne 'onfailure') && ($Inforef->{'LastOperatingMin'} == 100)))
+  {
+    unlink($reset_file);
+    unlink($operating_file);
+  }
+
+  my $notify_limit = $Inforef->{'CmdLine'}->{'mail-notify-limit'} || 0;
+  if ($notify_limit && ($Inforef->{'Condition'} eq 'onfailure'))
+  {
+    # Build array of sub-report operating percentages.
+    my @operating;
+    foreach my $subreport (@{$Inforef->{'LastOutputArray'}})
+    {
+      next unless ($subreport->{'name'} && defined($subreport->{'operating'}));
+      push(@operating, $subreport->{'operating'});
+    }
+
+    my $opstring = join(',', @operating);
+    my $cnt = 0;
+
+    if (-f $operating_file)
+    {
+      my $fh = new FileHandle;
+      $fh->open("< $operating_file") || return "Failed to open $operating_file: $!.\n";
+      my $old_opstring = <$fh>;
+      $fh->close();
+      chomp($old_opstring);
+
+      my $old_cnt;
+      ($old_cnt, $old_opstring) = split(/,/, $old_opstring, 2);
+
+      if ($old_opstring eq $opstring)
+      {
+	$cnt = $old_cnt;
+      }
+    }
+
+    $cnt++;
+
+    my $fh = new FileHandle;
+    $fh->open("> $operating_file") || return "Failed to open $operating_file for writing: $!.\n";
+    print $fh "$cnt,$opstring\n";
+    $fh->close();
+
+    if ($cnt == $notify_limit)
+    {
+      # Insert warning that this is our last notification.
+      splice(@$data, 1, 0,
+	     "This will be your last email notification about this error until health reports\n" . 
+	     "are reset or the health of the machine changes significantly. You will still\n" . 
+	     "receive your once-a-day health summary email.\n");
+    }
+    elsif ($cnt > $notify_limit)
+    {
+      # Email notification suppressed
+      return 1;
+    }
+  }
+
   return(output_basic_mailto(@_)) if (($Inforef->{'OutputFormat'} eq "HTML") ||
 				      $Inforef->{'CmdLine'}->{'NoMIME'});
   return(output_MIME_mailto(@_));
@@ -86,7 +157,7 @@ sub output_basic_mailto($$$$;$)
 ################################################################
 #
 # Create a multipart MIME message where the first part is the comprised
-# of teh operational percentage and any problems which might exist and
+# of the operational percentage and any problems which might exist and
 # the second part consists of the full report.
 #
 sub output_MIME_mailto($$$$;$)
