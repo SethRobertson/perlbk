@@ -207,9 +207,9 @@ use strict;
   # @return <i>1</i> on success
   # @return <i>undef</i> on failure
   #
-  sub write_health($;$)
+  sub write_health($;$$)
   {
-    my ($message, $pct) = @_;
+    my ($message, $pct, $subject) = @_;
     my ($fh);
     my $health_check_file = $ENV{'ANTURA_HOME'} . "/tmp/HEALTH_INCLUDE";
 
@@ -221,9 +221,11 @@ use strict;
 
     print $fh "\n";
 
-    if (defined($pct) && ($pct >=0) && ($pct <= 99))
+    if (defined($pct) && ($pct >=0) && ($pct <= 100))
     {
-      print $fh "HEALTH=$pct\n";
+      print $fh "HEALTH=$pct";
+      print $fh " SUBJECT=$subject" if (defined($subject));
+      print $fh "\n";
     }
 
     print $fh "$message\n";

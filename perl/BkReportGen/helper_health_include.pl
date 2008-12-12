@@ -16,43 +16,59 @@
 # <description>A module which will include a one-time-health file</description>
 #
 # Example (typically in $ANTURA_HOME/tmp/HEALTH_INCLUDE
-# HEALTH=50
+# HEALTH=50 SUBJECT=Frobnoz alert!
 # The frobnoz is overloaded
 # HEALTH=0
+# SUBJECT=Biftrap alert!
 # The biftrap is broken
+
+
+sub hhi_output($$$$$)
+{
+  my ($Outputarrayref, $health, $subject, $warns, $cnt) = @_;
+
+  return unless ($warns && $#{$warns} >= 0);
+  $health = 1 unless ($health);
+
+  my (%Output);
+  push(@$Outputarrayref, \%Output);
+  $Output{'id'} = "health_include".($cnt?"_$cnt":"");
+  $Output{'name'} = $subject || "Miscellaneous Health Warnings".($cnt?" $cnt":"");
+  $Output{'operating'} = defined($health)?$health:.9;
+  $Output{'data'} = join('',@{$warns});
+}
 
 
 sub helper_health_include($$$$)
 {
   my ($Inforef, $Storedref, $Outputarrayref, $Opt) = @_;
-  my (%Output);
-  my (@warnings);
-  my ($operating);
-
-  push(@$Outputarrayref, \%Output);
-  $Output{'id'} = "health_include";
 
   return 1 unless ($Opt->{'filename'});
   return 1 unless (open(H, $Opt->{'filename'}));
 
+  my ($health,$subject,$cnt);
+  my (@warnings);
   foreach my $line (<H>)
   {
     if ($line =~ s/^HEALTH=([0-9]+)\s*//)
     {
-      my ($tmp) = $1/100;
-      $operating = (defined($operating) && $operating<$tmp)?$operating:$tmp;
+      hhi_output($Outputarrayref,$health,$subject,\@warnings,$cnt) if ($#warnings >= 0);
+      $health = $1/100;
+      undef($subject);
+      undef(@warnings);
+      $cnt++;
+      next if length($line) < 2;
+    }
+    if ($line =~ s/^SUBJECT=(.*)//)
+    {
+      $subject = $1;
+      next;
     }
     push(@warnings,$line);
   }
+  hhi_output($Outputarrayref,$health,$subject,\@warnings,$cnt) if ($#warnings >= 0);
   close(H);
   unlink($Opt->{'filename'}) || push(@warning,"\nAnd could not delete $Opt->{'filename'}: $!\n");
-
-  if ($#warnings >= 0)
-  {
-    $Output{'name'} = "Miscellaneous Health Warnings";
-    $Output{'data'} = join('',@warnings);
-    $Output{'operating'} = defined($operating)?$operating:.9;
-  }
 
   1;
 }
