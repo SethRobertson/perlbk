@@ -81,7 +81,7 @@ sub helper_smart($$$$)
       {
 	$name = "S.M.A.R.T. Hard Drive Warnings";
       }
-      elsif ($smartout !~ /PASSED/)
+      elsif ($smartout !~ /PASSED/ && $smartout !~ /Health Status: OK/)
       {
 	# While this is nominally a successful test, absence of PASSED means it
 	# is probably a bogus SCSI emulation drive (like SATA) without -d option
