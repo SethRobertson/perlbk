@@ -18,6 +18,7 @@
 #
 
 MODULES=					\
+	helper_bmc.pl				\
 	helper_df.pl				\
 	helper_health_include.pl		\
 	helper_ifconfig.pl			\

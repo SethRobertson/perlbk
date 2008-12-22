@@ -20,7 +20,7 @@ sub helper_sensors($$$$)
   my ($Inforef, $Storedref, $Outputarrayref, $Opt) = @_;
   my (%Output);
 
-  if ( -f "/etc/sensors.conf")
+  if ( -f "/etc/sensors.conf" && -f "/sys/class/hwmon" && -f "/sys/bus/i2c/devices")
   {
     my $sensor = `sensors 2>&1`;
 
