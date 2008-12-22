@@ -49,12 +49,24 @@ sub helper_raid($$$$)
 
   if (-c '/dev/megaraid_sas_ioctl_node')
   {
-    $_ = `megarc -LDInfo -Lall -a0`;
+    $_ = `MegaCli -LDInfo -Lall -aALL`;
     $raid .= $_;
     if (/State: (?!Optimal)/)
     {
       # <TODO>something cleverer like what we have for 3ware RAID below</TODO>
       $Output{'operating'} = .1;
+    }
+
+    $raid .= "\n";
+    $_ = `MegaCli -PdList -aALL`;
+    $raid .= $_;
+    if (/Error Count: (?!0)/)
+    {
+      $Output{'operating'} = .30;
+    }
+    if (/Predictive Failure Count: (?!0)/)
+    {
+      $Output{'operating'} = .40;
     }
   }
 
