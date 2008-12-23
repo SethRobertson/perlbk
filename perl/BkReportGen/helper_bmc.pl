@@ -52,6 +52,9 @@ sub helper_bmc($$$$)
     $bmc .= $_;
   }
 
+  # Abuse of the bmc test
+  $bmc .= "\nSystem Identification:\n" . `getSystemId 2>/dev/null || echo`;
+
   if ($bmc)
   {
     if (!$Output{'name'})
