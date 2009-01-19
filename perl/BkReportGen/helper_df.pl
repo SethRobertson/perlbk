@@ -40,13 +40,22 @@ sub helper_df($$$$)
     # device into its persistent_filter_cache of valid_devices, and this will
     # fail if the CDROM is ever ejected.  So we proactively prune those out.
 
-    if (open(CACHE, "< /etc/lvm/.cache"))
+    my $cache = "/etc/lvm/.cache";
+    $cache = "/etc/lvm/cache/.cache" if (! -f $cache);
+
+    if (open(CACHE, "<", $cache))
     {
       my @lvmcache = <CACHE>;
       my @newlvmcache = grep(!m=/dev/cdrom=, @lvmcache);
+      if (my $cdrom = readlink("/dev/cdrom"))
+      {
+	$cdrom = "/dev/".$cdrom unless ($cdrom =~ m:^/:);
+	$cdrom = quotemeta($cdrom);
+	@newlvmcache = grep(!/$cdrom/, @newlvmcache);
+      }
       if ($#lvmcache != $#newlvmcache)
       {
-	open(CACHE, "> /etc/lvm/.cache");
+	open(CACHE, ">", $cache);
 	print(CACHE join('', @newlvmcache));
       }
       close(CACHE);
