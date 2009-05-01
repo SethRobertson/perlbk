@@ -131,6 +131,7 @@ $VERSION = 1.00;
     my($found_key) = 0;
     my($ret) = 0;
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks);
+    my ($haslock) = 0;
 
 
     if (!defined($key))
@@ -147,6 +148,14 @@ $VERSION = 1.00;
 
     # Update myself
     $self->{'sections'}->{'global'}->{$key} = $value;
+
+    system("lockfile -2 -r 6 -l 30 $self->{'filename'}.lock");
+    if ($? != 0)
+    {
+      $$error_ref = "Could not obtain write lock for update of $self->{'filename'}" if (defined($$error_ref));
+      goto error;
+    }
+    $haslock = 1;
 
     # Update the file. First read and replace the value if the key is found.
     if (!open(CONF_IN, "< $self->{'filename'}"))
@@ -186,6 +195,7 @@ $VERSION = 1.00;
     $ret = 1;
 
   error:
+    unlink("$self->{'filename'}.lock") if ($haslock);
     return($ret);
   }
 };
