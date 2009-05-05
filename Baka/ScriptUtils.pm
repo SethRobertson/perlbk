@@ -24,9 +24,10 @@ Baka::ScriptUtils - Helful routines for writing Baka Perl scripts
   use Baka::ScriptUtils qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask)
 
   bopen_log($filename);
-  berror($msg, $log, $no_break);
-  bdebug($msg, $log, $no_break);
-  bmsg($msg, $log, $no_break);
+  berror($msg, $log, $no_break, $no_header);
+  bwarn($msg, $log, $no_break, $no_header);
+  bdebug($msg, $log, $no_break, $no_header);
+  bmsg($msg, $log, $no_break, $no_header);
   bdie($msg, $log, $exitcode);
   bask($msg, $reply_r, $log, $pattern);
 
