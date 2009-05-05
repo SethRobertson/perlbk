@@ -19,6 +19,7 @@ BK_PERL_MODS=			\
 	Baka/Conf.pm		\
 	Baka/Error.pm		\
 	Baka/Exception.pm	\
+	Baka/NetUtils.pm	\
 	Baka/PgSql.pm		\
 	Baka/ScriptUtils.pm	\
 	Baka/SendRecv.pm	\
