@@ -73,6 +73,12 @@ $VERSION = 1.00;
     return $self;
   }
 
+  # Lookup the filename associated with the current instance
+  sub get_filename($ )
+  {
+    my($self) = @_;
+    return($self->{'filename'});
+  }
 
 
   # Lookup the value of a key.  Section is global unless specified.
