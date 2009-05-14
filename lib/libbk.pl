@@ -149,4 +149,52 @@ sub varsubst($$%)
   $string;
 }
 
+
+
+######################################################################
+#
+# Super-secret database password encoding
+#
+# Encrypt and decrypt the password using a "Vigenère cipher" This
+# provides essentially zero security, but it does obscure the password
+# which was the actual request.
+#
+sub do_vigenere($$;$)
+{
+  my ($encrypt,$in,$pass) = @_;
+  my ($out);
+
+  $pass = "fi5tRkH4Jh87o2Bo<--This is not providing a lot of security" unless ($pass);
+  my ($plen) = length($pass);
+  my (@pass) = split(//,$pass);
+  my $printable = "O.Y;0>mM/f(2-qxclkAvRJ\@ PU}5WgX)#N\\!\${9B`Knh_]7<rs?+uH:'e1,6LpD~=aETd4j8wo\"\%[Gyb*FQztZC|ISV^i3\&";
+  my $printablelen = length($printable);
+
+  my $length = length($in);
+  for(my $x = 0;$x < $length; $x++)
+  {
+    my $c = substr($in,$x,1);
+    my $loc = index($printable,$c);
+
+    # We only ``encrypt'' printable characters
+    if ($loc >= 0)
+    {
+      if ($encrypt)
+      {
+	$loc += index($printable,$pass[$x%$plen]);
+      }
+      else
+      {
+	$loc -= index($printable,$pass[$x%$plen]);
+      }
+      $out .= substr($printable,$loc % $printablelen,1);
+    }
+    else
+    {
+      $out .= $c;
+    }
+  }
+  $out;
+}
+
 1;
