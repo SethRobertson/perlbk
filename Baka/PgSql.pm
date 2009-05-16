@@ -136,8 +136,8 @@ use strict;
     bless $self, $type;
 
     $self->{'dbname'} = $dbname || $ENV{'PGDATABASE'};
-    $self->{'dbpass'} = $dbpass || $ENV{'PGPASS'};
-    $self->{'dbhost'} = $dbhost || $ENV{'PGUSER'} || "localhost";
+    $self->{'dbpass'} = $dbpass || $ENV{'PGPASSWORD'};
+    $self->{'dbhost'} = $dbhost || $ENV{'PGHOST'} || "localhost";
     $self->{'dbport'} = $dbport || $ENV{'PGPORT'} || "5432";
     $self->{'dbuser'} = $dbuser || $ENV{'PGUSER'} || $ENV{'USER'};
     $self->{'dbschema'} = $dbschema || "public";
@@ -147,6 +147,8 @@ use strict;
       berror("Database password is required", $error) if ($error);
       return(undef);
     }
+
+    bmsg("DB Connect: $self->{'dbhost'}:$self->{'dbport'} DB: $self->{'dbname'}, User: $self->{'dbuser'}, Schema: $self->{'dbschema'}\n", $error) if ($error);
 
     my (@dsn);
     push(@dsn,"dbname=$self->{dbname}") if ($self->{'dbname'});
@@ -174,9 +176,8 @@ use strict;
       return undef;
     }
 
-    if ($dbschema && (!$self->sqlcmd("set search_path to $dbschema, public", undef, $error, $timeout)))
+    if ($dbschema && (!defined($self->sqlcmd("set search_path to $dbschema, public", $error, $timeout))))
     {
-      print "OK\n" if ($error);
       berror("Could not set search path to: $dbschema, public", $error) if ($error);
       $self->{'dbh'}->disconnect;
       return(undef);
