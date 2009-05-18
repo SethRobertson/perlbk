@@ -131,6 +131,7 @@ use strict;
   sub new(;$$$$$$$$)
   {
     my ($type, $dbpass, $dbname, $dbhost, $dbport, $dbuser, $dbschema, $error, $timeout) = @_;
+    my $old_alarm_handler;
 
     my $self = {};
     bless $self, $type;
@@ -155,20 +156,32 @@ use strict;
     push(@dsn,"host=$self->{dbhost}") if ($self->{'dbhost'});
     push(@dsn,"port=$self->{dbport}") if ($self->{'dbport'});
 
+    if ($timeout)
+    {
+      # In all the routines that follow there is always a race condition
+      # between the time the DB action finishes and when alarm(0) runs. Thus,
+      # instead of cheating the caller out of a little bit of time, we give
+      # him plenty more than actually asked for -- or at least we *hope*
+      # so. In theory it could take longer than one second to run alarm(0).
+      $timeout++;
+      $old_alarm_handler = $SIG{'ALRM'};
+      $SIG{'ALRM'} = sub { die "DB connect timed out\n"; }; # die is OK because of eval
+      alarm($timeout);
+    }
+
     eval
     {
-      if ($timeout)
-      {
-	$SIG{'ALRM'} = sub { die "DB connect timed out\n"; };
-	alarm($timeout);
-      }
       $self->{'dbh'} = DBI->connect("dbi:Pg:" . join(";", @dsn), $self->{'dbuser'},
 				    $self->{'dbpass'},
 				    { AutoCommit => 1, Warn => 0, PrintError => 0 })
 	|| die "Database connect error: " . $DBI::errstr . "\n";
     };
 
-    $SIG{'ALRM'} = 'DEFAULT' if ($timeout);
+    if ($timeout)
+    {
+      alarm(0);
+      $SIG{'ALRM'} = $old_alarm_handler;
+    }
 
     if ($@)
     {
@@ -191,24 +204,29 @@ use strict;
     my($self, $cmd, $error, $timeout, $attr_r) = @_;
     my $dbh = $self->{'dbh'};
     my $rows;
+    my $old_alarm_handler;
 
     bmsg("SQL Command: $cmd: ", $error, 1) if ($error);
 
+    if ($timeout)
+    {
+      $timeout++; # See race condition remark in the constructor function
+      $old_alarm_handler = $SIG{'ALRM'};
+      $SIG{'ALRM'} = sub { die "SQL command timed out\n"; };
+      alarm($timeout);
+    }
     eval
     {
-      if ($timeout)
-      {
-	$SIG{'ALRM'} = sub { die "SQL command timed out\n"; };
-	alarm($timeout);
-      }
-
       $rows = $dbh->do($cmd, $attr_r);
-
       # Do *not* use bdie here. We are inside an eval
       die "SQL command failed: " . $dbh->errstr . "\n" if (!defined($rows));
     };
 
-    $SIG{'ALRM'} = 'DEFAULT' if ($timeout);
+    if ($timeout)
+    {
+      alarm(0);
+      $SIG{'ALRM'} = $old_alarm_handler;
+    }
 
     if ($@)
     {
@@ -227,24 +245,30 @@ use strict;
   {
     my($self, $sql, $error, $timeout) =  @_;
     my $dbh = $self->{'dbh'};
-    my($sth, $rows);
+    my($sth, $rows, $old_alarm_handler);
 
     bmsg("SQL Query: $sql: ", $error, 1) if ($error);
 
+    if ($timeout)
+    {
+      $timeout++; # See race condition remark in constructor function
+      $old_alarm_handler = $SIG{'ALRM'};
+      $SIG{'ALRM'} = sub { die "SQL query timed out\n"; };
+      alarm($timeout);
+    }
+
     eval
     {
-      if ($timeout)
-      {
-	$SIG{'ALRM'} = sub { die "SQL query timed out\n"; };
-	alarm($timeout);
-      }
-
       # Do *not* use bdie here. We are inside an eval
       die "Could not prepare SQL query " . $dbh->errstr . "\n" if (!($sth = $dbh->prepare($sql)));
       die "Could not execute SQL query " . $dbh->errstr . "\n" if (!$sth->execute);
     };
 
-    $SIG{'ALRM'} = 'DEFAULT' if ($timeout);
+    if ($timeout)
+    {
+      alarm(0);
+      $SIG{'ALRM'} = $old_alarm_handler;
+    }
 
     if ($@)
     {

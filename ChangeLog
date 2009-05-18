@@ -1,3 +1,10 @@
+2009-05-18  James Tanis  <jtt@outpost.tanis.org>
+
+	* Baka/PgSql.pm: Make sure that the alarm clocks is disabled when
+	actions finish. Make sure the caller gets at *least* the time he
+	asks for. Reset the SIGALRM handler to what it was originally;
+	don't just make it 'DEFAULT' (wow, that was really brain dead).
+
 2008-09-06  Alexander Dupuy  <alex.dupuy@counterstorm.com>
 
 	* perl/BkReportGen/helper_ifconfig.pl (helper_ifconfig): handle aliases
