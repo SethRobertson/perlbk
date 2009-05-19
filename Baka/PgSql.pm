@@ -164,7 +164,7 @@ use strict;
       # him plenty more than actually asked for -- or at least we *hope*
       # so. In theory it could take longer than one second to run alarm(0).
       $timeout++;
-      $old_alarm_handler = $SIG{'ALRM'};
+      $old_alarm_handler = $SIG{'ALRM'} || 'DEFAULT';
       $SIG{'ALRM'} = sub { die "DB connect timed out\n"; }; # die is OK because of eval
       alarm($timeout);
     }
@@ -211,7 +211,7 @@ use strict;
     if ($timeout)
     {
       $timeout++; # See race condition remark in the constructor function
-      $old_alarm_handler = $SIG{'ALRM'};
+      $old_alarm_handler = $SIG{'ALRM'} || "DEFAULT";
       $SIG{'ALRM'} = sub { die "SQL command timed out\n"; };
       alarm($timeout);
     }
@@ -252,7 +252,7 @@ use strict;
     if ($timeout)
     {
       $timeout++; # See race condition remark in constructor function
-      $old_alarm_handler = $SIG{'ALRM'};
+      $old_alarm_handler = $SIG{'ALRM'} || "DEFAULT";
       $SIG{'ALRM'} = sub { die "SQL query timed out\n"; };
       alarm($timeout);
     }
