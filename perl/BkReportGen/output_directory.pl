@@ -56,27 +56,28 @@ sub output_directory($$$$;$)
   {
     my $line = shift(@Output);
     chomp($line);
-    if ($new_file)
-    {
-      my $file = $line;
-      $file =~ s/\(.*\)//g;
-      $file =~ s/[:\s]+$//;
-      $file =~ s|[\s/]+|_|g;
-      return "Could not open ${output}/${file}: $!" if !(open(F, "> ${output}/${file}"));
-      $new_file = 0;
-      next;
-    }
 
     if ($line =~ /^\+\-+\+$/)
     {
-      # Make sure there a separator at the EOF.
-      print F "\n";
       close(F);
       $new_file = 1;
       next;
     }
 
-    print F $line;
+    if ($new_file)
+    {
+      next if (!$line);
+
+      my $file = $line;
+      $file =~ s/\(.*\)//g;
+      $file =~ s/[:\s]+$//;
+      $file =~ s|[\s/]+|_|g;
+      return "Could not open ${output}/${file}: $!" if !(open(F, ">> ${output}/${file}"));
+      $new_file = 0;
+      next;
+    }
+
+    print F $line."\n";
 
   }
 
