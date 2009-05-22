@@ -147,6 +147,15 @@ use POSIX qw(isatty);
 use Exporter 'import';
 @EXPORT_OK = qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask);
 
+sub berror($$;$$ );
+sub bwarn($$;$$ );
+sub bdebug($$;$$ );
+sub bruncmd($;$$$$$$ );
+sub bopen_log($;$$$ );
+sub bwant_stderr(;$ );
+sub bask($$$;$$);
+
+
 my $want_stderr = 0;
 
 
@@ -394,7 +403,7 @@ sub bopen_log($;$$$ )
 #
 # Obtain or set the value of want_stderr
 #
-sub bwant_stderr(;$)
+sub bwant_stderr(;$ )
 {
   my($preference) = @_;
 
