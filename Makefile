@@ -43,3 +43,8 @@ include $(GROUPTOP)/$(PKGTOP)/bkmk/Make.include
 -include ./Make.include
 ## END BKSTANDARD MAKEFILE
 ##################################################
+
+actual_install::
+	@perl -MLog::Dispatch -e 1 >/dev/null 2>&1 || echo '*** Warning: Missing Log::Dispatch module for Baka::Error ***'
+	@perl -MDBD::Pg -e 1 >/dev/null 2>&1 || echo '*** Warning: Missing optional DBD::Pg module for Baka::PgSql ***'
+
