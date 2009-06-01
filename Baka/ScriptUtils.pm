@@ -21,7 +21,7 @@ Baka::ScriptUtils - Helful routines for writing Baka Perl scripts
 
 =over 6
 
-  use Baka::ScriptUtils qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask)
+  use Baka::ScriptUtils qw (berror bwarn bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask)
 
   bopen_log($filename);
   berror($msg, $log, $no_break, $no_header);
@@ -37,7 +37,7 @@ Baka::ScriptUtils - Helful routines for writing Baka Perl scripts
 
 =head1 DESCRIPTION
 
-This library provides convient routines for writing Perl scripts to the
+This library provides convenient routines for writing Perl scripts to the
 Baka standard. Mostly they deal with logging issues.
 
 =head1 API
@@ -46,7 +46,7 @@ Baka standard. Mostly they deal with logging issues.
 
 =item B<bopen_log>
 
-The routine opens a Baka log which is just an instancw of an
+The routine opens a Baka log which is just an instance of an
 B<IO::File>. B<filename> is the name of the log. If <append> is set, then
 the log will not be truncated when opened. B<error> is a F<Baka::Error>
 handle. The F<IO::File> object will have autoflush turned on unless the
@@ -122,7 +122,7 @@ F<IO::File.pm>, F<Baka::Error.pm>
 
 =head1 BUGS
 
-"This library provides convient routines for writing Perl scripts to the Baka standard."
+"This library provides convenient routines for writing Perl scripts to the Baka standard."
 Baka B<standard>? B<What> Baka standard?
 
 These routines should probably also provide an option to print messages to
@@ -167,7 +167,7 @@ sub berror($$;$$ )
 {
   my($msg, $log, $no_break, $no_header) = @_;
 
-  # Make sure the message a separator at the end.
+  # Make sure the message has a separator at the end.
   if (!$no_break)
   {
     chomp($msg);
@@ -196,7 +196,7 @@ sub bwarn($$;$$ )
 {
   my($msg, $log, $no_break, $no_header) = @_;
 
-  # Make sure the message a separator at the end.
+  # Make sure the message has a separator at the end.
   if (!$no_break)
   {
     chomp($msg);
@@ -225,7 +225,7 @@ sub bdebug($$;$$ )
 {
   my($msg, $log, $no_break, $no_header) = @_;
 
-  # Make sure the message a separator at the end.
+  # Make sure the message has a separator at the end.
   if (!$no_break)
   {
     chomp($msg);
@@ -254,7 +254,7 @@ sub bmsg($$;$$ )
 {
   my($msg, $log, $no_break, $no_header) = @_;
 
-  # Make sure the message a separator at the end.
+  # Make sure the message has a separator at the end.
   if (!$no_break)
   {
     chomp($msg);
@@ -288,7 +288,7 @@ sub bdie($$;$ )
 
   if (isatty(fileno(STDERR)) || $want_stderr)
   {
-    # Make sure the message a separator at the end.
+    # Make sure the message has a separator at the end.
     chomp($msg);
     $msg .= $/;
     print STDERR "$msg";
