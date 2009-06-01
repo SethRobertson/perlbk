@@ -145,11 +145,13 @@ use IO::File;
 use Baka::Error;
 use POSIX qw(isatty);
 use Exporter 'import';
-@EXPORT_OK = qw (berror bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask);
+@EXPORT_OK = qw (berror bwarn bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask);
 
 sub berror($$;$$ );
 sub bwarn($$;$$ );
+sub bmsg($$;$$ );
 sub bdebug($$;$$ );
+sub bdie($$;$ );
 sub bruncmd($;$$$$$$ );
 sub bopen_log($;$$$ );
 sub bwant_stderr(;$ );
