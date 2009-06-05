@@ -197,4 +197,26 @@ sub do_vigenere($$;$)
   $out;
 }
 
+
+
+######################################################################
+#
+# Quote something for the shell
+#
+sub do_shquote($)
+{
+  my ($i) = @_;
+  my $o;
+  my $len = length($i);
+
+  foreach(my $x=0;$x<$len;$x++)
+  {
+    my $c = substr($i,$x,1);
+    $o .= '\\' if ($c =~ /[\\\$\`\"]/);
+    $o .= $c;
+  }
+  '"'.$o.'"';
+}
+
+
 1;
