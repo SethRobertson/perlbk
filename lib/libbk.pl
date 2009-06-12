@@ -201,7 +201,7 @@ sub do_vigenere($$;$)
 
 ######################################################################
 #
-# Quote something for the shell
+# Quote something for the shell inside a double-quoted string
 #
 sub do_shquote($)
 {
