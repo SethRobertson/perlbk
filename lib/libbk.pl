@@ -203,9 +203,9 @@ sub do_vigenere($$;$)
 #
 # Quote something for the shell, as a raw argument
 #
-sub do_shquote($)
+sub do_shquote($;$)
 {
-  my ($i) = @_;
+  my ($i,$nowrap) = @_;
   my $o;
   my $len = length($i);
 
@@ -215,7 +215,7 @@ sub do_shquote($)
     $o .= '\\' if ($c =~ /[\\\$\`\"]/);
     $o .= $c;
   }
-  '"'.$o.'"';
+  '"'.$o.'"' unless ($nowrap);
 }
 
 
