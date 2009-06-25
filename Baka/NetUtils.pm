@@ -23,8 +23,54 @@ package Baka::NetUtils;
 use Exporter 'import';
 use Config;
 use Baka::ScriptUtils qw(berror bruncmd);
-@EXPORT_OK = qw (inet_atoi inet_itoa network_match network_part netmask_from_bits minimal_netmask intinfo);
+@EXPORT_OK = qw (inet_atoi inet_itoa network_match network_part netmask_from_bits minimal_netmask intinfo cidr_to_netmask);
 
+
+################################################################
+#
+# Convert a cidr length to a netmask
+#
+sub cidr_to_netmask($ )
+{
+  my($length) = @_;
+  my %map;
+
+  $map{0} = 0;
+  $map{1}= 2147483648;
+  $map{2}= 3221225472;
+  $map{3}= 3758096384;
+  $map{4}= 4026531840;
+  $map{5}= 4160749568;
+  $map{6}= 4227858432;
+  $map{7}= 4261412864;
+  $map{8}= 4278190080;
+  $map{9}= 4286578688;
+  $map{10}= 4290772992;
+  $map{11}= 4292870144;
+  $map{12}= 4293918720;
+  $map{13}= 4294443008;
+  $map{14}= 4294705152;
+  $map{15}= 4294836224;
+  $map{16}= 4294901760;
+  $map{17}= 4294934528;
+  $map{18}= 4294950912;
+  $map{19}= 4294959104;
+  $map{20}= 4294963200;
+  $map{21}= 4294965248;
+  $map{22}= 4294966272;
+  $map{23}= 4294966784;
+  $map{24}= 4294967040;
+  $map{25}= 4294967168;
+  $map{26}= 4294967232;
+  $map{27}= 4294967264;
+  $map{28}= 4294967280;
+  $map{29}= 4294967288;
+  $map{30}= 4294967292;
+  $map{31}= 4294967294;
+  $map{32}= 4294967295;
+
+  return(inet_itoa($map{$length}))
+}
 
 ################################################################
 #
@@ -70,6 +116,11 @@ sub inet_itoa($ )
 sub network_match($$$ )
 {
   my($addr1, $addr2, $netmask) = @_;
+
+  if ($netmask =~ /\d+/)
+  {
+    $netmask = cidr_to_netmask($netmask);
+  }
 
   my $a1 = inet_atoi($addr1);
   my $a2 = inet_atoi($addr2);
