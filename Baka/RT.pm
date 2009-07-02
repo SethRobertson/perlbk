@@ -28,7 +28,7 @@ $ENV{'EDITOR'} = "cat" if (!exists($ENV{'EDITOR'}));
 my($rt3);
 
 {
-  sub new($;$$$)
+  sub new($;$$$ )
   {
     my($self, $queue, $base_priority) = @_;
     my($class) = ref($self) || $self;
@@ -63,7 +63,7 @@ my($rt3);
 
   # Get/set the limit of how many lines may appear as text in the ticket.
   # This is only availalble in rt3;
-  sub text_limit($;$)
+  sub text_limit($;$ )
   {
     my($self, $limit) = @_;
 
@@ -75,7 +75,7 @@ my($rt3);
 
 
 
-  sub create_ticket($;$$$$$)
+  sub create_ticket($;$$$$$ )
   {
     my($self, $subject, $source, $queue, $base_priority, $owner) = @_;
     my($new_ticket);
@@ -145,7 +145,7 @@ my($rt3);
   }
 
 
-  sub search_for_ticket($$)
+  sub search_for_ticket($$ )
   {
     my($self, $subject) = @_;
     my($cur_ticket, $cmd);
@@ -166,7 +166,7 @@ my($rt3);
 
 
 
-  sub cur_ticket($;$)
+  sub cur_ticket($;$ )
   {
     my($self, $cur_ticket) = @_;
 
@@ -187,7 +187,7 @@ my($rt3);
 
 
 
-  sub close_ticket($;$)
+  sub close_ticket($;$ )
   {
     my($self, $cur_ticket) = @_;
     my($ret, $cmd);
@@ -209,7 +209,7 @@ my($rt3);
 
 
 
-  sub valid_ticket($;$)
+  sub valid_ticket($;$ )
   {
     my($self, $cur_ticket) = @_;
 
@@ -220,7 +220,7 @@ my($rt3);
 
 
 
-  sub rtdir($;$)
+  sub rtdir($;$ )
   {
     my($self, $rtdir) = @_;
 
@@ -234,7 +234,7 @@ my($rt3);
 
 
 
-  sub queue($;$)
+  sub queue($;$ )
   {
     my($self, $queue) = @_;
 
@@ -244,7 +244,7 @@ my($rt3);
 
 
 
-  sub base_priority($;$)
+  sub base_priority($;$ )
   {
     my($self, $base_priority) = @_;
 
@@ -254,7 +254,7 @@ my($rt3);
 
 
 
-  sub get_owner($;$)
+  sub get_owner($;$ )
   {
     my($self, $cur_ticket) = @_;
     my($cur_owner, $cmd);
@@ -279,7 +279,7 @@ my($rt3);
 
 
 
-  sub valid_owner($;$)
+  sub valid_owner($;$ )
   {
     my($self, $owner) = @_;
 
@@ -288,7 +288,7 @@ my($rt3);
 
 
 
-  sub get_priority($;$)
+  sub get_priority($;$ )
   {
     my($self, $cur_ticket) = @_;
     my($cur_priority, $cmd);
@@ -312,7 +312,7 @@ my($rt3);
 
 
 
-  sub set_priority($$;$)
+  sub set_priority($$;$ )
   {
     my($self, $priority, $cur_ticket) = @_;
     my($ret, $cmd);
@@ -333,7 +333,7 @@ my($rt3);
 
 
 
-  sub add_keywords($$;$)
+  sub add_keywords($$;$ )
   {
     my($self, $keywords_listr, $cur_ticket) = @_;
     my($kw_args, $cmd);
@@ -358,7 +358,7 @@ my($rt3);
 
 
 
-  sub verbose($;$)
+  sub verbose($;$ )
   {
     my($self, $verbose) = @_;
 
@@ -368,7 +368,7 @@ my($rt3);
 
 
 
-  sub no_execute($;$)
+  sub no_execute($;$ )
   {
     my($self, $no_execute) = @_;
 
@@ -384,7 +384,7 @@ my($rt3);
   # perform the action (but print out a mesage if 'verbose' is on).
   # Returns 0 on success, -1 on faiure.
   #
-  sub _execute_cmd($$;$)
+  sub _execute_cmd($$;$ )
   {
     my($self, $cmd, $outputr) = @_;
     my($output);
