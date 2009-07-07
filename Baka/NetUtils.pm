@@ -117,7 +117,7 @@ sub network_match($$$ )
 {
   my($addr1, $addr2, $netmask) = @_;
 
-  if ($netmask =~ /\d+/)
+  if ($netmask =~ /^\d+$/)
   {
     $netmask = cidr_to_netmask($netmask);
   }
