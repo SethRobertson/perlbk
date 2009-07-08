@@ -49,7 +49,7 @@ sub helper_edac($$$$)
     my $val = <F>;
     chomp($val);
 
-    if ($val > $Storedref->{'edac'}->{$mc}->{$type})
+    if (defined($Storedref->{'edac'}) && $val > $Storedref->{'edac'}->{$mc}->{$type})
     {
       my $newtype = $type;
       $newtype =~ s/_noinfo//;
