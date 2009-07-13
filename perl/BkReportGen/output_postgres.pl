@@ -84,30 +84,18 @@ sub output_postgres($$$$;$)
     $line->{'name'} = "" unless $line->{'name'};
     $line->{'data'} = "" unless $line->{'data'};
 
-    $line->{'name'} =~ s/\\/\\\\\\\\/g;
-    $line->{'name'} =~ s/\n/\\\\\n/g;
-    $line->{'name'} =~ s/\"/\\\\\"/g;
-    $line->{'name'} =~ s/\'/\\\\\\\'/g;
-    $line->{'data'} =~ s/\\/\\\\\\\\/g;
-    $line->{'data'} =~ s/\n/\\\\\n/g;
-    $line->{'data'} =~ s/\"/\\\\\"/g;
-    $line->{'data'} =~ s/'/\\\'/g;
-
     push(@operating, int((defined($line->{'operating'})?$line->{'operating'}:1)*100));
     print $line->{'name'}." has null id\n" unless defined($line->{'id'});
     push(@name_item, '"'.$line->{'id'}.'"');
-    push(@title_item, '"'.($line->{'name'}||"").'"');
-    push(@result_item, '"'.($line->{'data'}||"").'"');
+    push(@title_item, ($line->{'name'}||""));
+    push(@result_item, ($line->{'data'}||""));
   }
-  $operating = join(',',@operating);
-  $name_item = join(',',@name_item);
-  $title_item = join(',',@title_item);
-  $result_item = join(',',@result_item);
+  $operating = psql_arrayquote(@operating);
+  $name_item = psql_arrayquote(@name_item);
+  $title_item = psql_arrayquote(@title_item);
+  $result_item = psql_arrayquote(@result_item);
 
-  $title_item =~ s/\"\"/NULL/g;
-  $result_item =~ s/\"\"/NULL/g;
-
-  my ($sql) = qq(insert into $table (report_name, operating, subject, operating_item, name_item, title_item,result_item) values ('@{[$Inforef->{'Template'}]}', $Inforef->{'LastOperatingMin'}, '$subject', '{$operating}', '{$name_item}', E'{$title_item}', E'{$result_item}'););
+  my ($sql) = qq(insert into $table (report_name, operating, subject, operating_item, name_item, title_item,result_item) values ('@{[$Inforef->{'Template'}]}', $Inforef->{'LastOperatingMin'}, '$subject', $operating, $name_item, $title_item, $result_item););
 
   dosql($dbh, "set search_path to antura;", 0);
   dosql($dbh, $sql, 0);
