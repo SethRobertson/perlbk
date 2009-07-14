@@ -47,7 +47,7 @@ sub helper_raid($$$$)
     }
   }
 
-  if (-c '/dev/megaraid_sas_ioctl_node')
+  if (!system("lsmod | grep -q megaraid_sas"))
   {
     $_ = `MegaCli -LDInfo -Lall -aALL`;
     $raid .= $_;
