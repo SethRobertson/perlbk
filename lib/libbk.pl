@@ -164,6 +164,11 @@ sub do_vigenere($$;$)
   my ($encrypt,$in,$pass) = @_;
   my ($out);
 
+  if (!defined($in))
+  {
+    return $in;
+  }
+
   $pass = "fi5tRkH4Jh87o2Bo<--This is not providing a lot of security" unless ($pass);
   my ($plen) = length($pass);
   my (@pass) = split(//,$pass);

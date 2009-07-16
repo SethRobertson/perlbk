@@ -18,7 +18,6 @@
 # output.  Note text output does not get a "subject" line.  Usage
 # similar to -o stdout:</description>
 
-#require "Db.pl";
 use constant SQL_DONT_DIE => 1;
 
 
@@ -81,14 +80,11 @@ sub output_postgres($$$$;$)
 
   foreach my $line (@{$Inforef->{'LastOutputArray'}})
   {
-    $line->{'name'} = "" unless $line->{'name'};
-    $line->{'data'} = "" unless $line->{'data'};
-
     push(@operating, int((defined($line->{'operating'})?$line->{'operating'}:1)*100));
     print $line->{'name'}." has null id\n" unless defined($line->{'id'});
-    push(@name_item, '"'.$line->{'id'}.'"');
-    push(@title_item, ($line->{'name'}||""));
-    push(@result_item, ($line->{'data'}||""));
+    push(@name_item, $line->{'id'});
+    push(@title_item, ($line->{'name'}));
+    push(@result_item, ($line->{'data'}));
   }
   $operating = psql_arrayquote(@operating);
   $name_item = psql_arrayquote(@name_item);
