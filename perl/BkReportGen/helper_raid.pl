@@ -49,6 +49,10 @@ sub helper_raid($$$$)
 
   if (!system("lsmod | grep -q megaraid_sas"))
   {
+    # Get battery status and other information
+    $_ = `MegaCli -AdpBbuCmd -GetBbuStatus -aALL`;
+    $raid .= $_;
+
     $_ = `MegaCli -LDInfo -Lall -aALL`;
     $raid .= $_;
     if (/State: (?!Optimal)/)
@@ -68,6 +72,11 @@ sub helper_raid($$$$)
     {
       $Output{'operating'} = .40;
     }
+
+    # Get some general status information
+    $_ = `MegaCli -AdpGetTime -aALL`
+      `MegaCli -AdpEventLog -GetEventlogInfo`;
+    $raid .= $_;
   }
 
   if (-c '/dev/twa1')
