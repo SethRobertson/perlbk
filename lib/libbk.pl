@@ -220,7 +220,8 @@ sub do_shquote($;$)
     $o .= '\\' if ($c =~ /[\\\$\`\"]/);
     $o .= $c;
   }
-  '"'.$o.'"' unless ($nowrap);
+  $o = '"'.$o.'"' unless ($nowrap);
+  $o;
 }
 
 
