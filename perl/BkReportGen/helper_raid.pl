@@ -74,8 +74,7 @@ sub helper_raid($$$$)
     }
 
     # Get some general status information
-    $_ = `MegaCli -AdpGetTime -aALL`
-      `MegaCli -AdpEventLog -GetEventlogInfo`;
+    $_ = `MegaCli -AdpGetTime -aALL; MegaCli -AdpEventLog -GetEventLogInfo -aAll; MegaCli -AdpEventLog -GetLatest 5 -f /dev/stdout -aAll`;
     $raid .= $_;
   }
 
