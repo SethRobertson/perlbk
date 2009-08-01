@@ -19,6 +19,7 @@
 # similar to -o stdout:</description>
 
 use constant SQL_DONT_DIE => 1;
+use Sys::Hostname;
 
 
 sub output_postgres($$$$;$)
@@ -32,7 +33,7 @@ sub output_postgres($$$$;$)
 
   if ($dbchunk)
   {
-    if ($dbchunk =~ /(?:(user)(?:\:(pass))@)(host)(?:\:(port))/)
+    if ($dbchunk =~ /(?:(\w*)(?:\:(.*))?@)?(.*)(?:\:(.*))?/)
     {
       $dbhost = $3 || 'localhost';
       $dbport = $4 || 5432;
@@ -41,7 +42,7 @@ sub output_postgres($$$$;$)
     }
     else
     {
-      die "Cannot parse database part of $output\n";
+      die "Cannot parse database part ($dbchunk) of $output\n";
     }
   }
 
@@ -59,6 +60,11 @@ sub output_postgres($$$$;$)
   push(@dsn,"dbname=$dbname") if ($dbname);
   push(@dsn,"host=$dbhost") if ($dbhost);
   push(@dsn,"port=$dbport") if ($dbport);
+
+  $dbh = join(",",@dsn);
+  $dbh = "(".$dbh.")" if ($dbh);
+  print STDERR "Connecting to database...$dbh\n";
+  undef($dbh);
 
   eval
   {
@@ -91,7 +97,8 @@ sub output_postgres($$$$;$)
   $title_item = psql_arrayquote(@title_item);
   $result_item = psql_arrayquote(@result_item);
 
-  my ($sql) = qq(insert into $table (report_name, operating, subject, operating_item, name_item, title_item,result_item) values ('@{[$Inforef->{'Template'}]}', $Inforef->{'LastOperatingMin'}, '$subject', $operating, $name_item, $title_item, $result_item););
+  my $hostname = hostname;
+  my ($sql) = qq(insert into $table (report_name, sensor_name, operating, subject, operating_item, name_item, title_item,result_item) values ('@{[$Inforef->{'Template'}]}', '$hostname', $Inforef->{'LastOperatingMin'}, '$subject', $operating, $name_item, $title_item, $result_item););
 
   dosql($dbh, "set search_path to antura;", 0);
   dosql($dbh, $sql, 0);
