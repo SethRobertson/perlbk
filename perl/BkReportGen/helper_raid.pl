@@ -50,10 +50,10 @@ sub helper_raid($$$$)
   if (!system("lsmod | grep -q megaraid_sas"))
   {
     # Get battery status and other information
-    $_ = `MegaCli -AdpBbuCmd -GetBbuStatus -aALL`;
+    $_ = `MegaCli -AdpBbuCmd -GetBbuStatus -aALL -NoLog`;
     $raid .= $_;
 
-    $_ = `MegaCli -LDInfo -Lall -aALL`;
+    $_ = `MegaCli -LDInfo -Lall -aALL -NoLog`;
     $raid .= $_;
     if (/State: (?!Optimal)/)
     {
@@ -62,7 +62,7 @@ sub helper_raid($$$$)
     }
 
     $raid .= "\n";
-    $_ = `MegaCli -PdList -aALL`;
+    $_ = `MegaCli -PdList -aALL -NoLog`;
     $raid .= $_;
     if (/Error Count: (?!0)/)
     {
@@ -74,8 +74,9 @@ sub helper_raid($$$$)
     }
 
     # Get some general status information
-    $_ = `MegaCli -AdpGetTime -aALL; MegaCli -AdpEventLog -GetEventLogInfo -aAll; MegaCli -AdpEventLog -GetLatest 5 -f /dev/stdout -aAll`;
-    $raid .= $_;
+    $raid .= `MegaCli -AdpGetTime -aALL -NoLog`;
+    $raid .= `MegaCli -AdpEventLog -GetEvents -f /dev/stdout -aAll -NoLog`;
+    `MegaCli -AdpEventLog -Clear -NoLog; rm -f CtDbg.log*`;
   }
 
   if (-c '/dev/twa1')
