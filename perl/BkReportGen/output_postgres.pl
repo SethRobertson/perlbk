@@ -63,23 +63,29 @@ sub output_postgres($$$$;$)
 
   $dbh = join(",",@dsn);
   $dbh = "(".$dbh.")" if ($dbh);
-  print STDERR "Connecting to database...$dbh\n";
   undef($dbh);
 
-  eval
+  if ($Inforef->{'pgdbh'})
   {
-    # Make sure we'll die eventually if connect hangs
-    local $SIG{ALRM} = sub { die "archive"; };
-    alarm(60);
-    $dbh = DBI->connect("dbi:Pg:".join(";",@dsn), $dbuser, $dbpass,
-			{ AutoCommit => 1, Warn => 0, PrintError => 0 } )
+    $dbh = $Inforef->{'pgdbh'};
+  }
+  else
+  {
+    eval
+    {
+      # Make sure we'll die eventually if connect hangs
+      local $SIG{ALRM} = sub { die "archive"; };
+      alarm(60);
+      $Inforef->{'pgdbh'} = $dbh = DBI->connect("dbi:Pg:".join(";",@dsn), $dbuser, $dbpass,
+						{ AutoCommit => 1, Warn => 0, PrintError => 0 } )
 	|| die "Database error: " . $DBI::errstr . ".\n";
-  };
-  alarm(0);
-  if ($@)
-  {
-    $@ = "Timed out connecting to database." if ($@ =~ /^archive.*$/);
-    die $@;
+    };
+    alarm(0);
+    if ($@)
+    {
+      $@ = "Timed out connecting to database." if ($@ =~ /^archive.*$/);
+      die $@;
+    }
   }
 
   my (@operating, $operating, @name_item, $name_item, @title_item, $title_item, @result_item, $result_item);
