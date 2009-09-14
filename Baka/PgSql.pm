@@ -25,8 +25,8 @@ Baka::PgSql - Connect and issue commands/queries to a SQL database.
   $bdbh = Baka::PgSql->new;
   $bdbh = Baka::PgSql->new($dbpass, $dbname, $dbhost, $dbport, $dbuser, $dbschema, $berror, $timeout);
 
-  $rows = $bdbh->sqlcmd($cmd, $error, $timeout, \%attr);
-  $sth = $bdbh->sqlquery($query, $error, $timeout);
+  $rows = $bdbh->sqlcmd($cmd, $timeout, \%attr);
+  $sth = $bdbh->sqlquery($query, $timeout);
 
   $lobjid = $bdbh->lo_import($filename);
   $ret = $bdbh->lo_export($lobjid, $filename);
@@ -128,13 +128,36 @@ use DBD::Pg;
 use Baka::ScriptUtils qw(berror bmsg);
 use strict;
 {
-  sub new(;$$$$$$$$)
+  sub new()
   {
-    my ($type, $dbpass, $dbname, $dbhost, $dbport, $dbuser, $dbschema, $error, $timeout) = @_;
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+    my ($dbpass, $dbname, $dbhost, $dbport, $dbuser, $dbschema, $error, $timeout);
     my $old_alarm_handler;
+    my $decrypt_password = 1;
+    my %args = @_;
 
     my $self = {};
-    bless $self, $type;
+    bless $self, $class;
+
+    if (my $config = $args{'config'})
+    {
+
+      # Obtain default values from the config file. Note these will be
+      # overridden by specific hashref entries of the same name (ie see
+      # the for loop below.
+      $dbhost = $config->get("postgres_host");
+      $dbuser = $config->get("postgres_user");
+      $dbport = $config->get("postgres_port");
+      $dbpass = $config->get("postgres_password");
+      $dbname = $config->get("postgres_dbname");
+      $dbschema = $config->get("postgres_schema");
+    }
+
+    foreach my $name ('dbpass', 'dbname', 'dbhost', 'dbport', 'dbuser', 'dbschema', 'error', 'timeout', 'decrypt_passwd')
+    {
+      eval "\$$name = \$args{$name}" if (defined($args{$name}));
+    }
 
     $self->{'dbname'} = $dbname || $ENV{'PGDATABASE'};
     $self->{'dbpass'} = $dbpass || $ENV{'PGPASSWORD'};
@@ -142,16 +165,19 @@ use strict;
     $self->{'dbport'} = $dbport || $ENV{'PGPORT'} || "5432";
     $self->{'dbuser'} = $dbuser || $ENV{'PGUSER'} || $ENV{'USER'};
     $self->{'dbschema'} = $dbschema || "public";
+    $self->{'error'} = $error;
 
     if (!$self->{'dbpass'})
     {
-      berror("Database password is required", $error) if ($error);
+      berror("Database password is required", $self->{'error'}) if ($self->{'error'});
       return(undef);
     }
 
-    bmsg("DB Connect: $self->{'dbhost'}:$self->{'dbport'} DB: $self->{'dbname'}, User: $self->{'dbuser'}, Schema: $self->{'dbschema'}\n", $error) if ($error);
+    $self->{'dbpass'} = de_vigenere(0, $self->{'dbpass'}) if ($decrypt_password);
 
-    my (@dsn);
+    bmsg("DB Connect: $self->{'dbhost'}:$self->{'dbport'}, DB: $self->{'dbname'}, User: $self->{'dbuser'}, Schema: $self->{'dbschema'}\n", $self->{'error'}) if ($self->{'error'});
+
+    my @dsn;
     push(@dsn,"dbname=$self->{dbname}") if ($self->{'dbname'});
     push(@dsn,"host=$self->{dbhost}") if ($self->{'dbhost'});
     push(@dsn,"port=$self->{dbport}") if ($self->{'dbport'});
@@ -185,13 +211,13 @@ use strict;
 
     if ($@)
     {
-      berror("$@", $error) if ($error);
+      berror("$@", $self->{'error'}) if ($self->{'error'});
       return undef;
     }
 
-    if ($dbschema && (!defined($self->sqlcmd("set search_path to $dbschema, public", $error, $timeout))))
+    if ($dbschema && (!defined($self->sqlcmd("set search_path to $dbschema, public", $timeout))))
     {
-      berror("Could not set search path to: $dbschema, public", $error) if ($error);
+      berror("Could not set search path to: $dbschema, public", $self->{'error'}) if ($self->{'error'});
       $self->{'dbh'}->disconnect;
       return(undef);
     }
@@ -199,14 +225,14 @@ use strict;
     return($self);
   }
 
-  sub sqlcmd($$;$$$$)
+  sub sqlcmd($$;$$)
   {
-    my($self, $cmd, $error, $timeout, $attr_r) = @_;
+    my($self, $cmd, $timeout, $attr_r) = @_;
     my $dbh = $self->{'dbh'};
     my $rows;
     my $old_alarm_handler;
 
-    bmsg("SQL Command: $cmd: ", $error, 1) if ($error);
+    bmsg("SQL Command: $cmd: ", $self->{'error'}, 1) if ($self->{'error'});
 
     if ($timeout)
     {
@@ -230,24 +256,24 @@ use strict;
 
     if ($@)
     {
-      berror("\nERROR: $@", $error, 0, 1) if ($error);
+      berror("\nERROR: $@", $self->{'error'}, 0, 1) if ($self->{'error'});
       return(undef);
     }
 
-    bmsg("$rows", $error, 0, 1);
+    bmsg("$rows", $self->{'error'}, 0, 1);
 
     return($rows);
   }
 
 
 
-  sub sqlquery($$;$$)
+  sub sqlquery($$;$)
   {
-    my($self, $sql, $error, $timeout) =  @_;
+    my($self, $sql, $timeout) =  @_;
     my $dbh = $self->{'dbh'};
     my($sth, $rows, $old_alarm_handler);
 
-    bmsg("SQL Query: $sql: ", $error, 1) if ($error);
+    bmsg("SQL Query: $sql: ", $self->{'error'}, 1) if ($self->{'error'});
 
     if ($timeout)
     {
@@ -272,25 +298,25 @@ use strict;
 
     if ($@)
     {
-      berror("\nERROR: $@", $error, 0, 1) if ($error);
+      berror("\nERROR: $@", $self->{'error'}, 0, 1) if ($self->{'error'});
       return(undef);
     }
 
     if ($sth)
     {
-      bmsg("OK", $error, 0, 1);
+      bmsg("OK", $self->{'error'}, 0, 1);
     }
     else
     {
-      bmsg("FAILED", $error, 0, 1);
+      bmsg("FAILED", $self->{'error'}, 0, 1);
     }
 
     return($sth);
   }
 
-  sub lo_import($$;$)
+  sub lo_import($$)
   {
-    my($self, $filename, $error) = @_;
+    my($self, $filename) = @_;
     my $dbh = $self->dbh();
 
     my $autocommit = $dbh->{AutoCommit};
@@ -301,7 +327,7 @@ use strict;
 
     if (!defined($lobjid))
     {
-      berror("Could not lo_import file: $filename: " . $dbh->errstr, $error) if ($error);
+      berror("Could not lo_import file: $filename: " . $dbh->errstr, $self->{'error'}) if ($self->{'error'});
       return(-1);
     }
 
@@ -309,9 +335,9 @@ use strict;
   }
 
 
-  sub lo_export($$$;$)
+  sub lo_export($$$)
   {
-    my($self, $lobjid, $filename, $error) = @_;
+    my($self, $lobjid, $filename) = @_;
     my $dbh = $self->dbh();
 
     my $autocommit = $dbh->{AutoCommit};
@@ -322,7 +348,7 @@ use strict;
 
     if (!$ret)
     {
-      berror("Could not lo_export $lobjid to file: $filename: " . $dbh->errstr, $error) if ($error);
+      berror("Could not lo_export $lobjid to file: $filename: " . $dbh->errstr, $self->{'error'}) if ($self->{'error'});
       return(-1);
     }
 
@@ -344,11 +370,64 @@ use strict;
   }
 
 
-  sub disconnect($)
+  sub disconnect($ )
   {
     my($self) = @_;
     $self->{'dbh'}->disconnect();
   }
+
+  sub de_vigenere($$;$ )
+  {
+    my ($encrypt,$in,$pass) = @_;
+    my ($out);
+
+    if (!defined($in))
+    {
+      return $in;
+    }
+
+    $pass = "fi5tRkH4Jh87o2Bo<--This is not providing a lot of security" unless ($pass);
+    my ($plen) = length($pass);
+    my (@pass) = split(//,$pass);
+    my $printable = "O.Y;0>mM/f(2-qxclkAvRJ\@ PU}5WgX)#N\\!\${9B`Knh_]7<rs?+uH:'e1,6LpD~=aETd4j8wo\"\%[Gyb*FQztZC|ISV^i3\&";
+    my $printablelen = length($printable);
+
+    my $length = length($in);
+    for(my $x = 0;$x < $length; $x++)
+    {
+      my $c = substr($in,$x,1);
+      my $loc = index($printable,$c);
+
+      # We only ``encrypt'' printable characters
+      if ($loc >= 0)
+      {
+	if ($encrypt)
+	{
+	  $loc += index($printable,$pass[$x%$plen]);
+	}
+	else
+	{
+	  $loc -= index($printable,$pass[$x%$plen]);
+	}
+	$out .= substr($printable,$loc % $printablelen,1);
+      }
+      else
+      {
+	$out .= $c;
+      }
+    }
+    $out;
+  }
+
+  sub quote($ )
+  {
+    my($self, $str) = @_;
+
+    $str =~ s/\\/\\\\/g;
+    $str =~ s/\'/\\\'/g;
+    return("E'$str'");
+  }
+
 };
 
 1;
