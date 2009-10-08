@@ -130,6 +130,21 @@ sub helper_ifconfig($$$$)
 	$confidence -= .2;
 	next;
       }
+
+      if (defined($interinfo{$int}->{'RX-dropped'}) && defined($oldinfo->{$int}->{'RX-dropped'}))
+      {
+	my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
+	my ($rxdropdelta) = $interinfo{$int}->{'RX-dropped'} - $oldinfo->{$int}->{'RX-dropped'};
+	my ($rxdroppct) = 100*$rxdelta/($rxdelta+$rxdropdelta);
+
+	if ($rxdroppct > 5)
+	{
+	  push(@warnings,sprintf("Interface %s dropped %d (%.3f%%) packets on reception, was %d now %d!\n",$int,$rxdelta,$rxdroppct,$oldinfo->{$int}->{'RX-dropped'},$interinfo{$int}->{'RX-dropped'}));
+	  $confidence -= .02;
+	  next;
+	}
+      }
+
 #
 #      if ($interinfo{$int}->{'RX-dropped'} > $oldinfo->{$int}->{'RX-dropped'})
 #      {
