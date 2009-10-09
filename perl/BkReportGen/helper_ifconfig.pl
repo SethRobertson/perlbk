@@ -137,7 +137,7 @@ sub helper_ifconfig($$$$)
 	my ($rxdropdelta) = $interinfo{$int}->{'RX-dropped'} - $oldinfo->{$int}->{'RX-dropped'};
 	my ($rxdroppct) = 100*$rxdelta/($rxdelta+$rxdropdelta);
 
-	if ($rxdroppct > 5)
+	if ($rxdroppct >= 1)
 	{
 	  push(@warnings,sprintf("Interface %s dropped %d (%.3f%%) packets on reception, was %d now %d!\n",$int,$rxdelta,$rxdroppct,$oldinfo->{$int}->{'RX-dropped'},$interinfo{$int}->{'RX-dropped'}));
 	  $confidence -= .02;
@@ -145,27 +145,34 @@ sub helper_ifconfig($$$$)
 	}
       }
 
-#
-#      if ($interinfo{$int}->{'RX-dropped'} > $oldinfo->{$int}->{'RX-dropped'})
-#      {
-#	push(@warnings,"Interface $int dropped some packets on reception, was $oldinfo->{$int}->{'RX-dropped'} now $interinfo{$int}->{'RX-dropped'}!\n");
-#	$confidence -= .02;
-#	next;
-#      }
-#
-#      if ($interinfo{$int}->{'RX-errors'} > $oldinfo->{$int}->{'RX-errors'})
-#      {
-#	push(@warnings,"Interface $int received some errors, was $oldinfo->{$int}->{'RX-errors'} now $interinfo{$int}->{'RX-errors'}!\n");
-#	$confidence -= .1;
-#	next;
-#      }
-#
-#      if ($interinfo{$int}->{'RX-frame'} > $oldinfo->{$int}->{'RX-frame'})
-#      {
-#	push(@warnings,"Interface $int received some frame problems, was $oldinfo->{$int}->{'RX-frame'} now $interinfo{$int}->{'RX-frame'}!\n");
-#	$confidence -= .1;
-#	next;
-#      }
+      if (defined($interinfo{$int}->{'RX-errors'}) && defined($oldinfo->{$int}->{'RX-errors'}))
+      {
+	my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
+	my ($rxerrdelta) = $interinfo{$int}->{'RX-errors'} - $oldinfo->{$int}->{'RX-errors'};
+	my ($rxerrpct) = 100*$rxdelta/($rxdelta+$rxerrdelta);
+
+	if ($rxerrpct >= 1)
+	{
+	  push(@warnings,sprintf("Interface %s had %d receive errors (%.3f%%), was %d now %d!\n",$int,$rxdelta,$rxerrpct,$oldinfo->{$int}->{'RX-errors'},$interinfo{$int}->{'RX-errors'}));
+	  $confidence -= .01;
+	  next;
+	}
+      }
+
+      if (defined($interinfo{$int}->{'RX-frame'}) && defined($oldinfo->{$int}->{'RX-frame'}))
+      {
+	my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
+	my ($rxframedelta) = $interinfo{$int}->{'RX-frame'} - $oldinfo->{$int}->{'RX-frame'};
+	my ($rxframepct) = 100*$rxdelta/($rxdelta+$rxframedelta);
+
+	if ($rxframepct >= 1)
+	{
+	  push(@warnings,sprintf("Interface %s had %d framing errors (%.3f%%), was %d now %d!\n",$int,$rxdelta,$rxframepct,$oldinfo->{$int}->{'RX-frame'},$interinfo{$int}->{'RX-frame'}));
+	  $confidence -= .01;
+	  next;
+	}
+      }
+
 #
 #      if ($interinfo{$int}->{'RX-overruns'} > $oldinfo->{$int}->{'RX-overruns'})
 #      {
