@@ -76,7 +76,7 @@ sub helper_raid($$$$)
     # Get some general status information
     $raid .= `MegaCli -AdpGetTime -aALL -NoLog`;
     $raid .= `MegaCli -AdpEventLog -GetEvents -f /dev/stdout -aAll -NoLog`;
-    `MegaCli -AdpEventLog -Clear -NoLog; rm -f CtDbg.log*`;
+    `MegaCli -AdpEventLog -Clear -aAll -NoLog; rm -f CtDbg.log*`;
   }
 
   if (-c '/dev/twa1')
