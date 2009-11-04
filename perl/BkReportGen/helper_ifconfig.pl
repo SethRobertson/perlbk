@@ -44,31 +44,32 @@ sub helper_ifconfig($$$$)
   # Parse the interface information
   foreach $interface (split(/\n\n/,$ifconfig))
   {
-    if ($interface !~ /^(\S+)[^\n]+\n(\s+inet addr:(\S+)[^\n]+\n|)(?:\s+inet6 addr: [^\n]+\n)*(?# flags)\s+(\S+)[^\n]+\n(?:\s+RX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# frame)(\S+):(\S+)[^\n]*\n\s+TX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# carrier)(\S+):(\S+)\s+(?# Collisions)(\S+):(\S+)\s+(?# txqueuelen)(\S+):(\S+)[^\n]*\n\s+RX (?# bytes)(\S+):(\d+).*TX (?# bytes)(\S+):(\d+))?/)
+    if ($interface !~ /^(\S+)[^\n]+\n(\s+inet addr:(\S+)[^\n]+\n|)(?:\s+inet6 addr: [^\n]+\n)*(?# flags)\s+((\S+)[^\n]*?)  [^\n]+\n(?:\s+RX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# frame)(\S+):(\S+)[^\n]*\n\s+TX\s+(?# packets)(\S+):(\S+)\s+(?# errors)(\S+):(\S+)\s+(?# dropped)(\S+):(\S+)\s+(?# overruns)(\S+):(\S+)\s+(?# carrier)(\S+):(\S+)\s+(?# Collisions)(\S+):(\S+)\s+(?# txqueuelen)(\S+):(\S+)[^\n]*\n\s+RX (?# bytes)(\S+):(\d+).*TX (?# bytes)(\S+):(\d+))?/)
     {
       return "Non-matching interface line $interface\n";
     }
 
-    $interinfo{$1}->{"status"} = $4;
+    $interinfo{$1}->{"status"} = $5;
+    $interinfo{$1}->{"flags"} = $4;
     # get stats for non-alias interfaces
     if ($1 !~ /:/)
     {
-      $interinfo{$1}->{"RX-$5"} = $6;
-      $interinfo{$1}->{"RX-$7"} = $8;
-      $interinfo{$1}->{"RX-$9"} = $10;
-      $interinfo{$1}->{"RX-$11"} = $12;
-      $interinfo{$1}->{"RX-$13"} = $14;
+      $interinfo{$1}->{"RX-$6"} = $7;
+      $interinfo{$1}->{"RX-$8"} = $9;
+      $interinfo{$1}->{"RX-$10"} = $11;
+      $interinfo{$1}->{"RX-$12"} = $13;
+      $interinfo{$1}->{"RX-$14"} = $15;
 
-      $interinfo{$1}->{"TX-$15"} = $16;
-      $interinfo{$1}->{"TX-$17"} = $18;
-      $interinfo{$1}->{"TX-$19"} = $20;
-      $interinfo{$1}->{"TX-$21"} = $22;
-      $interinfo{$1}->{"TX-$23"} = $24;
-      $interinfo{$1}->{"TX-$25"} = $26;
-      $interinfo{$1}->{"TX-$27"} = $28;
+      $interinfo{$1}->{"TX-$16"} = $17;
+      $interinfo{$1}->{"TX-$18"} = $19;
+      $interinfo{$1}->{"TX-$20"} = $21;
+      $interinfo{$1}->{"TX-$22"} = $23;
+      $interinfo{$1}->{"TX-$24"} = $25;
+      $interinfo{$1}->{"TX-$26"} = $27;
+      $interinfo{$1}->{"TX-$28"} = $29;
 
-      $interinfo{$1}->{"RX-$29"} = $30;
-      $interinfo{$1}->{"TX-$31"} = $32;
+      $interinfo{$1}->{"RX-$30"} = $31;
+      $interinfo{$1}->{"TX-$32"} = $33;
     }
   }
 
@@ -91,7 +92,12 @@ sub helper_ifconfig($$$$)
     $oldinfo = $Storedref->{'helper_ifconfig_intinfo'};
     foreach $int (keys %interinfo)
     {
-      next if ($Opt->{'alert'} && ($int !~ /$Opt->{'alert'}/));
+      # skip interfaces not on the alert list, unless a bonding interface is on
+      # the alert list and interface is a SLAVE
+      next if (!$Opt->{'alert'} ||
+	       ($int !~ /$Opt->{'alert'}/ &&
+		($Opt->{'alert'} !~ /\bbond\d+\b/ ||
+		 $interinfo{$int}->{'flags'} !~ /\bSLAVE\b/)));
 
       if (!$oldinfo->{$int})
       {
@@ -102,7 +108,7 @@ sub helper_ifconfig($$$$)
 
       if ($interinfo{$int}->{'status'} ne $oldinfo->{$int}->{'status'})
       {
-	push(@warnings,"Interface $int has changed status from $oldinfo->{$int}->{'status'} to $interinfo{$int}->{'status'}!\n");
+	push(@warnings,"Interface $int has changed admin status from $oldinfo->{$int}->{'status'} to $interinfo{$int}->{'status'}!\n");
 	if ($interinfo{$int}->{'status'} eq "UP")
 	{
 	  $confidence -= .05;
@@ -117,57 +123,93 @@ sub helper_ifconfig($$$$)
       # Don't bother looking further at non-up or alias interfaces
       next if ($interinfo{$int}->{'status'} ne "UP" || $int =~ /:/);
 
+      if ($interinfo{$int}->{'flags'} !~ /\bRUNNING\b/)
+      {
+	if ($interinfo{$int}->{'flags'} !~ /\bSLAVE\b/)
+	{
+	  my $bondmsg = "";
+
+	  # This is a primary interface - if it is the only one on the alert
+	  # list the operational state is 0%, otherwise 50%
+	  if ($Opt->{'alert'} =~ /\|/)
+	  {
+	    $confidence -= .5;
+	    $bondmsg = " (all bonded interfaces down)" if ($int =~ /^bond\d/);
+	  }
+	  else
+	  {
+	    $confidence = 0;
+	    $bondmsg = " (all monitoring interfaces down)" if ($int =~ /^bond\d/);
+	  }
+
+	  push(@warnings,"Interface $int has no link$bondmsg!!\n");
+	}
+	elsif ($interinfo{$int}->{'flags'} ne $oldinfo->{$int}->{'flags'})
+	{
+	  # Slave interface without link reduces health only if previously up
+	  $confidence -= .2;
+	  push(@warnings,"Interface $int has no link!\n was '$oldinfo->{$int}->{'flags'}',\n now '$interinfo{$int}->{'flags'}'\n");
+	}
+	next;
+      }
+
       if ($interinfo{$int}->{'RX-packets'} == $oldinfo->{$int}->{'RX-packets'})
       {
-	push(@warnings,"Interface $int has not received additional packets, was $oldinfo->{$int}->{'RX-packets'} now $interinfo{$int}->{'RX-packets'}!\n");
+	push(@warnings,"Interface $int has not received additional packets, still $interinfo{$int}->{'RX-packets'}!\n");
 	$confidence -= .1;
 	next;
       }
 
       if ($interinfo{$int}->{'RX-bytes'} == $oldinfo->{$int}->{'RX-bytes'})
       {
-	push(@warnings,"Interface $int has not received additional data (but did receive some packets), was $oldinfo->{$int}->{'RX-bytes'} now $interinfo{$int}->{'RX-bytes'}!\n");
+	push(@warnings,"Interface $int has not received additional data, still $interinfo{$int}->{'RX-bytes'} bytes (received ".($interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'})." packets)!");
 	$confidence -= .2;
 	next;
       }
 
+      # don't count errors on bond, as they will increase if any slave increases
+      # (unlike traffic health which is bad only if _all_ slaves see no traffic)
+      next if ($int =~ /^bond\d/);
+
+      my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
+
+      my ($rxdropdelta) = 0;
       if (defined($interinfo{$int}->{'RX-dropped'}) && defined($oldinfo->{$int}->{'RX-dropped'}))
       {
-	my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
-	my ($rxdropdelta) = $interinfo{$int}->{'RX-dropped'} - $oldinfo->{$int}->{'RX-dropped'};
-	my ($rxdroppct) = 100*$rxdelta/($rxdelta+$rxdropdelta);
+	$rxdropdelta = $interinfo{$int}->{'RX-dropped'} - $oldinfo->{$int}->{'RX-dropped'};
+	my ($rxdroppct) = 100*$rxdropdelta/($rxdelta+$rxdropdelta);
 
 	if ($rxdroppct >= 1)
 	{
-	  push(@warnings,sprintf("Interface %s dropped %d (%.3f%%) packets on reception, was %d now %d!\n",$int,$rxdelta,$rxdroppct,$oldinfo->{$int}->{'RX-dropped'},$interinfo{$int}->{'RX-dropped'}));
+	  push(@warnings,sprintf("Interface %s dropped %d (%.3f%%) packets on reception, was %d now %d!\n",$int,$rxdropdelta,$rxdroppct,$oldinfo->{$int}->{'RX-dropped'},$interinfo{$int}->{'RX-dropped'}));
 	  $confidence -= .02;
 	  next;
 	}
       }
 
+      my ($rxerrdelta) = 0;
       if (defined($interinfo{$int}->{'RX-errors'}) && defined($oldinfo->{$int}->{'RX-errors'}))
       {
-	my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
-	my ($rxerrdelta) = $interinfo{$int}->{'RX-errors'} - $oldinfo->{$int}->{'RX-errors'};
-	my ($rxerrpct) = 100*$rxdelta/($rxdelta+$rxerrdelta);
+      my ($rxerrdelta) = $interinfo{$int}->{'RX-errors'} - $oldinfo->{$int}->{'RX-errors'};
+	my ($rxerrpct) = 100*$rxerrdelta/($rxdelta+$rxerrdelta+$rxdropdelta);
 
 	if ($rxerrpct >= 1)
 	{
-	  push(@warnings,sprintf("Interface %s had %d receive errors (%.3f%%), was %d now %d!\n",$int,$rxdelta,$rxerrpct,$oldinfo->{$int}->{'RX-errors'},$interinfo{$int}->{'RX-errors'}));
+	  push(@warnings,sprintf("Interface %s had %d receive errors (%.3f%%), was %d now %d!\n",$int,$rxerrdelta,$rxerrpct,$oldinfo->{$int}->{'RX-errors'},$interinfo{$int}->{'RX-errors'}));
 	  $confidence -= .01;
 	  next;
 	}
       }
 
+      my ($rxframedelta) = 0;
       if (defined($interinfo{$int}->{'RX-frame'}) && defined($oldinfo->{$int}->{'RX-frame'}))
       {
-	my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
-	my ($rxframedelta) = $interinfo{$int}->{'RX-frame'} - $oldinfo->{$int}->{'RX-frame'};
-	my ($rxframepct) = 100*$rxdelta/($rxdelta+$rxframedelta);
+	$rxframedelta = $interinfo{$int}->{'RX-frame'} - $oldinfo->{$int}->{'RX-frame'};
+	my ($rxframepct) = 100*$rxframedelta/($rxdelta+$rxframedelta+$rxerrdelta+$rxdropdelta);
 
 	if ($rxframepct >= 1)
 	{
-	  push(@warnings,sprintf("Interface %s had %d framing errors (%.3f%%), was %d now %d!\n",$int,$rxdelta,$rxframepct,$oldinfo->{$int}->{'RX-frame'},$interinfo{$int}->{'RX-frame'}));
+	  push(@warnings,sprintf("Interface %s had %d framing errors (%.3f%%), was %d now %d!\n",$int,$rxframedelta,$rxframepct,$oldinfo->{$int}->{'RX-frame'},$interinfo{$int}->{'RX-frame'}));
 	  $confidence -= .01;
 	  next;
 	}
@@ -234,12 +276,11 @@ sub helper_ifconfig($$$$)
 
   push(@$Outputarrayref, \%Output);
 
+  my %Out1;
   $Out1{'id'} = "Interface Warnings";
   push(@$Outputarrayref, \%Out1);
   if ($#warnings >= 0)
   {
-    my (%Out1);
-
     $Out1{'operating'} = $confidence<0?0:$confidence;
     $Out1{'name'} = "Interface Warnings";
     $Out1{'data'} = join("",@warnings);;
