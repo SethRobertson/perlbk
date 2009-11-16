@@ -43,8 +43,8 @@ $VERSION = 1.00;
     {
       ++$lineno;
       # strip the whitespace
-      $line =~ s/^\s+//;
-      $line =~ s/\s+$//;
+#      $line =~ s/^\s+//;
+#      $line =~ s/\s+$//;
 
       next if ($line =~ /^\#/);
       next unless (length($line));
@@ -54,7 +54,7 @@ $VERSION = 1.00;
 	# new section
 	$section = $1;
       }
-      elsif ($line =~ /^(\S+?)\s*=\s*(.*)$/)
+      elsif ($line =~ /^(\S+?)\s*=\s?(.*)$/)
       {
 	my $key = $1;
 	my $val = $2;
@@ -170,7 +170,7 @@ $VERSION = 1.00;
 	if (defined($error_ref));
       goto error;
     }
-    @lines = grep(s/^\s*(\#\s*)?$key\s*=.*/$key = $value/ && ($found_key = 1) || 1, <CONF_IN>);
+    @lines = grep(s/^$key\s*=.*/$key = $value/ && ($found_key = 1) || 1, <CONF_IN>);
     close(CONF_IN);
 
     # Add the key/value pair if the key was not found
