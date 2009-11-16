@@ -47,7 +47,7 @@ $VERSION = 1.00;
 #      $line =~ s/\s+$//;
 
       next if ($line =~ /^\#/);
-      next unless (length($line));
+      next if ($line =~ /^\s*$/);
 
       if ($line =~ /^\[(.*)\]$/)
       {
