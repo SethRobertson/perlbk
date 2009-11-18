@@ -149,14 +149,23 @@ sub helper_ifconfig($$$$)
 	  # Slave interface without link reduces health only if previously up
 	  $confidence -= .2;
 	  push(@warnings,"Interface $int has no link!\n was '$oldinfo->{$int}->{'flags'}',\n now '$interinfo{$int}->{'flags'}'\n");
+	  push(@warnings,`egrep -i "^\$(date +'\%b \%e').* $int.* (up|down)" /var/log/messages | grep -v bond | tail`)
 	}
 	next;
       }
 
-      if ($interinfo{$int}->{'RX-packets'} == $oldinfo->{$int}->{'RX-packets'})
+      my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
+
+      if (!$rxdelta)
       {
 	push(@warnings,"Interface $int has not received additional packets, still $interinfo{$int}->{'RX-packets'}!\n");
 	$confidence -= .1;
+	next;
+      }
+      elsif ($rxdelta < 0)
+      {
+	# interface counters reset - reboot or ifdown/ifup - don't report
+	# nonsensical drop/err/frame etc. warnings based on negative counts
 	next;
       }
 
@@ -170,8 +179,6 @@ sub helper_ifconfig($$$$)
       # don't count errors on bond, as they will increase if any slave increases
       # (unlike traffic health which is bad only if _all_ slaves see no traffic)
       next if ($int =~ /^bond\d/);
-
-      my ($rxdelta) = $interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'};
 
       my ($rxdropdelta) = 0;
       if (defined($interinfo{$int}->{'RX-dropped'}) && defined($oldinfo->{$int}->{'RX-dropped'}))
