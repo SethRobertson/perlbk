@@ -46,11 +46,11 @@ sub output_standard($$$$$;$)
 
   if (ref($data) eq "ARRAY")
   {
-    print $FH @$data;
+    print $FH map(/\n$/?$_:"$_\n",@$data);
   }
   else
   {
-    print $FH $$data;
+    print $FH map(/\n$/?$_:"$_\n",($$data));
   }
 
 
