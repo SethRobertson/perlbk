@@ -136,6 +136,17 @@ sub helper_bmc($$$$)
       chomp($ev);
       my @items = split(' \| ', $ev);
 
+      splice(@items, 1, 1, "[Timestamp", "unknown]")
+	if ($items[1] eq "Pre-Init Time-stamp  ");
+
+      # Sometimes last field (Asserted/Deasserted) omitted
+      # (e.g. Power Supply PS Redundancy | Redundancy Lost)
+      $items[5] = "" if ($#items == 4);
+
+      # keep all of the last 10 items
+      push(@last10, "$items[1] $items[2]: $items[3] | $items[4] | $items[5]");
+      shift(@last10) if (@last10 >= 10);
+
       # ignore any events already reported (except for SEL overflow/clear)
       if ($items[0] le $Storedref->{'sel_last_id'})
       {
@@ -148,21 +159,20 @@ sub helper_bmc($$$$)
 
       # update hash mapping events to last timestamp
       $events{"$items[3] | $items[4] | $items[5]"} = "$items[1] $items[2]";
-
-      # keep all of the last 10 items
-      push(@last10, "$items[1] $items[2]: $items[3] | $items[4] | $items[5]");
-      shift(@last10) if (1 + $#last10 >= 10)
+    }
+    my $last10time;
+    foreach my $last (@last10)
+    {
+      $last10time = substr($last10[0], 0, 19);
+      last if (substr($last10[0], 0, 1) ne "[");
     }
     foreach my $evd (sort { $events{$a} cmp $events{$b} } keys %events)
     {
-      if ($events{$evd} ge substr($last10[0], 0, 19))
-      {
-	# print out all the last 10 entries and done
-	$bmc .= join("\n", @last10) . "\n";
-	last;
-      }
+      last if ($events{$evd} ge $last10time);
+
       $bmc .= "$events{$evd}: $evd\n";
     }
+    $bmc .= join("\n", @last10) . "\n";
 
     # write new SEL entries to syslog, and clear if (nearly) full
     # (also done by cron.daily/checksel, which creates cron noise on warnings,
