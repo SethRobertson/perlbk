@@ -92,9 +92,6 @@ sub helper_ifconfig($$$$)
     $oldinfo = $Storedref->{'helper_ifconfig_intinfo'};
     foreach $int (keys %interinfo)
     {
-      # Bug 9081 / Bug 9080 - Only check actual monitoring, not slave, interfaces
-      next if ($Opt->{'alert'} && ($int !~ /$Opt->{'alert'}/));
-
       # skip interfaces not on the alert list, unless a bonding interface is on
       # the alert list and interface is a SLAVE
       next if (!$Opt->{'alert'} ||
