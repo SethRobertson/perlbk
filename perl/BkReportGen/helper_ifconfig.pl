@@ -159,8 +159,12 @@ sub helper_ifconfig($$$$)
       if (!$rxdelta)
       {
 	push(@warnings,"Interface $int has not received additional packets, still $interinfo{$int}->{'RX-packets'}!\n");
-	$confidence -= .1;
-	next;
+	# Slaves are only sick if traffic previously seen, but not in 24 hours
+	if ($interinfo{$int}->{'flags'} !~ /\bSLAVE\b/ || ($Inforef->{'PeriodSeconds'} > 86000 && $oldinfo->{$int}->{'RX-packets'} > 0))
+	{
+	  $confidence -= .1;
+	  next;
+	}
       }
       elsif ($rxdelta < 0)
       {
@@ -172,8 +176,12 @@ sub helper_ifconfig($$$$)
       if ($interinfo{$int}->{'RX-bytes'} == $oldinfo->{$int}->{'RX-bytes'})
       {
 	push(@warnings,"Interface $int has not received additional data, still $interinfo{$int}->{'RX-bytes'} bytes (received ".($interinfo{$int}->{'RX-packets'} - $oldinfo->{$int}->{'RX-packets'})." packets)!");
-	$confidence -= .2;
-	next;
+	# Slaves are only sick if traffic previously seen, but not in 24 hours
+	if ($interinfo{$int}->{'flags'} !~ /\bSLAVE\b/ || ($Inforef->{'PeriodSeconds'} > 86000 && $oldinfo->{$int}->{'RX-bytes'} > 0))
+	{
+	  $confidence -= .2;
+	  next;
+	}
       }
 
       # don't count errors on bond, as they will increase if any slave increases
