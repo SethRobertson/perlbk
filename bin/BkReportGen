@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # ++Copyright BAKA++
 #
@@ -31,6 +31,8 @@
 #
 ######################################################################
 
+use warnings;
+no warnings "uninitialized";
 use FindBin qw($Bin);
 use vars qw ($Base);
 sub BEGIN
@@ -173,13 +175,31 @@ sub OutputAll($$$)
 
   foreach $Outputref (@{$OutputAllInforef->{'OutputList'}})
   {
-    next unless ($Outputref =~ /([^:]+)(:(.*))?/);
+    next unless ($Outputref =~ /([^:]+)(:([^?]*)(\?.*)?)?/);
     if (!$Info{'Loaded'}->{'output'}->{$1})
     {
       warn "Invalid output method: $1\n";
       next;
     }
-    my ($eval) = "package Modules; \$main::Outputret = output_$1(\$main::OutputAllInforef, \$main::Outputref, \$main::OutputAllSubject, \$main::OutputAlldataref); package main;";
+    my $method=$1;
+    my $options=$4;
+    if ($options !~ /\bOutputAllIgnoreCondition\b/)
+    {
+      if ($OutputAllInforef->{'Condition'} eq "onfailure")
+      {
+	my ($cmpr) = $OutputAllInforef->{'CmdLine'}->{'ConditionPercent'} || 1;
+
+	next if ($OutputAllInforef->{'LastOperatingMin'} >= $cmpr);
+      }
+      elsif ($OutputAllInforef->{'Condition'} eq "onsuccess")
+      {
+	my ($cmpr) = $OutputAllInforef->{'CmdLine'}->{'ConditionPercent'} || 0;
+
+	next if ($OutputAllInforef->{'LastOperatingMin'} <= $cmpr);
+      }
+    }
+
+    my ($eval) = "package Modules; \$main::Outputret = output_$method(\$main::OutputAllInforef, \$main::Outputref, \$main::OutputAllSubject, \$main::OutputAlldataref); package main;";
 #    print "Evalling $eval\n";
     eval $eval;
     $fullret .= $Outputret if (length($Outputret) > 1);
