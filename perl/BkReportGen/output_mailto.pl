@@ -36,7 +36,7 @@ sub output_mailto($$$$;$)
   # 2. This an onfailure notification and the last health check was 100% healthy.
   # 3. This is not an onfailure notification and we are telling the admin we are 100% healthy.
   if ((-f $reset_file) ||
-      (($Inforef->{'Condition'} eq 'onfailure') && ($Inforef->{'SavedStateRef'}->{'LastOperatingMin'} == 100)) || 
+      (($Inforef->{'Condition'} eq 'onfailure') && ($Inforef->{'SavedStateRef'}->{'LastOperatingMin'} == 100)) ||
       (($Inforef->{'Condition'} ne 'onfailure') && ($Inforef->{'LastOperatingMin'} == 100)))
   {
     unlink($reset_file);
@@ -85,8 +85,8 @@ sub output_mailto($$$$;$)
     {
       # Insert warning that this is our last notification.
       splice(@$data, 1, 0,
-	     "This will be your last email notification about this error until health reports\n" . 
-	     "are reset or the health of the machine changes significantly. You will still\n" . 
+	     "This will be your last email notification about this error until health reports\n" .
+	     "are reset or the health of the machine changes significantly. You will still\n" .
 	     "receive your once-a-day health summary email.\n");
     }
     elsif ($cnt > $notify_limit)
