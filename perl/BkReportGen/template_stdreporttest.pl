@@ -31,21 +31,6 @@ sub template_stdreporttest($$)
     return "template_stdreporttest: helper_simplereports terminated abnormally with $ret";
   }
 
-  # <TODO>Do something clever with operatingmin</TODO>
-  if ($Inforef->{'Condition'} eq "onfailure")
-  {
-    my ($cmpr) = $Inforef->{'CmdLine'}->{'ConditionPercent'} || 1;
-
-    return 1 if ($operatingmin >= $cmpr);
-  }
-  elsif ($Inforef->{'Condition'} eq "onsuccess")
-  {
-    my ($cmpr) = $Inforef->{'CmdLine'}->{'ConditionPercent'} || 0;
-
-    return 1 if ($operatingmin <= $cmpr);
-  }
-
-
   main::OutputAll($Inforef, "Standard Sample Report", \@Output);
 }
 

@@ -37,6 +37,7 @@ MODULES=					\
 	output_mailto.pl			\
 	output_postgres.pl			\
 	output_stdout.pl			\
+	output_syslog.pl			\
 	template_helloworld.pl			\
 	template_stdreporttest.pl		\
 # Line eater fodder -- do no remove
