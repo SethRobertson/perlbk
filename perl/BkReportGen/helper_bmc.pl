@@ -89,6 +89,28 @@ sub helper_bmc($$$$)
 	{
 	  # suppress health error for out-of-spec Nehalem memory temp sensor
 	}
+	elsif ($vals[0] =~ /^Voltage \d/)
+	{
+	  # Generate one-time health warning if redundant power supply lost
+	  $vals[0] =~ /^(.*?)\s*$/;
+	  my $voltage = $1;
+	  chomp $vals[4];
+	  if ($Storedref->{$voltage} =~ /ok/ && $vals[2] !~ /ok/)
+	  {
+	    $Output{'operating'} = .96;
+	    $Output{'name'} .= "Power Supply $voltage";
+	    $Storedref->{$voltage} =~ s/.*ok\s+//;
+	    $Output{'name'} .= " (was $Storedref->{$voltage}, now $vals[4])! ";
+	  }
+	  $Storedref->{$voltage} = $vals[2] . $vals[4];
+	  $vals[4] .= "\n";
+	}
+	elsif ($vals[2] !~ /ok/ && $vals[4] =~ s/State Asserted/Out of Spec/)
+	{
+	  $vals[0] =~ /^(.*?)\s*$/;
+	  $Output{'operating'} = .4;
+	  $Output{'name'} .= "$1$vals[4]! ";
+	}
 	elsif ($vals[2] =~ /nc/)
 	{
 	  $vals[0] =~ /^(.*?)\s*$/;
@@ -105,6 +127,7 @@ sub helper_bmc($$$$)
 	{
 	  next;
 	}
+	$vals[4] =~ s/State Deasserted/Nominal/ if $vals[2] =~ /ok/;
 	$bmc .= "$vals[0]|$vals[2]|$vals[4]";
       }
     }
