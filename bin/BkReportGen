@@ -187,7 +187,7 @@ sub OutputAll($$$)
     {
       if ($OutputAllInforef->{'Condition'} eq "onfailure")
       {
-	my ($cmpr) = $OutputAllInforef->{'CmdLine'}->{'ConditionPercent'} || 1;
+	my ($cmpr) = $OutputAllInforef->{'CmdLine'}->{'ConditionPercent'} || 100;
 
 	next if ($OutputAllInforef->{'LastOperatingMin'} >= $cmpr);
       }
