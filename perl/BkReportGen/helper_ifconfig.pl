@@ -192,7 +192,9 @@ sub helper_ifconfig($$$$)
       if (defined($interinfo{$int}->{'RX-dropped'}) && defined($oldinfo->{$int}->{'RX-dropped'}))
       {
 	$rxdropdelta = $interinfo{$int}->{'RX-dropped'} - $oldinfo->{$int}->{'RX-dropped'};
-	my ($rxdroppct) = 100*$rxdropdelta/($rxdelta+$rxdropdelta);
+	my ($rxdroppct) = 0;
+	$rxdroppct = 100*$rxdropdelta/($rxdelta+$rxdropdelta)
+	  if ($rxdelta+$rxdropdelta);
 
 	if ($rxdroppct >= 1)
 	{
@@ -205,8 +207,10 @@ sub helper_ifconfig($$$$)
       my ($rxerrdelta) = 0;
       if (defined($interinfo{$int}->{'RX-errors'}) && defined($oldinfo->{$int}->{'RX-errors'}))
       {
-      my ($rxerrdelta) = $interinfo{$int}->{'RX-errors'} - $oldinfo->{$int}->{'RX-errors'};
-	my ($rxerrpct) = 100*$rxerrdelta/($rxdelta+$rxerrdelta+$rxdropdelta);
+	my ($rxerrdelta) = $interinfo{$int}->{'RX-errors'} - $oldinfo->{$int}->{'RX-errors'};
+	my ($rxerrpct) = 0;
+	$rxerrpct = 100*$rxerrdelta/($rxdelta+$rxerrdelta+$rxdropdelta)
+	  if ($rxdelta+$rxerrdelta+$rxdropdelta);
 
 	if ($rxerrpct >= 1)
 	{
@@ -220,7 +224,9 @@ sub helper_ifconfig($$$$)
       if (defined($interinfo{$int}->{'RX-frame'}) && defined($oldinfo->{$int}->{'RX-frame'}))
       {
 	$rxframedelta = $interinfo{$int}->{'RX-frame'} - $oldinfo->{$int}->{'RX-frame'};
-	my ($rxframepct) = 100*$rxframedelta/($rxdelta+$rxframedelta+$rxerrdelta+$rxdropdelta);
+	my ($rxframepct) = 0;
+	$rxframepct = 100*$rxframedelta/($rxdelta+$rxframedelta+$rxerrdelta+$rxdropdelta)
+	  if ($rxdelta+$rxframedelta+$rxerrdelta+rxdropdelta);
 
 	if ($rxframepct >= 1)
 	{

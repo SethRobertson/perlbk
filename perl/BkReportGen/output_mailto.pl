@@ -33,10 +33,11 @@ sub output_mailto($$$$;$)
 
   # Reset the holddown under any of these conditions:
   # 1. Someone has created the reset file.
-  # 2. This an onfailure notification and the last health check was 100% healthy.
-  # 3. This is not an onfailure notification and we are telling the admin we are 100% healthy.
+  # 2. This an onfailure notification and the last health check was *not*
+  # an onfailure notification, and was 100% healthy.
+  # 3. This is not an onfailure notification and we are 100% healthy.
   if ((-f $reset_file) ||
-      (($Inforef->{'Condition'} eq 'onfailure') && ($Inforef->{'SavedStateRef'}->{'LastOperatingMin'} == 100)) ||
+      (($Inforef->{'Condition'} eq 'onfailure') && ($Inforef->{'SavedStateRef'}->{'Condition'} ne 'onfailure') && ($Inforef->{'SavedStateRef'}->{'LastOperatingMin'} == 100)) ||
       (($Inforef->{'Condition'} ne 'onfailure') && ($Inforef->{'LastOperatingMin'} == 100)))
   {
     unlink($reset_file);
@@ -48,9 +49,13 @@ sub output_mailto($$$$;$)
   {
     # Build array of sub-report operating percentages.
     my @operating;
+    # start array with overall minimum (may be event progress, omitted below)
+    push(@operating, $Inforef->{'LastOperatingMin'});
     foreach my $subreport (@{$Inforef->{'LastOutputArray'}})
     {
       next unless ($subreport->{'name'} && defined($subreport->{'operating'}));
+      # omit "event progress" (failure) status [unreported anyhow if 100%]
+      next if ($subreport->{'name'} =~ / event progress /);
       push(@operating, $subreport->{'operating'});
     }
 
@@ -72,6 +77,7 @@ sub output_mailto($$$$;$)
       {
 	$cnt = $old_cnt;
       }
+      # system("{ echo -n 'OLD '; cat $operating_file; }>>$operating_file.log");
     }
 
     $cnt++;
@@ -80,6 +86,17 @@ sub output_mailto($$$$;$)
     $fh->open("> $operating_file") || return "Failed to open $operating_file for writing: $!.\n";
     print $fh "$cnt,$opstring\n";
     $fh->close();
+
+    if (0 && $fh->open(">> $operating_file.log"))
+    {
+      foreach my $subreport (@{$Inforef->{'LastOutputArray'}})
+      {
+	next unless ($subreport->{'name'} && defined($subreport->{'operating'}));
+	print $fh $subreport->{'name'} . "=" . $subreport->{'operating'} . " ";
+      }
+      print $fh "\n";
+      $fh->close();
+    }
 
     if ($cnt == $notify_limit)
     {
