@@ -44,6 +44,8 @@ sub output_mailto($$$$;$)
     unlink($operating_file);
   }
 
+  $Inforef->{'SavedStateRef'}->{'Condition'} = $Inforef->{'Condition'};
+
   my $notify_limit = $Inforef->{'CmdLine'}->{'mail-notify-limit'} || 0;
   if ($notify_limit && ($Inforef->{'Condition'} eq 'onfailure'))
   {
@@ -80,24 +82,29 @@ sub output_mailto($$$$;$)
       # system("{ echo -n 'OLD '; cat $operating_file; }>>$operating_file.log");
     }
 
-    $cnt++;
-
-    my $fh = new FileHandle;
-    $fh->open("> $operating_file") || return "Failed to open $operating_file for writing: $!.\n";
-    print $fh "$cnt,$opstring\n";
-    $fh->close();
-
-    if (0 && $fh->open(">> $operating_file.log"))
+    # don't update count/status if no report will be issued (we are "onfailure")
+    if ($Inforef->{'LastOperatingMin'} != 100)
     {
-      foreach my $subreport (@{$Inforef->{'LastOutputArray'}})
-      {
-	next unless ($subreport->{'name'} && defined($subreport->{'operating'}));
-	print $fh $subreport->{'name'} . "=" . $subreport->{'operating'} . " ";
-      }
-      print $fh "\n";
+      $cnt++;
+
+      my $fh = new FileHandle;
+      $fh->open("> $operating_file") || return "Failed to open $operating_file for writing: $!.\n";
+      print $fh "$cnt,$opstring\n";
       $fh->close();
+
+      if (0 && $fh->open(">> $operating_file.log"))
+      {
+	foreach my $subreport (@{$Inforef->{'LastOutputArray'}})
+	{
+	  next unless ($subreport->{'name'} && defined($subreport->{'operating'}));
+	  print $fh $subreport->{'name'} . "=" . $subreport->{'operating'} . " ";
+	}
+	print $fh "\n";
+	$fh->close();
+      }
     }
 
+    # system("echo 'NEW $cnt,$opstring'>>$operating_file.log");
     if ($cnt == $notify_limit)
     {
       # Insert warning that this is our last notification.
