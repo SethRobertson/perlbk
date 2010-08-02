@@ -225,4 +225,40 @@ sub do_shquote($;$)
 }
 
 
+
+######################################################################
+#
+# Quote something for the CSV, as a raw argument
+#
+sub csvquote($;$)
+{
+  my ($i,$nowrap) = @_;
+  my $o;
+  my $len = length($i);
+
+  foreach(my $x=0;$x<$len;$x++)
+  {
+    my $c = substr($i,$x,1);
+    if ($c eq '"')
+    {
+      $o .= '""';
+    }
+    elsif ($c eq "\r" && substr($i,$x+1,1) eq "\n")
+    {
+      $o .= '\\n';
+      $x++;
+    }
+    elsif ($c eq "\n")
+    {
+      $o .= '\\n';
+    }
+    else
+    {
+      $o .= $c;
+    }
+  }
+  $o = '"'.$o.'"' unless ($o !~ /[\s,"]/ || $nowrap);
+  $o;
+}
+
 1;
