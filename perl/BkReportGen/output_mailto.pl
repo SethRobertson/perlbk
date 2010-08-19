@@ -109,9 +109,9 @@ sub output_mailto($$$$;$)
     {
       # Insert warning that this is our last notification.
       splice(@$data, 1, 0,
-	     "This will be your last email notification about this error until health reports\n" .
+	     "This will be your last e-mail notification about this error until health reports\n" .
 	     "are reset or the health of the machine changes significantly. You will still\n" .
-	     "receive your once-a-day health summary email.\n");
+	     "receive your once-a-day health summary e-mail.\n");
     }
     elsif ($cnt > $notify_limit)
     {
