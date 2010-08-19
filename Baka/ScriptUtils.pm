@@ -436,7 +436,7 @@ sub bask($$$;$$)
 
     last if (!defined($pattern) || (eval "\$reply =~ $pattern"));
     # Note we log only $msg, not $query (too wordy)
-    bmsg("$msg: $$reply", $log);
+    bmsg("$msg: $reply", $log);
   }
 
   $$reply_r = $reply;
