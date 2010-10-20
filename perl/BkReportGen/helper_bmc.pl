@@ -202,7 +202,7 @@ sub helper_bmc($$$$)
     # so we rely on running every 15 minutes (or daily, "antura" < "checksel"
     # to make sure this runs first and prevent cron noise from checksel)
 
-    my $warning = `/usr/sbin/ipmiutil sel -w`;
+    my $warning = `/usr/sbin/ipmiutil sel -e -w`;
     if ($warning =~ /WARNING: (free space .*?),/)
     {
       my $space = $1;
