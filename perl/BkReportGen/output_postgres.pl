@@ -106,7 +106,7 @@ sub output_postgres($$$$;$)
   my $hostname = hostname;
   my ($sql) = qq(insert into $table (report_name, sensor_name, operating, subject, operating_item, name_item, title_item,result_item) values ('@{[$Inforef->{'Template'}]}', '$hostname', $Inforef->{'LastOperatingMin'}, '$subject', $operating, $name_item, $title_item, $result_item););
 
-  dosql($dbh, "set search_path to antura;", 0);
+  dosql($dbh, "set search_path to antura,public;", 0);
   dosql($dbh, $sql, 0);
 
   1;
