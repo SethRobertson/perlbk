@@ -75,7 +75,7 @@
 
 	* perl/BkReportGen/helper_df.pl (helper_df): #8514: avoid LVM gripes
 	about "file descriptor # left open"
-	
+
 2006-09-27  Alex Dupuy  <alex.dupuy@counterstorm.com>
 
 	* perl/BkReportGen/helper_df.pl (helper_df): add LVM2 PV and LV stats
@@ -84,12 +84,12 @@
 	get health and details for software RAID on FC5 (this *never* worked!)
 
 	* perl/BkReportGen/helper_raid.pl (helper_raid): #8079: do 3ware RAID;
-	
+
 2006-09-26  Alexander Dupuy  <alex.dupuy@counterstorm.com>
 
 	* perl/BkReportGen/helper_smart.pl (helper_smart): parse smartctl exit
 	#8079: handle -d device option for SATA and 3ware RAID
-	
+
 2006-04-17  James Tanis  <jtt@swift.sysdetect.com>
 
 	* Baka/NetUtils.pm (netmask_from_bits($): Create a netmask from a

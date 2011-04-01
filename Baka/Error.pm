@@ -83,7 +83,7 @@ use strict;
     my $stderr_to_logger = 0;
     if (-p STDERR)
     {
-      # Use the inode number to find out whether STDERR is piped to logger. This 
+      # Use the inode number to find out whether STDERR is piped to logger. This
       # still fails if there is another process in between: thisprog | anotherprog | logger.
       my $lsof = '/usr/sbin/lsof';
       my @pipe_stat = stat(STDERR);
