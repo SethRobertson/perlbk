@@ -321,7 +321,7 @@ sub bruncmd($;$$$$$$ )
 
   $success_code = 0 if (!defined($success_code));
 
-  print $log "Running cmd: $cmd: ";
+  print $log "Running cmd: $cmd: " if ($log);
 
   # If the caller is catching SIGCHLD, he probably doesn't want it caught for this, so
   # reset it across the backtick call.
@@ -334,18 +334,20 @@ sub bruncmd($;$$$$$$ )
   my $sig = $exitcode&0x7f;
   my $ret = ($exitcode>>8)&0xff;
 
-  print $log "$ret";
-  print $log " [signal: $sig]" if ($sig);
-  print $log " (ignored)" if ($ignore_error_code && ($ret != $success_code));
-  print $log "\n";
+  if ($log)
+  {
+    print $log "$ret";
+    print $log " [signal: $sig]" if ($sig);
+    print $log " (ignored)" if ($ignore_error_code && $ret != $success_code);
+    print $log "\n";
 
-  print $log "------------------------------------------------------------\n";
-
+    print $log "----------------------------------------------------------\n";
+  }
   if (@lines)
   {
     my $output_str = "" . join("$/", @lines) . "$/";
 
-    if (!$ignore_output)
+    if ($log && !$ignore_output)
     {
       print $log "$output_str";
       print $log "------------------------------------------------------------\n";
