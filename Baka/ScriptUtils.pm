@@ -140,9 +140,11 @@ James Tanis
 #
 
 package Baka::ScriptUtils;
-use Switch;
 use IO::File;
-use Baka::Error;
+BEGIN
+{
+  eval { require Baka::Error; }; # Require Baka::Error if it's available, but don't sweat it
+}
 use POSIX qw(isatty);
 use Exporter 'import';
 @EXPORT_OK = qw (berror bwarn bmsg bdebug bdie bruncmd bopen_log bwant_stderr bask);
@@ -160,6 +162,10 @@ sub bask($$$;$$);
 
 my $want_stderr = 0;
 
+# For long running commands, it can be annoying to wait and wait and wait
+# for the results, so while the comand is running, results will be tee'ed
+# into this file.
+my $tmp_results = "/tmp/bruncmd.$$";
 
 ################################################################
 #
@@ -211,9 +217,17 @@ sub bwarn($$;$$ )
   }
   else
   {
-    print $log ((!$no_header)?"WARN: ":"") . "$msg";
-  }
+    my $warning = ((!$no_header)?"WARN: ":"") . "$msg";
+    print $log $warning;
 
+    if (isatty(fileno(STDERR)) || $want_stderr)
+    {
+      # Make sure the message has a separator at the end.
+      chomp($warning);
+      $warning .= $/;
+      print STDERR "$warning";
+    }
+  }
   return;
 }
 
@@ -312,10 +326,17 @@ sub bruncmd($;$$$$$$ )
 
   if ($output_r)
   {
-    switch (ref($output_r))
+    if (ref($output_r) eq "ARRAY")
     {
-      case "ARRAY" { @$output_r = (); }
-      case "SCALAR" { $$output_r = ""; }
+      @$output_r = ();
+    }
+    elsif (ref($output_r) eq "SCALAR")
+    {
+      $$output_r = "";
+    }
+    else
+    {
+      # <TODO> Should return some kind of error here, but needs testing </TODO>
     }
   }
 
@@ -327,12 +348,17 @@ sub bruncmd($;$$$$$$ )
   # reset it across the backtick call.
   my $old_chld = $SIG{'CHLD'};
   $SIG{'CHLD'} = 'DEFAULT';
-  chomp(my @lines = `exec 2>/dev/stdout; $cmd`);
+  chomp(my @lines = `{ $cmd; echo "\$?" > /tmp/__results;  } 2>&1 | tee $tmp_results; _exit_status=\$(cat /tmp/__results); rm -f /tmp__results; exit \$_exit_status`);
   $SIG{'CHLD'} = $old_chld if (defined($old_chld));
 
   my $exitcode = ($?&0xffff);
   my $sig = $exitcode&0x7f;
   my $ret = ($exitcode>>8)&0xff;
+
+  # Now that the command is over and the exitcode processed the and results
+  # will be written into the log file (if there is one), we can nuke the
+  # temporary file.
+  unlink($tmp_results);
 
   if ($log)
   {
@@ -355,10 +381,17 @@ sub bruncmd($;$$$$$$ )
 
     if ($output_r)
     {
-      switch (ref($output_r))
+      if (ref($output_r) eq "ARRAY")
       {
-	case "ARRAY" { @$output_r = @lines; }
-	case "SCALAR" { $$output_r = $output_str; }
+	@$output_r = @lines;
+      }
+      elsif (ref($output_r) eq "SCALAR")
+      {
+	$$output_r = $output_str;
+      }
+      else
+      {
+	# <TODO> Should return some kind of error here but needs to be tested </TOOD>
       }
     }
   }
@@ -399,6 +432,8 @@ sub bopen_log($;$$$ )
   }
 
   $log->autoflush(1) unless ($no_autoflush);
+
+  print $log "While a shell command is runing, real time results will appear in $tmp_results\n";
   return($log);
 }
 
