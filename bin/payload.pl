@@ -10,14 +10,17 @@ use Getopt::Long;
 use Net::Pcap;
 use Net::IP;
 use Socket;
+use NetPacket qw(htonl htons);
 use NetPacket::Ethernet;
 use NetPacket::IP;
 use NetPacket::TCP;
 use NetPacket::UDP;
 use FileHandle;
+use Data::Dumper;
 
 sub make_association($$$$$ );
 sub destroy_assoc($$ );
+sub get_direction($$$ );
 
 use constant
 {
@@ -45,7 +48,7 @@ my $USAGE = "Usage: $progname --list-devs | --live=DEV | --file=DMPFILE [--filte
 
 my(%OPTIONS);
 Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat");
-GetOptions(\%OPTIONS, 'debug|d', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'help|?') || die $USAGE;
+GetOptions(\%OPTIONS, 'debug|d', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'help|?') || die $USAGE;
 die $USAGE if ($OPTIONS{'help'});
 die $USAGE if (@ARGV);
 
@@ -112,16 +115,18 @@ if ($filter_str)
 
 bdie("Could not create $dir", $log) if (bruncmd("mkdir -p $dir", $log) != 0);
 
-my (%pcap_header, $assoc_info);
+my %pcap_header;
+my $assoc_info = {};
 my ($pkt_cnt, $ip_pkt_cnt, $last_pkt_time, $misordered_cnt) = (0, 0, 0.0, 0);
 while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
 {
   $pkt_cnt++;
 
+  # Get paket time
+  my $pkt_time = $pcap_header{'tv_sec'} + $pcap_header{'tv_usec'} / 1000.0;
+
   # Obtain packet.
   my $eth_obj = NetPacket::Ethernet->decode($pkt);
-
-  my $pkt_time = $eth_obj->{'tv_sec'} + $eth_obj->{'tv_usec'} / 1000.0;
 
   # Check and update packet time (before we do any kind of filtering).
   if ($pkt_time < $last_pkt_time)
@@ -139,7 +144,7 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   # Skip non-IP packet.
   next if (($eth_obj->{'type'}&0xffff) != ETHERTYPE_IP);
 
-  my $ip_pkt = NetPacket::Ethernet::strip($pkt);
+  my $ip_pkt = $eth_obj->{'data'};
   $ip_pkt_cnt++;
 
   my $ip_obj = NetPacket::IP->decode($ip_pkt);
@@ -154,10 +159,9 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   else
   {
     # <TODO> Handle frangments. Uggh.. </TODO>
-    bwarn("Fragments not currently handled!", $log)
+    bwarn("Fragments not currently handled!", $log);
+    next;
   }
-
-  my $trans_pdu = NetPacket::IP->strip($ip_pkt);
 
   next if (($proto != IPPROTO_TCP) &&  ($proto != IPPROTO_UDP));
 
@@ -165,16 +169,14 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   # Decode transport layer and set ports and data.
   if ($proto == IPPROTO_TCP)
   {
-    $tcp_obj = NetPacket::TCP->decode($trans_pdu);
-
+    $tcp_obj = NetPacket::TCP->decode($ip_obj->{'data'});
     $src_port = $tcp_obj->{'src_port'};
     $dst_port = $tcp_obj->{'dest_port'};
     $data = $tcp_obj->{'data'};
   }
   else
   {
-    $udp_obj = NetPacket::TCP->decode($trans_pdu);
-
+    $udp_obj = NetPacket::TCP->decode($ip_obj->{'data'});
     $src_port = $udp_obj->{'src_port'};
     $dst_port = $udp_obj->{'dest_port'};
     $data = $udp_obj->{'data'};
@@ -182,23 +184,23 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
 
   my $assoc = make_association($src_ip, $dst_ip, $proto, $src_port, $dst_port);
 
-  # Update association time.
-  $assoc_info->{$assoc}->{'last_pkt_time'} = $pkt_time;
-  
-  # Set the direction packet.
-  my $direction = get_direction($src_ip, $dst_ip);
-
   # Set the first_from immediately.
   my $first_from;
   if (!defined($assoc_info->{$assoc}))
   {
     $assoc_info->{$assoc}->{'first_from'} = $first_from = $src_ip;
-    $assoc_info->{$assoc}->{'protp'} = $proto;
+    $assoc_info->{$assoc}->{'proto'} = $proto;
   }
   else
   {
     $first_from = $assoc_info->{$assoc}->{'first_from'};
   }
+
+  # Update association time.
+  $assoc_info->{$assoc}->{'last_pkt_time'} = $pkt_time;
+  
+  # Set the direction packet.
+  my $direction = get_direction($assoc_info, $assoc, $src_ip);
 
   # If this a TCP segment then check to see if the FIN is set so we can track close conditions.
   if (($proto == IPPROTO_TCP) && ($tcp_obj->{'flags'} & FIN))
@@ -270,10 +272,12 @@ sub make_association($$$$$ )
 {
   my ($src_ip, $dst_ip, $proto, $src_port, $dst_port) = @_;
 
-  my $sip = NetPacket::htonl(inet_aton($src_ip));
-  my $dip = NetPacket::htonl(inet_aton($dst_ip));
+  my $sip = htonl(inet_aton($src_ip));
+  my $dip = htonl(inet_aton($dst_ip));
+  my $sport = htons($src_port);
+  my $dport = htons($dst_port);
 
-  return(($sip < $dip)?"${proto}-${src_ip}:${src_port}-${dst_ip}:${dst_port}":"${proto}-${dst_ip}:${dst_port}-${src_ip}:${src_port}");
+  return((($sip < $dip) || ($sport < $dport))?"${proto}-${src_ip}:${src_port}-${dst_ip}:${dst_port}":"${proto}-${dst_ip}:${dst_port}-${src_ip}:${src_port}");
 }
 
 
@@ -297,4 +301,11 @@ sub destroy_assoc($$ )
 
   delete($assoc_info->{$assoc});
   return(0);
+}
+
+sub get_direction($$$ )
+{
+  my($assoc_info, $assoc, $src) = @_;
+
+  return(($assoc_info->{$assoc}->{'first_from'} eq $src)?@{[DIRECTION_FROM_SOURCE]}:@{[DIRECTION_TO_SOURCE]});
 }
