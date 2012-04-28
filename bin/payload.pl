@@ -21,6 +21,7 @@ use Data::Dumper;
 sub make_association($$$$$ );
 sub destroy_assoc($$ );
 sub get_direction($$$ );
+sub ip2i($ );
 
 use constant
 {
@@ -44,11 +45,11 @@ $progbase =~ s/\.pl$//;
 
 my @required_args = ( "list-devs", "live", "file" );
 
-my $USAGE = "Usage: $progname --list-devs | --live=DEV | --file=DMPFILE [--filter=FILTER] [--log-file=FILE] [--netmask=NETMASK] [--[no-]optimize] [--snaplen=LEN] [--[no]-promisc] [--to-ms=TIMEOUT] [--bidir!] [--dir=DIRECTORY] [--[no-]permit-misordered]\n";
+my $USAGE = "Usage: $progname --list-devs | --live=DEV | --file=DMPFILE [--filter=FILTER] [--log-file=FILE] [--netmask=NETMASK] [--[no-]optimize] [--snaplen=LEN] [--[no]-promisc] [--to-ms=TIMEOUT] [--bidir!] [--dir=DIRECTORY] [--[no-]permit-misordered] [--[no-]stats\n";
 
 my(%OPTIONS);
 Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat");
-GetOptions(\%OPTIONS, 'debug|d', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'help|?') || die $USAGE;
+GetOptions(\%OPTIONS, 'debug|d', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'stats!', 'help|?') || die $USAGE;
 die $USAGE if ($OPTIONS{'help'});
 die $USAGE if (@ARGV);
 
@@ -65,6 +66,7 @@ my $optimize = $OPTIONS{'optimize'} // 0;
 my $bidir = $OPTIONS{'bidir'} // 1;
 my $dir = $OPTIONS{'dir'} // "/tmp/payload.d";
 my $permit_misordered = $OPTIONS{'permit_misordered'} // 1;
+my $stats = $OPTIONS{'stats'} // 0;
 
 my $log_file = $OPTIONS{'log-file'} // "/tmp/${progbase}.$ENV{USER}";
 my $log = bopen_log($log_file);
@@ -117,13 +119,15 @@ bdie("Could not create $dir", $log) if (bruncmd("mkdir -p $dir", $log) != 0);
 
 my %pcap_header;
 my $assoc_info = {};
-my ($pkt_cnt, $ip_pkt_cnt, $last_pkt_time, $misordered_cnt) = (0, 0, 0.0, 0);
+# Stats
+my ($pkt_cnt, $ip_pkt_cnt, $misordered_cnt) = (0, 0, 0);
+my $last_pkt_time = 0.0;
 while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
 {
   $pkt_cnt++;
 
   # Get paket time
-  my $pkt_time = $pcap_header{'tv_sec'} + $pcap_header{'tv_usec'} / 1000.0;
+  my $pkt_time = $pcap_header{'tv_sec'} + $pcap_header{'tv_usec'} / 1000000.0;
 
   # Obtain packet.
   my $eth_obj = NetPacket::Ethernet->decode($pkt);
@@ -188,6 +192,7 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   my $first_from;
   if (!defined($assoc_info->{$assoc}))
   {
+    print STDERR "New association: $assoc\n";
     $assoc_info->{$assoc}->{'first_from'} = $first_from = $src_ip;
     $assoc_info->{$assoc}->{'proto'} = $proto;
   }
@@ -222,6 +227,8 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
       {
 	$filename = "${proto}-${dst_ip}:${dst_port}:${src_ip}:${src_port}"
       }
+
+      $filename = "${dir}/${filename}";
 
       bdie("Could not open $filename for writing: $!", $log) if (!($fh = FileHandle->new(">> $filename")));
       $assoc->{$assoc}->{$src_port}->{$direction} = $fh;
@@ -260,6 +267,22 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   }
 }
 
+# Destroy all remaining associations (basically to ensure that the output files are closed).
+foreach my $assoc (keys(%{$assoc_info}))
+{
+  destroy_assoc($assoc_info, $assoc);
+}
+
+
+if ($stats)
+{
+  my $format = "%10s: %i\n";
+  printf($format, "Packets", $pkt_cnt);
+  printf($format, "IP Packets", $ip_pkt_cnt);
+  printf($format, "Misordered", $misordered_cnt);
+}
+
+
 exit(0);
 
 sub END
@@ -271,14 +294,26 @@ sub END
 sub make_association($$$$$ )
 {
   my ($src_ip, $dst_ip, $proto, $src_port, $dst_port) = @_;
+  my $src_first = 0;
 
-  my $sip = htonl(inet_aton($src_ip));
-  my $dip = htonl(inet_aton($dst_ip));
+  my $sip = ip2i($src_ip);
+  my $dip = ip2i($dst_ip);
   my $sport = htons($src_port);
   my $dport = htons($dst_port);
 
-  return((($sip < $dip) || ($sport < $dport))?"${proto}-${src_ip}:${src_port}-${dst_ip}:${dst_port}":"${proto}-${dst_ip}:${dst_port}-${src_ip}:${src_port}");
+  $src_first = 1 if (($sip < $dip) || (($sip == $dip) && ($sport < $dport)));
+
+  return($src_first?"${proto}-${src_ip}:${src_port}-${dst_ip}:${dst_port}":"${proto}-${dst_ip}:${dst_port}-${src_ip}:${src_port}");
 }
+
+sub ip2i($ )
+{
+  my($ip) = @_;
+
+  my $normalized = htonl(unpack("L", pack("C4", split(/\./, $ip))));
+  return($normalized);
+}
+
 
 
 sub destroy_assoc($$ )
