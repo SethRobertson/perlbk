@@ -1,7 +1,20 @@
 #!  /usr/bin/perl -w
 
+# <TODO> 
+# IP filter
+# Broadcast option
+# Early post FIN close
+# Initial holddown
+# Suppress extra newlines 
+# Comment
+# Document
+# Test: Live capture
+# Test: Filtering (probably already tested)
+# Test: Bidir
+# Test: Closes
+#</TOOD>
+
 use strict;
-no strict "refs";
 use FindBin qw($Bin);
 use lib "$Bin/..";
 use Baka::ScriptUtils (qw(berror bdie bruncmd bopen_log bmsg bwant_stderr bask bwarn));;
@@ -25,10 +38,10 @@ sub ip2i($ );
 
 use constant
 {
-  ETHERTYPE_IP		=> 2048, 	#net/ethernet.h
+  ETHERTYPE_IP		=> 2048,	# net/ethernet.h
   IPPROTO_TCP		=> 6,
   IPPROTO_UDP		=> 17,
-  TIMEOUT_2MSL		=> 240.0, # The comparison is with a floating point number.
+  TIMEOUT_2MSL		=> 240.0, 	# The comparison is with a floating point number.
 };
 
 use constant
@@ -36,7 +49,6 @@ use constant
   DIRECTION_FROM_SOURCE	=> 0,
   DIRECTION_TO_SOURCE	=> 1,
 };
-
 
 our $progname = basename($0);
 
@@ -192,7 +204,6 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   my $first_from;
   if (!defined($assoc_info->{$assoc}))
   {
-    print STDERR "New association: $assoc\n";
     $assoc_info->{$assoc}->{'first_from'} = $first_from = $src_ip;
     $assoc_info->{$assoc}->{'proto'} = $proto;
   }
@@ -241,14 +252,8 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
     
     if ($bidir)
     {
-      if ($direction eq DIRECTION_FROM_SOURCE)
-      {
-	print $fh "\n>>>>>>\n";
-      }
-      else
-      {
-	print $fh "\n<<<<<<\n";
-      }
+      my $direction_char = (($direction eq DIRECTION_FROM_SOURCE)?'>':'<');
+      print $fh "\n" . ($direction_char x 6) . "\n";
     }
     print $fh $data;
   }
@@ -262,7 +267,7 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   # function. Too bad we don't have try/finally.
   foreach $assoc (keys(%{$assoc_info}))
   {
-    next if ($assoc_info->{$assoc}->{'proto'} != IPPROTO_TCP); # This should always be true of course.
+    next if ($assoc_info->{$assoc}->{'proto'} != IPPROTO_TCP); # Should never be true
     destroy_assoc($assoc_info, $assoc) if (($assoc_info->{$assoc}->{'last_pkt_time'} - $pkt_time) >= TIMEOUT_2MSL);
   }
 }
@@ -273,7 +278,6 @@ foreach my $assoc (keys(%{$assoc_info}))
   destroy_assoc($assoc_info, $assoc);
 }
 
-
 if ($stats)
 {
   my $format = "%10s: %i\n";
@@ -282,13 +286,15 @@ if ($stats)
   printf($format, "Misordered", $misordered_cnt);
 }
 
-
 exit(0);
+
+
 
 sub END
 {
   Net::Pcap::pcap_close($pcap) if (defined($pcap));
 }
+
 
 
 sub make_association($$$$$ )
@@ -305,6 +311,8 @@ sub make_association($$$$$ )
 
   return($src_first?"${proto}-${src_ip}:${src_port}-${dst_ip}:${dst_port}":"${proto}-${dst_ip}:${dst_port}-${src_ip}:${src_port}");
 }
+
+
 
 sub ip2i($ )
 {
@@ -337,6 +345,8 @@ sub destroy_assoc($$ )
   delete($assoc_info->{$assoc});
   return(0);
 }
+
+
 
 sub get_direction($$$ )
 {
