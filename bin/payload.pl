@@ -1,20 +1,19 @@
 #!  /usr/bin/perl -w
 
 # <TODO> 
-# IP filter
-# Broadcast option
 # Early post FIN close
 # Initial holddown
 # Suppress extra newlines 
+# Standard filter (not udp, not ports 22, 443)
 # Comment
 # Document
 # Test: Live capture
-# Test: Filtering (probably already tested)
 # Test: Bidir
 # Test: Closes
 #</TOOD>
 
 use strict;
+no strict 'refs';
 use FindBin qw($Bin);
 use lib "$Bin/..";
 use Baka::ScriptUtils (qw(berror bdie bruncmd bopen_log bmsg bwant_stderr bask bwarn));;
@@ -27,6 +26,7 @@ use NetPacket qw(htonl htons);
 use NetPacket::Ethernet;
 use NetPacket::IP;
 use NetPacket::TCP;
+
 use NetPacket::UDP;
 use FileHandle;
 use Data::Dumper;
@@ -41,7 +41,8 @@ use constant
   ETHERTYPE_IP		=> 2048,	# net/ethernet.h
   IPPROTO_TCP		=> 6,
   IPPROTO_UDP		=> 17,
-  TIMEOUT_2MSL		=> 240.0, 	# The comparison is with a floating point number.
+#  TIMEOUT_2MSL		=> 240.0, 	# The comparison is with a floating point number.
+  TIMEOUT_2MSL		=> 1.0, 	# The comparison is with a floating point number.
 };
 
 use constant
@@ -54,14 +55,15 @@ our $progname = basename($0);
 
 my $progbase = $progname;
 $progbase =~ s/\.pl$//;
+my $live_capture_done = 0;
 
 my @required_args = ( "list-devs", "live", "file" );
 
-my $USAGE = "Usage: $progname --list-devs | --live=DEV | --file=DMPFILE [--filter=FILTER] [--log-file=FILE] [--netmask=NETMASK] [--[no-]optimize] [--snaplen=LEN] [--[no]-promisc] [--to-ms=TIMEOUT] [--bidir!] [--dir=DIRECTORY] [--[no-]permit-misordered] [--[no-]stats\n";
+my $USAGE = "Usage: $progname --list-devs | --live=DEV | --file=DMPFILE [--filter=FILTER] [--log-file=FILE] [--netmask=NETMASK] [--[no-]optimize] [--snaplen=LEN] [--[no]-promisc] [--to-ms=TIMEOUT] [--bidir!] [--dir=DIRECTORY] [--[no-]permit-misordered] [--[no-]stats [--[no-]broadcast]\n";
 
 my(%OPTIONS);
 Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat");
-GetOptions(\%OPTIONS, 'debug|d', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'stats!', 'help|?') || die $USAGE;
+GetOptions(\%OPTIONS, 'debug|d', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'stats!', 'broadcast!', 'help|?') || die $USAGE;
 die $USAGE if ($OPTIONS{'help'});
 die $USAGE if (@ARGV);
 
@@ -79,6 +81,7 @@ my $bidir = $OPTIONS{'bidir'} // 1;
 my $dir = $OPTIONS{'dir'} // "/tmp/payload.d";
 my $permit_misordered = $OPTIONS{'permit_misordered'} // 1;
 my $stats = $OPTIONS{'stats'} // 0;
+my $broadcast = $OPTIONS{'broadcast'} // 0;
 
 my $log_file = $OPTIONS{'log-file'} // "/tmp/${progbase}.$ENV{USER}";
 my $log = bopen_log($log_file);
@@ -110,22 +113,30 @@ elsif ($OPTIONS{'live'})
 {
   my $dev = $OPTIONS{'live'};
 
+  $SIG{'INT'} = sub { print STDERR "GOT HERE\n"; $live_capture_done = 1 };
+
   bdie("Could not open $dev: $pcap_err", $log) if (!($pcap = Net::Pcap::pcap_open_live($dev, $snaplen, $promisc, $to_ms, \$pcap_err)));
 }
-else
+elsif ($OPTIONS{'file'})
 {
   my $savefile = $OPTIONS{'file'};
   bdie("Could not open savefile: $savefile: $pcap_err", $log) if (!($pcap = Net::Pcap::pcap_open_offline($savefile, \$pcap_err)));
 }
-
-if ($filter_str)
+else
 {
-  my $filter;
-  my $netmask = inet_aton($netmask_str);
-  bdie("Could not compile filter: " . Net::Pcap::pca_geterr($pcap), $log) if (Net::Pcap::pcap_filter($pcap, \$filter, $filter_str, $optimize, $netmask) < 0);
-  bdie("Could not set the filter: " . Net::Pcap::pca_geterr($pcap), $log) if (Net::Pcap::set_filter($pcap, $filter) < 0);
-  Net::Pcap::pcap_freecode($filter);
+  bdie("$USAGE", $log);
 }
+
+my $filter;
+
+my $full_filter_str = "ip";
+$full_filter_str .= " and not broadcast" if (!$broadcast && !$OPTIONS{'live'});
+$full_filter_str .= " and ( $filter_str )" if ($filter_str);
+
+my $netmask = unpack("L", pack("C4", split(/\./, $netmask_str)));
+bdie("Could not compile filter: " . Net::Pcap::pcap_geterr($pcap), $log) if (Net::Pcap::pcap_compile($pcap, \$filter, $full_filter_str, $optimize, $netmask) < 0);
+bdie("Could not set the filter: " . Net::Pcap::pcap_geterr($pcap), $log) if (Net::Pcap::pcap_setfilter($pcap, $filter) < 0);
+Net::Pcap::pcap_freecode($filter);
 
 bdie("Could not create $dir", $log) if (bruncmd("mkdir -p $dir", $log) != 0);
 
@@ -134,7 +145,8 @@ my $assoc_info = {};
 # Stats
 my ($pkt_cnt, $ip_pkt_cnt, $misordered_cnt) = (0, 0, 0);
 my $last_pkt_time = 0.0;
-while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
+my ($pcap_ret, $pkt);
+while (!$live_capture_done && ($pcap_ret = Net::Pcap::pcap_next_ex($pcap, \%pcap_header, \$pkt)) == 1)
 {
   $pkt_cnt++;
 
@@ -221,7 +233,8 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   # If this a TCP segment then check to see if the FIN is set so we can track close conditions.
   if (($proto == IPPROTO_TCP) && ($tcp_obj->{'flags'} & FIN))
   {
-    $assoc_info->{$assoc}->{'FIN'}->{$src_port} = 1;
+    print STDERR "Saw FIN: ${src_ip}:${src_port} => ${dst_ip}:${dst_port}\n";
+    $assoc_info->{$assoc}->{'FIN'}->{$src_ip} = 1;
   }
 
   my $fh;
@@ -260,7 +273,7 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
 
   # Don't save UDP "associations" as there really is no such thing (so,
   # yes, UDP's cause the data file to open close each time;
-  destroy_assoc($assoc_info, {$assoc}) if ($proto == IPPROTO_UDP);
+  destroy_assoc($assoc_info, $assoc) if ($proto == IPPROTO_UDP);
 
   # Scan the TCP associattions for those that have timed out. NB: $assoc is
   # *reused* here, so this must always be the last thing in the
@@ -268,9 +281,36 @@ while (my $pkt = Net::Pcap::pcap_next($pcap, \%pcap_header))
   foreach $assoc (keys(%{$assoc_info}))
   {
     next if ($assoc_info->{$assoc}->{'proto'} != IPPROTO_TCP); # Should never be true
-    destroy_assoc($assoc_info, $assoc) if (($assoc_info->{$assoc}->{'last_pkt_time'} - $pkt_time) >= TIMEOUT_2MSL);
+    if (keys(%{$assoc_info->{$assoc}->{'FIN'}}) == 2)
+    {
+      destroy_assoc($assoc_info, $assoc) if (($pkt_time - $assoc_info->{$assoc}->{'last_pkt_time'}) >= TIMEOUT_2MSL);
+    }
   }
 }
+
+if (!$live_capture_done)
+{
+  if ($pcap_ret == 0)
+  {
+    if ($OPTIONS{'live'})
+    {
+      bmsg("pcap timer expired", $log);
+    }
+    else
+    {
+      berror("pcap return 0 from savefile read (should not happen): " . Net::Pcap::pcap_geterr($pcap), $log);
+    }
+  }
+  elsif ($pcap_ret == -1)
+  {
+    berror("Error getting next packet: " . Net::Pcap::pcap_getrr($pcap), $log);
+  }
+  elsif ($pcap_ret == -2)
+  {
+    berror("pcap return -2 from live_capture (should not happen): " . Net::Pcap::pcap_geterr($pcap), $log) if (!$OPTIONS{'file'});
+  }
+}
+
 
 # Destroy all remaining associations (basically to ensure that the output files are closed).
 foreach my $assoc (keys(%{$assoc_info}))
@@ -287,8 +327,6 @@ if ($stats)
 }
 
 exit(0);
-
-
 
 sub END
 {
@@ -330,16 +368,27 @@ sub destroy_assoc($$ )
   my $src_fh = $assoc_info->{$assoc}->{DIRECTION_FROM_SOURCE}->{'fh'};
   my $dst_fh = $assoc_info->{$assoc}->{DIRECTION_TO_SOURCE}->{'fh'};
 
+  print STDERR "Destroying: $assoc\n";
+
   if (defined($src_fh))
   {
     if (defined($dst_fh) && ($src_fh != $dst_fh))
     {
       $dst_fh->close();
-      delete($assoc_info->{$assoc}->{$dst_fh}); # Belt/suspenders
+      delete($assoc_info->{$assoc}->{DIRECTION_TO_SOURCE});
     }
     
     $src_fh->close();
-    delete($assoc_info->{$assoc}->{$src_fh}); # Belt/suspenders
+    delete($assoc_info->{$assoc}->{DIRECTION_FROM_SOURCE});
+  }
+  elsif(defined($dst_fh))
+  {
+
+    # This condition could occur if we've seen a FIN from the "source" but
+    # not from the destination (most likely because the capture was
+    # interrupted).
+    $dst_fh->close();
+    delete($assoc_info->{$assoc}->{DIRECTION_TO_SOURCE});
   }
 
   delete($assoc_info->{$assoc});
