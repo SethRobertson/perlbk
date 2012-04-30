@@ -328,7 +328,7 @@ if (!$live_capture_done)
   }
   elsif ($pcap_ret == -1)
   {
-    berror("Error getting next packet: " . Net::Pcap::pcap_getrr($pcap), $log);
+    berror("Error getting next packet: " . Net::Pcap::pcap_geterr($pcap), $log);
   }
   elsif ($pcap_ret == -2)
   {
