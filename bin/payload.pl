@@ -1,7 +1,6 @@
 #!  /usr/bin/perl -w
 
 # <TODO> 
-# Bug: Direction symbols and filename do not match
 # Initial holddown
 # Suppress extra newlines 
 # Comment
@@ -267,7 +266,7 @@ while (!$live_capture_done && ($pcap_ret = Net::Pcap::pcap_next_ex($pcap, \%pcap
 
       $filename .= getprotobynumber($proto) . "-" unless ($standard_filter);
 
-      if (!$OPTIONS{'bidir'} || ($direction eq DIRECTION_FROM_SOURCE))
+      if ($OPTIONS{'bidir'} || ($direction eq DIRECTION_FROM_SOURCE))
       {
 	$filename .= "${src_hostname}:${src_port}:${dst_hostname}:${dst_port}";
       }
