@@ -1,12 +1,12 @@
 #!  /usr/bin/perl -w
 
 # <TODO> 
+# Bug: Direction symbols and filename do not match
 # Initial holddown
 # Suppress extra newlines 
 # Comment
 # Document
 # Test: Bidir
-# Test: Closes
 #</TOOD>
 
 use strict;
@@ -32,6 +32,7 @@ sub make_association($$$$$ );
 sub destroy_assoc($$ );
 sub ip2i($ );
 sub close_file($$$ );
+sub get_other_direction($ );
 
 use constant
 {
@@ -79,7 +80,7 @@ my $dir = $OPTIONS{'dir'} // "/tmp/payload.d";
 my $permit_misordered = $OPTIONS{'permit_misordered'} // 1;
 my $stats = $OPTIONS{'stats'} // 0;
 my $broadcast = $OPTIONS{'broadcast'} // 0;
-my $debug = $OPTIONS{'debug'};
+my $debug = $OPTIONS{'debug'} // 0;
 my $standard_filter = $OPTIONS{'standard-filter'} // 1;
 my $hostnames = $OPTIONS{'hostnames'} // 1;
 
@@ -244,7 +245,7 @@ while (!$live_capture_done && ($pcap_ret = Net::Pcap::pcap_next_ex($pcap, \%pcap
   my $fh;
   if ($data)
   {
-    if (!defined($fh = $assoc->{$assoc}->{'fh'}->{$direction}))
+    if (!defined($fh = $assoc_info->{$assoc}->{'fh'}->{$direction}))
     {
       my $filename = "";
       my ($src_hostname, $dst_hostname);
@@ -279,12 +280,12 @@ while (!$live_capture_done && ($pcap_ret = Net::Pcap::pcap_next_ex($pcap, \%pcap
 
       bdie("Could not open $filename for writing: $!", $log) if (!($fh = FileHandle->new(">> $filename")));
 
-      print STDERR "Opening file: $filename: $fh\n" if ($debug > 1);
-      $assoc->{$assoc}->{'fh'}->{$direction} = $fh;
+      print STDERR "Opening file: $fh\n" if ($debug > 1);
+      $assoc_info->{$assoc}->{'fh'}->{$direction} = $fh;
       if ($bidir)
       {
-	my $other_direction = !$direction;
-	$assoc->{$assoc}->{'fh'}->{$other_direction} = $fh;
+	my $other_direction = get_other_direction($direction);
+	$assoc_info->{$assoc}->{'fh'}->{$other_direction} = $fh;
       }
     }
     
@@ -352,6 +353,8 @@ if ($stats)
 
 exit(0);
 
+
+
 sub END
 {
   Net::Pcap::pcap_close($pcap) if (defined($pcap));
@@ -389,13 +392,13 @@ sub ip2i($ )
 sub close_file($$$ )
 {
   my($assoc_info, $assoc, $direction) = @_;
-  my $other_direction = !$direction;
+  my $other_direction = get_other_direction($direction);
   
   if (defined($assoc_info->{$assoc}->{'fh'}) && defined($assoc_info->{$assoc}->{'fh'}->{$direction}))
   {
     my $fh = $assoc_info->{$assoc}->{'fh'}->{$direction};
     delete($assoc_info->{$assoc}->{'fh'}->{$direction});
-    if ($fh != $assoc_info->{$assoc}->{'fh'}->{$other_direction})
+    if (!defined($assoc_info->{$assoc}->{'fh'}->{$other_direction}) || ($fh != $assoc_info->{$assoc}->{'fh'}->{$other_direction}))
     {
       print STDERR "Closing file: $fh\n" if ($debug > 1);
       $fh->close();
@@ -409,8 +412,6 @@ sub close_file($$$ )
 sub destroy_assoc($$ )
 {
   my($assoc_info, $assoc) = @_;
-  my $src_fh = $assoc_info->{$assoc}->{'fh'}->{DIRECTION_FROM_SOURCE};
-  my $dst_fh = $assoc_info->{$assoc}->{'fh'}->{DIRECTION_TO_SOURCE};
 
   print STDERR "Destroying assoc: $assoc\n" if ($debug);
 
@@ -419,4 +420,12 @@ sub destroy_assoc($$ )
 
   delete($assoc_info->{$assoc});
   return(0);
+}
+
+
+sub get_other_direction($ )
+{
+  my($dir) = @_;
+  return(DIRECTION_TO_SOURCE) if ($dir eq DIRECTION_FROM_SOURCE);
+  return(DIRECTION_FROM_SOURCE);
 }
