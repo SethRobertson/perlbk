@@ -60,7 +60,7 @@ my $USAGE = "Usage: $progname --list-devs | --live=DEV | --file=DMPFILE [--debug
 
 my(%OPTIONS);
 Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat");
-GetOptions(\%OPTIONS, 'debug|d+', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'stats!', 'broadcast!', 'standard-filter!', 'hostnames!', 'help|?') || die $USAGE;
+GetOptions(\%OPTIONS, 'debug|d+', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'stats!', 'broadcast!', 'standard-filter!', 'hostnames!', 'dir=s', 'help|?') || die $USAGE;
 die $USAGE if ($OPTIONS{'help'});
 die $USAGE if (@ARGV);
 
