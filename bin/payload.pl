@@ -1,13 +1,10 @@
 #!  /usr/bin/perl -w
 
 # <TODO> 
-# Early post FIN close
 # Initial holddown
 # Suppress extra newlines 
-# Standard filter (not udp, not ports 22, 443)
 # Comment
 # Document
-# Test: Live capture
 # Test: Bidir
 # Test: Closes
 #</TOOD>
@@ -33,8 +30,8 @@ use Data::Dumper;
 
 sub make_association($$$$$ );
 sub destroy_assoc($$ );
-sub get_direction($$$ );
 sub ip2i($ );
+sub close_file($$$ );
 
 use constant
 {
@@ -59,11 +56,11 @@ my $live_capture_done = 0;
 
 my @required_args = ( "list-devs", "live", "file" );
 
-my $USAGE = "Usage: $progname --list-devs | --live=DEV | --file=DMPFILE [--filter=FILTER] [--log-file=FILE] [--netmask=NETMASK] [--[no-]optimize] [--snaplen=LEN] [--[no]-promisc] [--to-ms=TIMEOUT] [--bidir!] [--dir=DIRECTORY] [--[no-]permit-misordered] [--[no-]stats [--[no-]broadcast]\n";
+my $USAGE = "Usage: $progname --list-devs | --live=DEV | --file=DMPFILE [--debug] [--filter=FILTER] [--log-file=FILE] [--netmask=NETMASK] [--[no-]optimize] [--snaplen=LEN] [--[no]-promisc] [--to-ms=TIMEOUT] [--bidir!] [--dir=DIRECTORY] [--[no-]permit-misordered] [--[no-]stats] [--[no-]broadcast] [--[no-]standard-filter] [--[no-]hostnames]\n";
 
 my(%OPTIONS);
 Getopt::Long::Configure("bundling", "no_ignore_case", "no_auto_abbrev", "no_getopt_compat");
-GetOptions(\%OPTIONS, 'debug|d', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'stats!', 'broadcast!', 'help|?') || die $USAGE;
+GetOptions(\%OPTIONS, 'debug|d+', 'list-devs', 'live=s', 'filter=s', 'file=s', 'log-file=s', 'snaplen=i', 'verbose|v', 'promisc!', 'netmask=s', 'optimize!', 'to-ms=i', 'permit-misordered!', 'bidir!', 'stats!', 'broadcast!', 'standard-filter!', 'hostnames!', 'help|?') || die $USAGE;
 die $USAGE if ($OPTIONS{'help'});
 die $USAGE if (@ARGV);
 
@@ -82,6 +79,9 @@ my $dir = $OPTIONS{'dir'} // "/tmp/payload.d";
 my $permit_misordered = $OPTIONS{'permit_misordered'} // 1;
 my $stats = $OPTIONS{'stats'} // 0;
 my $broadcast = $OPTIONS{'broadcast'} // 0;
+my $debug = $OPTIONS{'debug'};
+my $standard_filter = $OPTIONS{'standard-filter'} // 1;
+my $hostnames = $OPTIONS{'hostnames'} // 1;
 
 my $log_file = $OPTIONS{'log-file'} // "/tmp/${progbase}.$ENV{USER}";
 my $log = bopen_log($log_file);
@@ -113,7 +113,7 @@ elsif ($OPTIONS{'live'})
 {
   my $dev = $OPTIONS{'live'};
 
-  $SIG{'INT'} = sub { print STDERR "GOT HERE\n"; $live_capture_done = 1 };
+  $SIG{'INT'} = sub { $live_capture_done = 1 };
 
   bdie("Could not open $dev: $pcap_err", $log) if (!($pcap = Net::Pcap::pcap_open_live($dev, $snaplen, $promisc, $to_ms, \$pcap_err)));
 }
@@ -130,8 +130,11 @@ else
 my $filter;
 
 my $full_filter_str = "ip";
-$full_filter_str .= " and not broadcast" if (!$broadcast && !$OPTIONS{'live'});
+$full_filter_str .= " and not broadcast" if (!$broadcast);
+$full_filter_str .= " and not ( udp or port 2049 or port 443 or port 22 or port 111 or portrange 5999-6011 )" if ($standard_filter);
 $full_filter_str .= " and ( $filter_str )" if ($filter_str);
+
+print STDERR "Filter string: $full_filter_str\n" if (($standard_filter && ($debug > 2)) || (!$standard_filter && $debug));
 
 my $netmask = unpack("L", pack("C4", split(/\./, $netmask_str)));
 bdie("Could not compile filter: " . Net::Pcap::pcap_geterr($pcap), $log) if (Net::Pcap::pcap_compile($pcap, \$filter, $full_filter_str, $optimize, $netmask) < 0);
@@ -142,8 +145,7 @@ bdie("Could not create $dir", $log) if (bruncmd("mkdir -p $dir", $log) != 0);
 
 my %pcap_header;
 my $assoc_info = {};
-# Stats
-my ($pkt_cnt, $ip_pkt_cnt, $misordered_cnt) = (0, 0, 0);
+my ($pkt_cnt, $misordered_cnt) = (0, 0); # Stats
 my $last_pkt_time = 0.0;
 my ($pcap_ret, $pkt);
 while (!$live_capture_done && ($pcap_ret = Net::Pcap::pcap_next_ex($pcap, \%pcap_header, \$pkt)) == 1)
@@ -173,7 +175,6 @@ while (!$live_capture_done && ($pcap_ret = Net::Pcap::pcap_next_ex($pcap, \%pcap
   next if (($eth_obj->{'type'}&0xffff) != ETHERTYPE_IP);
 
   my $ip_pkt = $eth_obj->{'data'};
-  $ip_pkt_cnt++;
 
   my $ip_obj = NetPacket::IP->decode($ip_pkt);
 
@@ -216,8 +217,10 @@ while (!$live_capture_done && ($pcap_ret = Net::Pcap::pcap_next_ex($pcap, \%pcap
   my $first_from;
   if (!defined($assoc_info->{$assoc}))
   {
+    print STDERR "Creating assoc: $assoc\n" if ($debug);
     $assoc_info->{$assoc}->{'first_from'} = $first_from = $src_ip;
     $assoc_info->{$assoc}->{'proto'} = $proto;
+    $assoc_info->{$assoc}->{'fh'} = {};
   }
   else
   {
@@ -228,38 +231,60 @@ while (!$live_capture_done && ($pcap_ret = Net::Pcap::pcap_next_ex($pcap, \%pcap
   $assoc_info->{$assoc}->{'last_pkt_time'} = $pkt_time;
   
   # Set the direction packet.
-  my $direction = get_direction($assoc_info, $assoc, $src_ip);
+  my $direction = ($assoc_info->{$assoc}->{'first_from'} eq $src_ip)?"@{[DIRECTION_FROM_SOURCE]}":"@{[DIRECTION_TO_SOURCE]}";
 
   # If this a TCP segment then check to see if the FIN is set so we can track close conditions.
   if (($proto == IPPROTO_TCP) && ($tcp_obj->{'flags'} & FIN))
   {
-    print STDERR "Saw FIN: ${src_ip}:${src_port} => ${dst_ip}:${dst_port}\n";
+    print STDERR "Saw FIN: ${src_ip}:${src_port} => ${dst_ip}:${dst_port}\n" if ($debug);
     $assoc_info->{$assoc}->{'FIN'}->{$src_ip} = 1;
+    close_file($assoc_info, $assoc, $direction);
   }
 
   my $fh;
   if ($data)
   {
-    if (!defined($fh = $assoc->{$assoc}->{$direction}->{'fh'}))
+    if (!defined($fh = $assoc->{$assoc}->{'fh'}->{$direction}))
     {
-      my $filename;
-      if (!$OPTIONS{'bidir'} || ($direction eq DIRECTION_FROM_SOURCE))
+      my $filename = "";
+      my ($src_hostname, $dst_hostname);
+
+      if ($hostnames)
       {
-	$filename = $assoc;
+	$src_hostname = gethostbyaddr(inet_aton($src_ip), AF_INET) || $src_ip;
+	$dst_hostname = gethostbyaddr(inet_aton($dst_ip), AF_INET) || $dst_ip;
       }
       else
       {
-	$filename = "${proto}-${dst_ip}:${dst_port}:${src_ip}:${src_port}"
+	$src_hostname = $src_ip;
+	$dst_hostname = $dst_ip;
+      }
+
+      # Make the protcol the first element of the hostname unless we're
+      # using the standard filter in which case we know we're filtering out
+      # all udp".
+
+      $filename .= getprotobynumber($proto) . "-" unless ($standard_filter);
+
+      if (!$OPTIONS{'bidir'} || ($direction eq DIRECTION_FROM_SOURCE))
+      {
+	$filename .= "${src_hostname}:${src_port}:${dst_hostname}:${dst_port}";
+      }
+      else
+      {
+	$filename .= "${dst_hostname}:${dst_port}:${src_hostname}:${src_port}";
       }
 
       $filename = "${dir}/${filename}";
 
       bdie("Could not open $filename for writing: $!", $log) if (!($fh = FileHandle->new(">> $filename")));
-      $assoc->{$assoc}->{$src_port}->{$direction} = $fh;
+
+      print STDERR "Opening file: $filename: $fh\n" if ($debug > 1);
+      $assoc->{$assoc}->{'fh'}->{$direction} = $fh;
       if ($bidir)
       {
 	my $other_direction = !$direction;
-	$assoc->{$assoc}->{$dst_port}->{$other_direction} = $fh;
+	$assoc->{$assoc}->{'fh'}->{$other_direction} = $fh;
       }
     }
     
@@ -321,8 +346,7 @@ foreach my $assoc (keys(%{$assoc_info}))
 if ($stats)
 {
   my $format = "%10s: %i\n";
-  printf($format, "Packets", $pkt_cnt);
-  printf($format, "IP Packets", $ip_pkt_cnt);
+  printf($format, "IP Packets", $pkt_cnt);
   printf($format, "Misordered", $misordered_cnt);
 }
 
@@ -362,44 +386,37 @@ sub ip2i($ )
 
 
 
-sub destroy_assoc($$ )
+sub close_file($$$ )
 {
-  my($assoc_info, $assoc) = @_;
-  my $src_fh = $assoc_info->{$assoc}->{DIRECTION_FROM_SOURCE}->{'fh'};
-  my $dst_fh = $assoc_info->{$assoc}->{DIRECTION_TO_SOURCE}->{'fh'};
-
-  print STDERR "Destroying: $assoc\n";
-
-  if (defined($src_fh))
+  my($assoc_info, $assoc, $direction) = @_;
+  my $other_direction = !$direction;
+  
+  if (defined($assoc_info->{$assoc}->{'fh'}) && defined($assoc_info->{$assoc}->{'fh'}->{$direction}))
   {
-    if (defined($dst_fh) && ($src_fh != $dst_fh))
+    my $fh = $assoc_info->{$assoc}->{'fh'}->{$direction};
+    delete($assoc_info->{$assoc}->{'fh'}->{$direction});
+    if ($fh != $assoc_info->{$assoc}->{'fh'}->{$other_direction})
     {
-      $dst_fh->close();
-      delete($assoc_info->{$assoc}->{DIRECTION_TO_SOURCE});
+      print STDERR "Closing file: $fh\n" if ($debug > 1);
+      $fh->close();
     }
-    
-    $src_fh->close();
-    delete($assoc_info->{$assoc}->{DIRECTION_FROM_SOURCE});
   }
-  elsif(defined($dst_fh))
-  {
-
-    # This condition could occur if we've seen a FIN from the "source" but
-    # not from the destination (most likely because the capture was
-    # interrupted).
-    $dst_fh->close();
-    delete($assoc_info->{$assoc}->{DIRECTION_TO_SOURCE});
-  }
-
-  delete($assoc_info->{$assoc});
-  return(0);
+  return;
 }
 
 
 
-sub get_direction($$$ )
+sub destroy_assoc($$ )
 {
-  my($assoc_info, $assoc, $src) = @_;
+  my($assoc_info, $assoc) = @_;
+  my $src_fh = $assoc_info->{$assoc}->{'fh'}->{DIRECTION_FROM_SOURCE};
+  my $dst_fh = $assoc_info->{$assoc}->{'fh'}->{DIRECTION_TO_SOURCE};
 
-  return(($assoc_info->{$assoc}->{'first_from'} eq $src)?@{[DIRECTION_FROM_SOURCE]}:@{[DIRECTION_TO_SOURCE]});
+  print STDERR "Destroying assoc: $assoc\n" if ($debug);
+
+  close_file($assoc_info, $assoc, DIRECTION_FROM_SOURCE);
+  close_file($assoc_info, $assoc, DIRECTION_TO_SOURCE);
+
+  delete($assoc_info->{$assoc});
+  return(0);
 }
