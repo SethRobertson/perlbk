@@ -38,8 +38,8 @@ use constant
   ETHERTYPE_IP		=> 2048,	# net/ethernet.h
   IPPROTO_TCP		=> 6,
   IPPROTO_UDP		=> 17,
-#  TIMEOUT_2MSL		=> 240.0, 	# The comparison is with a floating point number.
-  TIMEOUT_2MSL		=> 1.0, 	# The comparison is with a floating point number.
+  TIMEOUT_2MSL		=> 240.0, 	# The comparison is with a floating point number.
+#  TIMEOUT_2MSL		=> 1.0, 	# The comparison is with a floating point number.
 };
 
 use constant
