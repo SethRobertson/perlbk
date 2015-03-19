@@ -366,17 +366,16 @@ sub bruncmd($;$$$$$$ )
     print $log " [signal: $sig]" if ($sig);
     print $log " (ignored)" if ($ignore_error_code && $ret != $success_code);
     print $log "\n";
-
-    print $log "----------------------------------------------------------\n";
   }
+
   if (@lines)
   {
     my $output_str = "" . join("$/", @lines) . "$/";
 
     if ($log && !$ignore_output)
     {
+      print $log "----------------------------------------------------------\n";
       print $log "$output_str";
-      print $log "------------------------------------------------------------\n";
     }
 
     if ($output_r)
@@ -395,6 +394,8 @@ sub bruncmd($;$$$$$$ )
       }
     }
   }
+
+  print $log "============================================================\n" if ($log);
 
   $$retcode_r = $ret if ($retcode_r);
   return($ret);
