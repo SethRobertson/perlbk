@@ -165,7 +165,7 @@ my $want_stderr = 0;
 # For long running commands, it can be annoying to wait and wait and wait
 # for the results, so while the comand is running, results will be tee'ed
 # into this file.
-my $tmp_results = "/tmp/bruncmd.$$";
+my $tmp_results = "$ENV{'TMP'}/bruncmd.$$";
 
 ################################################################
 #
@@ -343,12 +343,14 @@ sub bruncmd($;$$$$$$ )
   $success_code = 0 if (!defined($success_code));
 
   print $log "Running cmd: $cmd: " if ($log);
+  
+  my $exit_status_file = "$ENV{TMP}/__exit_status.$$";
 
   # If the caller is catching SIGCHLD, he probably doesn't want it caught for this, so
   # reset it across the backtick call.
   my $old_chld = $SIG{'CHLD'};
   $SIG{'CHLD'} = 'DEFAULT';
-  chomp(my @lines = `{ $cmd; echo "\$?" > /tmp/__results; chmod 777 /tmp/__results; } 2>&1 | tee $tmp_results; _exit_status=\$(cat /tmp/__results); rm -f /tmp/__results; exit \$_exit_status`);
+  chomp(my @lines = `{ $cmd; echo "\$?" > $exit_status_file; chmod 777 $exit_status_file; } 2>&1 | tee $tmp_results; _exit_status=\$(cat $exit_status_file); rm -f $exit_status_file; exit \$_exit_status`);
   $SIG{'CHLD'} = $old_chld if (defined($old_chld));
 
   my $exitcode = ($?&0xffff);
