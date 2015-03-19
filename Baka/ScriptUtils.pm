@@ -348,7 +348,7 @@ sub bruncmd($;$$$$$$ )
   # reset it across the backtick call.
   my $old_chld = $SIG{'CHLD'};
   $SIG{'CHLD'} = 'DEFAULT';
-  chomp(my @lines = `{ $cmd; echo "\$?" > /tmp/__results;  } 2>&1 | tee $tmp_results; _exit_status=\$(cat /tmp/__results); rm -f /tmp/__results; exit \$_exit_status`);
+  chomp(my @lines = `{ $cmd; echo "\$?" > /tmp/__results; chmod 777 /tmp/__results; } 2>&1 | tee $tmp_results; _exit_status=\$(cat /tmp/__results); rm -f /tmp/__results; exit \$_exit_status`);
   $SIG{'CHLD'} = $old_chld if (defined($old_chld));
 
   my $exitcode = ($?&0xffff);
